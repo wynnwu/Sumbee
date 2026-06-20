@@ -1,0 +1,21 @@
+# Swift / SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+
+# Build output
+dist/
+build/
+
+# macOS
+.DS_Store
+
+# Xcode (if a contributor opens the package in Xcode)
+*.xcodeproj
+xcuserdata/
+DerivedData/
+
+# Tooling / local scaffolding (not part of the app)
+.claude/
+.specify/
+icon-concepts/
