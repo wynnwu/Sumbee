@@ -48,8 +48,9 @@ struct StylesCRUDSection: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .onAppear { autoEditFirstStyleIfRequested() }
+        .onAppear { autoEditFirstStyleIfRequested(); startNewStyleIfRequested() }
         .onChange(of: state.library.styles.count) { autoEditFirstStyleIfRequested() }
+        .onChange(of: state.pendingNewStyle) { startNewStyleIfRequested() }
         .alert("Remove this style?", isPresented: Binding(
             get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }
         )) {
@@ -61,6 +62,13 @@ struct StylesCRUDSection: View {
         } message: {
             Text("Its folder and any summaries inside it are kept. Only the style definition is removed.")
         }
+    }
+
+    /// ⌘N (FR-044): start a new style when requested from the app menu.
+    private func startNewStyleIfRequested() {
+        guard state.pendingNewStyle, editing == nil else { return }
+        creating = true
+        state.pendingNewStyle = false
     }
 
     /// Verification hook: jump straight into editing the first style for a headless shot.
@@ -119,26 +127,49 @@ private struct StyleEditorInline: View {
     @State private var channel: StyleChannel
     @State private var prompt: String
 
+    // Per-style model/format override (FR-038)
+    @State private var advancedOpen: Bool
+    @State private var overrideOn: Bool
+    @State private var ovModel: String
+    @State private var ovFormat: OutputFormat
+    @State private var ovMaxTokens: Int
+
     private let original: SummaryStyle?
 
     init(mode: StyleEditorMode, onClose: @escaping () -> Void) {
         self.mode = mode
         self.onClose = onClose
+        let source: SummaryStyle?
         switch mode {
         case .create:
             _name = State(initialValue: "")
             _channel = State(initialValue: .file)
             _prompt = State(initialValue: "")
-            original = nil
+            source = nil
         case .edit(let s):
             _name = State(initialValue: s.name)
             _channel = State(initialValue: s.channel)
             _prompt = State(initialValue: s.prompt)
-            original = s
+            source = s
         }
+        original = source
+        let mo = source?.modelOverride
+        let hasOverride = mo != nil && !(mo?.isEmpty ?? true)
+        _advancedOpen = State(initialValue: hasOverride)
+        _overrideOn = State(initialValue: hasOverride)
+        _ovModel = State(initialValue: mo?.model ?? ModelCatalog.defaultModelID)
+        _ovFormat = State(initialValue: mo?.outputFormat ?? .markdown)
+        _ovMaxTokens = State(initialValue: mo?.maxOutputTokens ?? 8192)
     }
 
     private var isCreate: Bool { original == nil }
+
+    private var builtOverride: ModelOverride? {
+        guard overrideOn else { return nil }
+        return ModelOverride(model: ovModel.isEmpty ? nil : ovModel,
+                             maxOutputTokens: ovMaxTokens,
+                             outputFormat: ovFormat)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -167,6 +198,27 @@ private struct StyleEditorInline: View {
                 }
             }
 
+            DisclosureGroup(isExpanded: $advancedOpen) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle("Override the global model & output format for this style", isOn: $overrideOn)
+                    if overrideOn {
+                        HStack(spacing: 12) {
+                            Picker("Model", selection: $ovModel) {
+                                ForEach(state.modelsForPicker) { Text($0.displayName).tag($0.id) }
+                            }.frame(maxWidth: 300)
+                            Picker("Output", selection: $ovFormat) {
+                                ForEach(OutputFormat.allCases) { Text($0.displayName).tag($0) }
+                            }.frame(width: 210)
+                        }
+                        Stepper("Max output tokens: \(ovMaxTokens)", value: $ovMaxTokens, in: 512...64000, step: 512)
+                    }
+                }
+                .font(.uiCaption)
+                .padding(.top, 4)
+            } label: {
+                Text("Advanced — per-style model & format").font(.uiCaption).foregroundStyle(.secondary)
+            }
+
             Text("Prompt").font(.uiCaption).foregroundStyle(.secondary)
             BigPromptEditor(text: $prompt, fill: true)
 
@@ -182,9 +234,10 @@ private struct StyleEditorInline: View {
             edited.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
             edited.channel = channel
             edited.prompt = prompt
+            edited.modelOverride = builtOverride
             state.saveStyle(original: original, edited: edited)
         } else {
-            state.createStyle(name: name, channel: channel, prompt: prompt)
+            state.createStyle(name: name, channel: channel, prompt: prompt, modelOverride: builtOverride)
         }
         onClose()
     }

@@ -58,7 +58,11 @@ A date-stamped **copy** (never a move) of the original under `<root>/source/`:
 | `htmlStylingPrompt` | `""` |
 | `systemPrompt` | `""` (prepended in front of every style prompt — FR-034) |
 | `previewFontSize` | `16` (sticky preview base font — FR-036) |
+| `geekMode` | `false` (when on, preview exact prompt + token estimate before sending — FR-039) |
 | `ytDlpPath` | `nil` (auto-discover) |
+
+Per-style overrides (FR-038) live on `SummaryStyle.modelOverride` (already in the model:
+optional `model`, `outputFormat`, `maxOutputTokens`); no new settings field is needed.
 | `windowState` | last frame |
 
 Stored as JSON at `~/Library/Application Support/Sumbee/config.json`. **Excludes**

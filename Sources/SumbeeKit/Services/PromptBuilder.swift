@@ -18,6 +18,17 @@ public enum PromptBuilder {
         return parts.joined(separator: "\n\n")
     }
 
+    /// Assemble the exact (system, user) pair the engine will send — used by geek mode's
+    /// prompt preview (FR-039) so the preview can't drift from what's actually sent.
+    public static func assemble(style: SummaryStyle, format: OutputFormat, htmlStylingPrompt: String,
+                                globalPrompt: String, transcript: String,
+                                videoMeta: VideoMeta?) -> (system: String, user: String) {
+        let system = systemPrompt(style: style, format: format,
+                                  htmlStylingPrompt: htmlStylingPrompt, globalPrompt: globalPrompt)
+        let user = userMessage(transcript: transcript, videoMeta: videoMeta)
+        return (system, user)
+    }
+
     public static func userMessage(transcript: String, videoMeta: VideoMeta? = nil) -> String {
         guard let meta = videoMeta else { return transcript }
         var header = "Video metadata:\n"

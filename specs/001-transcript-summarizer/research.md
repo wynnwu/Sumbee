@@ -209,3 +209,27 @@ roomy editor is far better for writing/reading long prompts than a small floatin
 preview is a stated priority and the size must stick. **Decoding made field-tolerant**
 (`decodeIfPresent` + defaults) so adding `systemPrompt`/`previewFontSize` never resets a config —
 the prior synthesized `Codable` would have failed to decode older files and silently reset them.
+
+## D16. Regenerate, geek mode, streaming, power-user touches (Revision 7, FR-037..044)
+
+**Decisions & rationale**:
+- **Regenerate (FR-037)** reuses the archived `source/` copy: the engine gains
+  `prepareFromArchive(summaryURL:)` that reads the summary's front-matter `source`, then either
+  re-extracts the archived file or re-fetches the YouTube URL — producing a `PreparedInput` WITHOUT
+  re-archiving. `finish(...)` then runs with the chosen style/model/format and writes a **new**
+  file. Non-destructive by design (re-running is exploratory; never clobber a kept result).
+- **Geek mode (FR-039)** is a confirmation gate, not a new pipeline: when on, single-input actions
+  route through a `PromptPreview` sheet (assembled `system` + `user` message from `PromptBuilder`)
+  with a token estimate, then enqueue on Send. Token estimate uses a **local heuristic**
+  (`ceil(chars / 3.7)`, labelled "~") rather than the count-tokens API, so it's instant and offline
+  — accuracy beyond an order-of-magnitude isn't the point of an inspect mode. Batches skip the
+  per-item gate to avoid N modal prompts.
+- **Streaming preview (FR-040)** adds `AppState.streamingText`/`streamingJobID`, appended on
+  `.streamDelta` (full text, not just the bottom-bar's 320-char tail). The preview pane shows the
+  live text while a job runs, then falls back to the selected asset. One surface, no new window.
+- **Per-style overrides (FR-038)** surface existing `SummaryStyle.modelOverride` in the editor —
+  no model change.
+- **Touches**: library search is a local title filter (NOT a tag/index system — folders stay the
+  organizing model); drag-out exposes the file URL via `.onDrag`; Quick Look uses `QLPreviewPanel`;
+  table/link rendering is a small extension to the existing `MarkdownText` (no CommonMark dep);
+  ⌘F/⌘N via SwiftUI `commands`/`focused` state. All chosen to add capability without surface area.

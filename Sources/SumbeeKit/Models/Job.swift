@@ -5,6 +5,8 @@ public struct Job: Identifiable, Equatable {
     public enum Input: Equatable, Sendable {
         case file(URL)
         case youtube(URL)
+        /// Re-run a saved summary from its archived source (FR-037); optional model/format override.
+        case regenerate(summaryURL: URL, override: ModelOverride?)
     }
 
     public enum Phase: Equatable, Sendable {

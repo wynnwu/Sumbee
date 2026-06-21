@@ -52,6 +52,16 @@ public enum HTMLMetaCodec {
         return html + snippet
     }
 
+    /// Read back a `<meta name="…" content="…">` value embedded by `embed` (FR-037 regenerate).
+    public static func readMeta(_ html: String, name: String) -> String? {
+        guard let nameRange = html.range(of: "name=\"\(name)\"") else { return nil }
+        guard let contentOpen = html.range(of: "content=\"",
+                                           range: nameRange.upperBound..<html.endIndex) else { return nil }
+        guard let contentClose = html.range(of: "\"",
+                                            range: contentOpen.upperBound..<html.endIndex) else { return nil }
+        return decode(String(html[contentOpen.upperBound..<contentClose.lowerBound]))
+    }
+
     /// Reverse of `escape` — decode the four entities (`&amp;` LAST to avoid double-decoding).
     public static func decode(_ s: String) -> String {
         s.replacingOccurrences(of: "&lt;", with: "<")

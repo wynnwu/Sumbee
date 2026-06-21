@@ -3,6 +3,25 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-06-21
+
+### Added
+- **Regenerate** — re-run any saved summary from its archived original with a different style,
+  model, or output format; produces a new summary and never overwrites the original.
+- **Live streaming preview** — the summary streams into the preview pane as it generates, then
+  settles on the saved file.
+- **Geek mode** — a bottom-bar toggle; when on, single summaries first show the exact prompt to be
+  sent plus an estimated token count, with Send / Cancel.
+- **Per-style model & output-format overrides** — surfaced in the style editor; unset fields fall
+  back to the global settings.
+- **Library search** (⌘F) over summary titles, and **⌘N** to start a new style.
+- **Drag a summary out** to Finder/other apps, and **space-bar Quick Look**.
+- **Richer Markdown preview** — renders tables and clickable links.
+
+### Notes
+- 47 unit tests. Settings decoding remains field-tolerant, so the new `geekMode` setting (and any
+  future field) never resets an existing config.
+
 ## [0.1.1] — 2026-06-21
 
 ### Added

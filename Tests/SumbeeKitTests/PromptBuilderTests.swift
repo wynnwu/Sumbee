@@ -56,6 +56,18 @@ final class PromptBuilderTests: XCTestCase {
         XCTAssertEqual(withEmpty, without)
     }
 
+    func testAssembleReturnsExactSystemAndUser() {
+        let meta = VideoMeta(videoID: "x", title: "My Title", channel: "C",
+                             durationSeconds: 60, uploadDate: "2026-06-21")
+        let (system, user) = PromptBuilder.assemble(
+            style: style, format: .markdown, htmlStylingPrompt: "",
+            globalPrompt: "GLOBAL RULE", transcript: "the transcript body", videoMeta: meta)
+        XCTAssertTrue(system.contains("GLOBAL RULE"))
+        XCTAssertTrue(system.contains("Summarize the meeting"))
+        XCTAssertTrue(user.contains("the transcript body"))
+        XCTAssertTrue(user.contains("My Title"))
+    }
+
     func testUserMessageEmbedsVideoMeta() {
         let meta = VideoMeta(videoID: "abc", title: "Cool Video", channel: "Chan",
                              durationSeconds: 125, uploadDate: "2026-06-20")

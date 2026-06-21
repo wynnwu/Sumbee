@@ -51,6 +51,8 @@ struct SettingsView: View {
             .shadow(color: .black.opacity(0.4), radius: 34, y: 12)
         }
         .onChange(of: state.settings) { state.scheduleSave() }
+        .onChange(of: state.pendingNewStyle) { if state.pendingNewStyle { section = .styles } }
+        .onAppear { if state.pendingNewStyle { section = .styles } }
         .onExitCommand { close() }
     }
 

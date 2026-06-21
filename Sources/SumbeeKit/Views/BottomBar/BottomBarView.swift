@@ -35,6 +35,8 @@ struct BottomBarView: View {
 
             outputToggle
 
+            geekToggle
+
             Spacer()
 
             if state.hasPendingRetry {
@@ -147,6 +149,31 @@ struct BottomBarView: View {
         }
         .buttonStyle(.plain)
         .help("Save new summaries as \(fmt.displayName)")
+    }
+
+    // MARK: Geek mode toggle (FR-039)
+
+    private var geekToggle: some View {
+        Button {
+            state.settings.geekMode.toggle()
+            state.persistSettings()
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "chevron.left.forwardslash.chevron.right")
+                Text("Geek").font(.uiCallout.weight(.semibold))
+            }
+            .font(.uiCallout.weight(.semibold))
+            .foregroundStyle(state.settings.geekMode ? Color.white : Color.secondary)
+            .padding(.horizontal, 9).padding(.vertical, 5)
+            .background {
+                if state.settings.geekMode { Rectangle().fill(Theme.accentGradient) }
+                else { Rectangle().fill(Color.primary.opacity(0.06)) }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Geek mode: preview the exact prompt and an estimated token count before sending")
+        .accessibilityLabel("Geek mode")
     }
 
     // MARK: Lively background (FR-028)

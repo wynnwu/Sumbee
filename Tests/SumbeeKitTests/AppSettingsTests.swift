@@ -22,9 +22,16 @@ final class AppSettingsTests: XCTestCase {
         var s = AppSettings()
         s.systemPrompt = "Shared prefix for all styles"
         s.previewFontSize = 22
+        s.geekMode = true
         let data = try JSONEncoder().encode(s)
         let back = try JSONDecoder().decode(AppSettings.self, from: data)
         XCTAssertEqual(back.systemPrompt, "Shared prefix for all styles")
         XCTAssertEqual(back.previewFontSize, 22)
+        XCTAssertTrue(back.geekMode)
+    }
+
+    func testGeekModeDefaultsFalseWhenAbsent() throws {
+        let json = "{\"schemaVersion\":2}".data(using: .utf8)!
+        XCTAssertFalse(try JSONDecoder().decode(AppSettings.self, from: json).geekMode)
     }
 }

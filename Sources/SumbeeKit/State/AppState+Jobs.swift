@@ -1,5 +1,18 @@
 import Foundation
 
+/// A pending, fully-assembled request awaiting user confirmation in geek mode (FR-039).
+public struct PendingPreview: Identifiable {
+    public let id = UUID()
+    public var system: String
+    public var user: String
+    public var estimatedTokens: Int
+    public var modelName: String
+    var prepared: PreparedInput
+    var style: SummaryStyle
+    var displayName: String
+    var input: Job.Input
+}
+
 /// Sequential job queue with a resilient retry policy (FR-021): one job at a time, one
 /// failure never aborts the batch, and transient/environmental failures (no network, model
 /// unavailable, region/VPN-blocked, rate limit, overload) are retried with exponential
@@ -20,6 +33,11 @@ public extension AppState {
             present(.error, "Skipped \(unsupported.count) unsupported file\(unsupported.count == 1 ? "" : "s").")
         }
         guard !supported.isEmpty else { return }
+        // Geek mode: preview the exact prompt before sending a single file (FR-039). Batches skip it.
+        if settings.geekMode, supported.count == 1 {
+            previewSingle(input: .file(supported[0]), displayName: supported[0].lastPathComponent, style: style)
+            return
+        }
         for url in supported {
             jobs.append(Job(input: .file(url), displayName: url.lastPathComponent,
                             styleID: style.id, styleName: style.name))
@@ -29,11 +47,80 @@ public extension AppState {
 
     func enqueueYouTube(_ url: URL, style: SummaryStyle) {
         guard requireKey() else { return }
+        if settings.geekMode {
+            previewSingle(input: .youtube(url), displayName: youtubeDisplayName(url), style: style)
+            return
+        }
         jobs.append(Job(input: .youtube(url),
                         displayName: youtubeDisplayName(url),
                         styleID: style.id, styleName: style.name))
         startProcessing()
     }
+
+    /// Re-run a saved summary from its archived source with a chosen style and optional
+    /// model/format override; produces a NEW summary, leaving the original intact (FR-037).
+    func regenerate(_ asset: Asset, style: SummaryStyle, override: ModelOverride?) {
+        guard requireKey() else { return }
+        if settings.geekMode {
+            previewSingle(input: .regenerate(summaryURL: asset.url, override: override),
+                          displayName: "Regenerate · \(asset.title)", style: style)
+            return
+        }
+        jobs.append(Job(input: .regenerate(summaryURL: asset.url, override: override),
+                        displayName: "Regenerate · \(asset.title)",
+                        styleID: style.id, styleName: style.name))
+        startProcessing()
+    }
+
+    // MARK: Geek-mode prompt preview (FR-039)
+
+    /// Prepare the input, assemble the exact prompt, and surface it for confirmation. On Send the
+    /// job is enqueued with the prepared input cached (so it isn't prepared twice).
+    private func previewSingle(input: Job.Input, displayName: String, style: SummaryStyle) {
+        let settingsSnapshot = settings
+        present(.info, "Preparing prompt preview…")
+        Task { [weak self] in
+            guard let self else { return }
+            let noop: @Sendable (SummarizationEvent) -> Void = { _ in }
+            do {
+                let prepared: PreparedInput
+                switch input {
+                case .file(let url):
+                    prepared = try await engine.prepareFile(url, settings: settingsSnapshot, progress: noop)
+                case .youtube(let url):
+                    prepared = try await engine.prepareYouTube(url, settings: settingsSnapshot, progress: noop)
+                case .regenerate(let url, _):
+                    prepared = try await engine.prepareFromArchive(summaryURL: url, settings: settingsSnapshot, progress: noop)
+                }
+                var effStyle = style
+                if case .regenerate(_, let o) = input, let o { effStyle.modelOverride = o }
+                let format = effStyle.modelOverride?.outputFormat ?? settingsSnapshot.outputFormat
+                let model = effStyle.modelOverride?.model ?? settingsSnapshot.model
+                let (system, user) = PromptBuilder.assemble(
+                    style: effStyle, format: format, htmlStylingPrompt: settingsSnapshot.htmlStylingPrompt,
+                    globalPrompt: settingsSnapshot.systemPrompt, transcript: prepared.text, videoMeta: prepared.videoMeta)
+                self.pendingPreview = PendingPreview(
+                    system: system, user: user,
+                    estimatedTokens: TokenEstimator.estimate(system + "\n\n" + user),
+                    modelName: model, prepared: prepared, style: style,
+                    displayName: displayName, input: input)
+            } catch {
+                self.present(.error, "Couldn’t prepare preview: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// Send the previewed request (geek mode): enqueue with the already-prepared input.
+    func confirmPendingPreview() {
+        guard let p = pendingPreview else { return }
+        var job = Job(input: p.input, displayName: p.displayName, styleID: p.style.id, styleName: p.style.name)
+        job.prepared = p.prepared       // skip re-prepare — runJob reuses the cache
+        jobs.append(job)
+        pendingPreview = nil
+        startProcessing()
+    }
+
+    func cancelPendingPreview() { pendingPreview = nil }
 
     func cancel(_ jobID: UUID) {
         if jobID == currentJobID {
@@ -160,14 +247,24 @@ public extension AppState {
                     prepared = try await engine.prepareFile(url, settings: settings, progress: progress)
                 case .youtube(let url):
                     prepared = try await engine.prepareYouTube(url, settings: settings, progress: progress)
+                case .regenerate(let summaryURL, _):
+                    prepared = try await engine.prepareFromArchive(summaryURL: summaryURL,
+                                                                   settings: settings, progress: progress)
                 }
                 updateJob(job.id) { $0.prepared = prepared }
             }
             try Task.checkCancellation()
 
-            let asset = try await engine.finish(prepared, style: style, settings: settings,
+            // Regenerate may override the chosen style's model/format (FR-037/038).
+            var effectiveStyle = style
+            if case .regenerate(_, let override) = job.input, let o = override {
+                effectiveStyle.modelOverride = o
+            }
+            streamingText = ""; streamingJobID = job.id     // begin live preview (FR-040)
+            let asset = try await engine.finish(prepared, style: effectiveStyle, settings: settings,
                                                 apiKey: apiKey, progress: progress)
             updateJob(job.id) { $0.phase = .done(asset.url); $0.nextRetryAt = nil }
+            clearStreaming(job.id)
             reloadLibrary()
             selectedAsset = asset
             present(.success, "Saved “\(asset.title)”.")
@@ -189,6 +286,8 @@ public extension AppState {
             else { fail(job.id, e.userMessage) }
         } catch let e as ExtractionError {
             fail(job.id, "\(job.displayName): \(e.userMessage)")
+        } catch let e as RegenerateError {
+            fail(job.id, e.userMessage)
         } catch let e as URLError {
             if Task.isCancelled || e.code == .cancelled { markCancelled(job.id) }
             else { scheduleRetry(job.id, message: "Network problem: \(e.localizedDescription)") }
@@ -199,16 +298,24 @@ public extension AppState {
 
     private func markCancelled(_ id: UUID) {
         updateJob(id) { $0.phase = .cancelled; $0.nextRetryAt = nil }
+        clearStreaming(id)
     }
 
     private func fail(_ id: UUID, _ message: String) {
         updateJob(id) { $0.phase = .failed(message); $0.nextRetryAt = nil }
+        clearStreaming(id)
         present(.error, message)
+    }
+
+    /// Clear the live preview buffer when this job stops streaming.
+    private func clearStreaming(_ id: UUID) {
+        if streamingJobID == id { streamingText = ""; streamingJobID = nil }
     }
 
     /// Schedule an automatic retry with exponential backoff (cap 5 min). After the schedule is
     /// exhausted, leave the job failed but requeue-able via "Run queue".
     private func scheduleRetry(_ id: UUID, message: String) {
+        clearStreaming(id)
         guard let idx = jobs.firstIndex(where: { $0.id == id }) else { return }
         let attempt = jobs[idx].attempt + 1
         jobs[idx].attempt = attempt
@@ -258,6 +365,8 @@ public extension AppState {
             updateJob(id) { if !$0.phase.isTerminal { $0.phase = p } }
         case .streamDelta(let d):
             updateJob(id) { $0.preview = String(($0.preview + d).suffix(320)) }
+            streamingJobID = id
+            streamingText += d          // full live text for the preview pane (FR-040)
         case .notice(let text):
             present(.info, text)
         }

@@ -35,6 +35,20 @@ public final class AppState: ObservableObject {
     // Selection (asset browser)
     @Published public var selectedAsset: Asset?
 
+    // Live streaming output for the preview pane (FR-040)
+    @Published public var streamingText: String = ""
+    @Published public var streamingJobID: UUID?
+
+    // Command / cross-view coordination (FR-039/041/044)
+    @Published public var focusSearchToken = 0
+    @Published public var pendingNewStyle = false
+    @Published public var pendingPreview: PendingPreview?
+
+    /// Focus the library search field (⌘F).
+    public func requestSearchFocus() { focusSearchToken &+= 1 }
+    /// Open Settings ▸ Styles and start a new style (⌘N).
+    public func requestNewStyle() { showSettings = true; pendingNewStyle = true }
+
     // Collaborators
     public let keychain: KeychainStoring
     let styleStore: StyleStoring

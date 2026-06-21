@@ -19,6 +19,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var systemPrompt: String
     /// Sticky base font size for the preview pane (FR-036).
     public var previewFontSize: Double
+    /// When on, preview the exact prompt + an estimated token count before sending (FR-039).
+    public var geekMode: Bool
     /// User-set absolute path to a yt-dlp binary; nil = auto-discover.
     public var ytDlpPath: String?
 
@@ -34,6 +36,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
                 htmlStylingPrompt: String = "",
                 systemPrompt: String = "",
                 previewFontSize: Double = 16,
+                geekMode: Bool = false,
                 ytDlpPath: String? = nil) {
         self.schemaVersion = schemaVersion
         self.libraryRootPath = libraryRootPath
@@ -47,13 +50,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.htmlStylingPrompt = htmlStylingPrompt
         self.systemPrompt = systemPrompt
         self.previewFontSize = previewFontSize
+        self.geekMode = geekMode
         self.ytDlpPath = ytDlpPath
     }
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, libraryRootPath, model, maxOutputTokens, temperature, effort,
              extendedThinking, captionLanguage, outputFormat, htmlStylingPrompt, systemPrompt,
-             previewFontSize, ytDlpPath
+             previewFontSize, geekMode, ytDlpPath
     }
 
     /// Field-tolerant decoding: every key falls back to its default, so adding a new setting
@@ -73,6 +77,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         htmlStylingPrompt = try c.decodeIfPresent(String.self, forKey: .htmlStylingPrompt) ?? d.htmlStylingPrompt
         systemPrompt = try c.decodeIfPresent(String.self, forKey: .systemPrompt) ?? d.systemPrompt
         previewFontSize = try c.decodeIfPresent(Double.self, forKey: .previewFontSize) ?? d.previewFontSize
+        geekMode = try c.decodeIfPresent(Bool.self, forKey: .geekMode) ?? d.geekMode
         ytDlpPath = try c.decodeIfPresent(String.self, forKey: .ytDlpPath) ?? d.ytDlpPath
     }
 

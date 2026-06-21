@@ -17,6 +17,15 @@ public struct PreparedInput: Sendable, Equatable {
     public var videoMeta: VideoMeta?
 }
 
+/// Regenerate (FR-037) couldn't locate the saved summary's original source.
+public enum RegenerateError: Error, CustomStringConvertible {
+    case sourceMissing
+    public var description: String {
+        "Couldn’t find this summary’s original source to regenerate from."
+    }
+    public var userMessage: String { description }
+}
+
 /// Orchestrates the pipeline as two resumable stages: `prepare` (extract/fetch + archive,
 /// done once) and `finish` (prompt → stream → save, retried by the job queue). Runs off main.
 public struct SummarizationEngine {
@@ -52,6 +61,32 @@ public struct SummarizationEngine {
         _ = try archiveTranscript(transcript, videoID: meta.videoID, root: settings.libraryRootURL, originalURL: url)
         return PreparedInput(text: transcript, sourceRef: url.absoluteString,   // record the URL as the source
                              fallbackTitle: meta.title, videoMeta: meta)
+    }
+
+    /// Rebuild a `PreparedInput` from a saved summary's archived source — for Regenerate (FR-037).
+    /// Re-extracts an archived file (no re-archiving) or re-fetches a YouTube URL.
+    public func prepareFromArchive(summaryURL: URL, settings: AppSettings,
+                                   progress: @escaping @Sendable (SummarizationEvent) -> Void) async throws -> PreparedInput {
+        let raw = (try? String(contentsOf: summaryURL, encoding: .utf8)) ?? ""
+        let isHTML = summaryURL.pathExtension.lowercased() == "html"
+        let doc = isHTML ? nil : FrontmatterCodec.parse(raw)
+        let source = (isHTML ? HTMLMetaCodec.readMeta(raw, name: "source") : doc?.frontmatter["source"])?
+            .trimmingCharacters(in: .whitespaces)
+        guard let source, !source.isEmpty else { throw RegenerateError.sourceMissing }
+
+        // YouTube source = the original URL → re-fetch.
+        if let url = URL(string: source), let scheme = url.scheme,
+           scheme == "http" || scheme == "https" {
+            return try await prepareYouTube(url, settings: settings, progress: progress)
+        }
+        // File source = an archived path under the library root (e.g. "source/<name>").
+        let fileURL = settings.libraryRootURL.appendingPathComponent(source)
+        guard fm.fileExists(atPath: fileURL.path) else { throw RegenerateError.sourceMissing }
+        progress(.phase(.extracting))
+        let text = try extractor.extract(from: fileURL)
+        let title = (isHTML ? HTMLMetaCodec.readMeta(raw, name: "title") : doc?.frontmatter["title"])
+            ?? fileURL.deletingPathExtension().lastPathComponent
+        return PreparedInput(text: text, sourceRef: source, fallbackTitle: title, videoMeta: nil)
     }
 
     // MARK: Finish (retryable: prompt → stream → save)

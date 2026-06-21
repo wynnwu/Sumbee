@@ -23,6 +23,14 @@ public struct SumbeeApp: App {
                 Button("Settings…") { state.showSettings = true }
                     .keyboardShortcut(",", modifiers: .command)
             }
+            CommandGroup(replacing: .newItem) {
+                Button("New Style…") { state.requestNewStyle() }      // ⌘N (FR-044)
+                    .keyboardShortcut("n", modifiers: .command)
+            }
+            CommandGroup(after: .pasteboard) {
+                Button("Find") { state.requestSearchFocus() }         // ⌘F (FR-041)
+                    .keyboardShortcut("f", modifiers: .command)
+            }
         }
     }
 }

@@ -339,6 +339,38 @@ Three changes, added as FR-034..FR-036 below:
   toolbar; the chosen size MUST persist across sessions (sticky) and scale the rendered body and
   headings proportionally.
 
+### Session 2026-06-21 (Revision 7 — regenerate, geek mode, streaming, power-user touches)
+
+Added as FR-037..FR-044 below. Design intent: deepen the core without adding surface area —
+several of these (regenerate, streaming) reuse machinery the app already has (the archived
+`source/`, the SSE stream, the per-style `modelOverride`).
+
+- **FR-037 (Regenerate)**: A saved summary MUST be re-runnable from its archived source without
+  re-dropping the file. The user picks a style (defaulting to the summary's own) and may override
+  the model and output format; the app reconstructs the input from the archive (re-extracting an
+  archived file, or re-fetching a YouTube URL) and produces a **new** summary (non-destructive —
+  the original is never overwritten). Regenerate is unavailable if the source can't be located.
+- **FR-038 (Per-style model/format overrides)**: The style editor MUST expose the existing
+  per-style `modelOverride` (model, output format, max tokens) so a style can pin its own model/
+  format; unset fields fall back to the global settings. This adds no new data — it surfaces what
+  the model already supports.
+- **FR-039 (Geek mode)**: A bottom-bar **geek mode** toggle (persisted). When ON, starting a
+  **single** summary (one dropped file, a YouTube URL, or a regenerate) MUST first show a preview
+  of the **exact prompt to be sent** (assembled system prompt + user message) together with an
+  **estimated token count**, with Send / Cancel. When OFF, behavior is unchanged. Multi-file batch
+  drops are not individually previewed (power-user bulk path); the estimate is a fast local
+  heuristic so it works offline and adds no latency.
+- **FR-040 (Streaming preview)**: While a summary is generating, the preview pane MUST show the
+  output **streaming in live**, then settle on the saved file when done. No separate window.
+- **FR-041 (Library search)**: The library MUST offer a search/filter field over summary titles;
+  **⌘F** focuses it. Filtering is local and instant. Empty query shows everything.
+- **FR-042 (Drag out & Quick Look)**: A summary row/preview MUST be **draggable** to Finder or
+  other apps (the underlying file), and **space bar** MUST Quick Look the selected summary.
+- **FR-043 (Richer preview)**: The Markdown preview MUST additionally render **tables** and
+  **clickable links** (kept deliberately lightweight — no full CommonMark engine).
+- **FR-044 (Keyboard shortcuts)**: **⌘N** creates a new style (opens the style editor); together
+  with ⌘F (FR-041) and existing ⌘, (Settings), the core flow is keyboard-reachable.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Summary Style**: A named, user-editable prompt with a stable identifier, a channel

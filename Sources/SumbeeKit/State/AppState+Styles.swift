@@ -6,11 +6,13 @@ public extension AppState {
     private var root: URL { settings.libraryRootURL }
 
     /// Create a new style (channel + prompt). Name must be unique.
-    func createStyle(name: String, channel: StyleChannel, prompt: String) {
+    func createStyle(name: String, channel: StyleChannel, prompt: String,
+                     modelOverride: ModelOverride? = nil) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { present(.error, "Name can’t be empty."); return }
         let nextOrder = (library.styles.map(\.order).max() ?? 0) + 1
-        let style = SummaryStyle(name: trimmed, channel: channel, prompt: prompt, order: nextOrder)
+        let style = SummaryStyle(name: trimmed, channel: channel, prompt: prompt, order: nextOrder,
+                                 modelOverride: modelOverride)
         do {
             try styleStore.create(style, root: root)
             reloadLibrary()

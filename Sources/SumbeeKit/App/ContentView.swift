@@ -38,6 +38,11 @@ struct ContentView: View {
                     .zIndex(10)
             }
         }
+        .sheet(item: Binding(get: { state.pendingPreview }, set: { state.pendingPreview = $0 })) { preview in
+            PromptPreviewSheet(preview: preview,
+                               onSend: { state.confirmPendingPreview() },
+                               onCancel: { state.cancelPendingPreview() })
+        }
         .animation(Theme.spring, value: state.showSettings)
         .animation(Theme.quick, value: state.toast?.id)
         .dynamicTypeSize(.xLarge)          // bump the whole app's text up a notch (FR-027)

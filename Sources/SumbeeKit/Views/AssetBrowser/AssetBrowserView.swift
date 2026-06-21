@@ -6,6 +6,8 @@ struct AssetBrowserView: View {
     @EnvironmentObject private var state: AppState
     @State private var confirmingDelete: Asset?
     @State private var tab: LibraryTab = .summaries
+    @State private var query = ""
+    @FocusState private var searchFocused: Bool
 
     enum LibraryTab: String, CaseIterable, Identifiable {
         case summaries = "Summaries"
@@ -17,10 +19,21 @@ struct AssetBrowserView: View {
         state.library.groups.filter { tab == .source ? $0.isSourceFolder : !$0.isSourceFolder }
     }
 
+    /// Assets in a group after applying the search filter (FR-041).
+    private func assets(in group: StyleGroup) -> [Asset] {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return group.assets }
+        return group.assets.filter { $0.title.localizedCaseInsensitiveContains(q) }
+    }
+
+    private var hasResults: Bool { visibleGroups.contains { !assets(in: $0).isEmpty } }
+    private var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
+
     var body: some View {
         VStack(spacing: 0) {
             header
             tabPicker
+            searchBar
             VSplitView {
                 groupList
                     .frame(minHeight: 180)
@@ -31,6 +44,7 @@ struct AssetBrowserView: View {
             }
         }
         .background(.ultraThinMaterial.opacity(0.5))
+        .onChange(of: state.focusSearchToken) { searchFocused = true }   // ⌘F (FR-041/044)
         .alert("Delete this summary?", isPresented: Binding(
             get: { confirmingDelete != nil },
             set: { if !$0 { confirmingDelete = nil } }
@@ -73,12 +87,30 @@ struct AssetBrowserView: View {
         .padding(.bottom, 10)
     }
 
+    private var searchBar: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").font(.uiCallout).foregroundStyle(.secondary)
+            TextField("Search summaries…", text: $query)
+                .textFieldStyle(.plain).font(.uiBody)
+                .focused($searchFocused)
+            if isSearching {
+                Button { query = "" } label: { Image(systemName: "xmark.circle.fill").font(.uiCallout) }
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.smallCorner, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.smallCorner, style: .continuous)
+            .strokeBorder(Color.primary.opacity(searchFocused ? 0.22 : 0.10), lineWidth: 1))
+        .padding(.horizontal, 16).padding(.bottom, 10)
+    }
+
     // MARK: List
 
     private var groupList: some View {
         Group {
-            if visibleGroups.allSatisfy({ $0.assets.isEmpty }) {
-                emptyState
+            if !hasResults {
+                if isSearching { noMatchesState } else { emptyState }
             } else {
                 List(selection: Binding<Asset.ID?>(
                     get: { state.selectedAsset?.id },
@@ -91,9 +123,10 @@ struct AssetBrowserView: View {
                     }
                 )) {
                     ForEach(visibleGroups) { group in
-                        if !group.assets.isEmpty {
+                        let items = assets(in: group)
+                        if !items.isEmpty {
                             Section {
-                                ForEach(group.assets) { asset in
+                                ForEach(items) { asset in
                                     AssetRowView(asset: asset).tag(asset.id)
                                 }
                             } header: {
@@ -107,6 +140,17 @@ struct AssetBrowserView: View {
                 .scrollContentBackground(.hidden)
             }
         }
+    }
+
+    private var noMatchesState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "magnifyingglass").font(.system(size: 38)).foregroundStyle(.secondary)
+            Text("No matches").font(.uiHeadline)
+            Text("No summaries match “\(query)”.")
+                .font(.uiBody).foregroundStyle(.secondary).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     private var emptyState: some View {
@@ -200,6 +244,7 @@ struct AssetRowView: View {
             }
         }
         .padding(.vertical, 4)
+        .onDrag { NSItemProvider(object: asset.url as NSURL) }   // drag the file out (FR-042)
     }
 
     private var icon: String {

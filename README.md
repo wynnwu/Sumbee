@@ -35,7 +35,12 @@ Markdown (or HTML) files in a folder you control.
   summary, with the original safely archived. Drop many at once: they queue and run one at a time,
   and one failure never aborts the batch (with automatic, backed-off retries for transient errors).
 - **YouTube → summary.** Paste a URL, pick a style, and Sumbee summarizes the video's captions.
-- **Full style CRUD** (name, channel, prompt), reflected live in the main window.
+- **Regenerate.** Re-run any saved summary from its archived original with a different style,
+  model, or format — produces a new summary, the original is kept.
+- **Live streaming preview.** Watch the summary write itself into the preview pane as it generates.
+- **Library search.** Instant title filter (⌘F); **⌘N** starts a new style.
+- **Full style CRUD** (name, channel, prompt), reflected live in the main window — with optional
+  **per-style model & output-format overrides**.
 - **Shared system prompt.** One editable prompt is prepended to *every* style, so common
   instructions live in one place instead of being duplicated across styles.
 - **Unified, roomy prompt editing.** The system prompt, each style's prompt, and the HTML-styling
@@ -46,7 +51,10 @@ Markdown (or HTML) files in a folder you control.
   toolbar; the size sticks across sessions and scales headings proportionally.
 - **Secure key storage** in the macOS Keychain; summarizing is gated until a valid key is set, and
   re-gated automatically on an auth failure.
-- **Markdown or HTML output**, with an optional shared HTML-styling prompt.
+- **Markdown or HTML output**, with an optional shared HTML-styling prompt. The Markdown preview
+  renders tables and clickable links; drag a summary to Finder, or **space-bar Quick Look** it.
+- **Geek mode.** Flip it on in the bottom bar to preview the exact prompt and an estimated token
+  count before each summary is sent.
 - **Model-capability aware:** defaults to the latest Claude model and only sends parameters a given
   model accepts (e.g. it won't send `temperature` to a model that rejects it).
 
@@ -58,11 +66,11 @@ Markdown (or HTML) files in a folder you control.
 
 ## Download & install
 
-> **Heads-up:** the 0.1.0 build is **ad-hoc signed, not notarized** (no paid Apple Developer
+> **Heads-up:** the build is **ad-hoc signed, not notarized** (no paid Apple Developer
 > certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that — you
 > only do it once.
 
-1. Download **`Sumbee-0.1.0.zip`** from the [latest release](../../releases/latest).
+1. Download **`Sumbee-0.2.0.zip`** from the [latest release](../../releases/latest).
 2. Unzip it and drag **Sumbee.app** to your **Applications** folder.
 3. Remove the quarantine flag (the reliable way to open an unsigned app), then launch:
    ```bash
@@ -86,7 +94,7 @@ git clone https://github.com/wynnwu/Sumbee.git
 cd Sumbee
 
 swift run Sumbee        # run a debug build
-swift test              # run the unit tests (38)
+swift test              # run the unit tests (47)
 ./scripts/bundle.sh     # produce dist/Sumbee.app (release, ad-hoc signed)
 open dist/Sumbee.app
 ```
