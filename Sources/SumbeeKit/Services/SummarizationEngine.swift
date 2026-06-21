@@ -62,7 +62,8 @@ public struct SummarizationEngine {
         let root = settings.libraryRootURL
         let format = style.modelOverride?.outputFormat ?? settings.outputFormat
         let system = PromptBuilder.systemPrompt(style: style, format: format,
-                                                htmlStylingPrompt: settings.htmlStylingPrompt)
+                                                htmlStylingPrompt: settings.htmlStylingPrompt,
+                                                globalPrompt: settings.systemPrompt)
 
         let model = style.modelOverride?.model ?? settings.model
         let caps = ModelCatalog.capabilities(for: model)

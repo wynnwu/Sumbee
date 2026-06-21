@@ -15,6 +15,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var captionLanguage: String
     public var outputFormat: OutputFormat
     public var htmlStylingPrompt: String
+    /// Shared prompt prepended in front of every style's prompt (FR-034). Empty = no-op.
+    public var systemPrompt: String
+    /// Sticky base font size for the preview pane (FR-036).
+    public var previewFontSize: Double
     /// User-set absolute path to a yt-dlp binary; nil = auto-discover.
     public var ytDlpPath: String?
 
@@ -28,6 +32,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
                 captionLanguage: String = "en",
                 outputFormat: OutputFormat = .markdown,
                 htmlStylingPrompt: String = "",
+                systemPrompt: String = "",
+                previewFontSize: Double = 16,
                 ytDlpPath: String? = nil) {
         self.schemaVersion = schemaVersion
         self.libraryRootPath = libraryRootPath
@@ -39,7 +45,35 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.captionLanguage = captionLanguage
         self.outputFormat = outputFormat
         self.htmlStylingPrompt = htmlStylingPrompt
+        self.systemPrompt = systemPrompt
+        self.previewFontSize = previewFontSize
         self.ytDlpPath = ytDlpPath
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, libraryRootPath, model, maxOutputTokens, temperature, effort,
+             extendedThinking, captionLanguage, outputFormat, htmlStylingPrompt, systemPrompt,
+             previewFontSize, ytDlpPath
+    }
+
+    /// Field-tolerant decoding: every key falls back to its default, so adding a new setting
+    /// never fails to decode an older `config.json` (which would silently reset everything).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = AppSettings()
+        schemaVersion = try c.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? d.schemaVersion
+        libraryRootPath = try c.decodeIfPresent(String.self, forKey: .libraryRootPath) ?? d.libraryRootPath
+        model = try c.decodeIfPresent(String.self, forKey: .model) ?? d.model
+        maxOutputTokens = try c.decodeIfPresent(Int.self, forKey: .maxOutputTokens) ?? d.maxOutputTokens
+        temperature = try c.decodeIfPresent(Double.self, forKey: .temperature) ?? d.temperature
+        effort = try c.decodeIfPresent(String.self, forKey: .effort) ?? d.effort
+        extendedThinking = try c.decodeIfPresent(Bool.self, forKey: .extendedThinking) ?? d.extendedThinking
+        captionLanguage = try c.decodeIfPresent(String.self, forKey: .captionLanguage) ?? d.captionLanguage
+        outputFormat = try c.decodeIfPresent(OutputFormat.self, forKey: .outputFormat) ?? d.outputFormat
+        htmlStylingPrompt = try c.decodeIfPresent(String.self, forKey: .htmlStylingPrompt) ?? d.htmlStylingPrompt
+        systemPrompt = try c.decodeIfPresent(String.self, forKey: .systemPrompt) ?? d.systemPrompt
+        previewFontSize = try c.decodeIfPresent(Double.self, forKey: .previewFontSize) ?? d.previewFontSize
+        ytDlpPath = try c.decodeIfPresent(String.self, forKey: .ytDlpPath) ?? d.ytDlpPath
     }
 
     public static let currentSchemaVersion = 2

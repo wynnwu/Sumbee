@@ -4,13 +4,16 @@ import AppKit
 /// Full-window settings overlay opened from the gear. Sidebar + section detail on a glass panel.
 struct SettingsView: View {
     @EnvironmentObject private var state: AppState
-    @State private var section: Section = .apiKey
+    @State private var section: Section =
+        ProcessInfo.processInfo.environment["SUMBEE_SETTINGS_SECTION"]
+            .flatMap(Section.init(rawValue:)) ?? .apiKey
 
     enum Section: String, CaseIterable, Identifiable {
         case apiKey = "API Key"
         case generation = "Generation"
         case library = "Library"
         case styles = "Styles"
+        case systemPrompt = "System Prompt"
         case youtube = "YouTube"
         case output = "Output"
         case about = "Privacy & About"
@@ -21,6 +24,7 @@ struct SettingsView: View {
             case .generation: return "slider.horizontal.3"
             case .library: return "folder.fill"
             case .styles: return "square.stack.3d.up.fill"
+            case .systemPrompt: return "text.alignleft"
             case .youtube: return "play.rectangle.fill"
             case .output: return "doc.fill"
             case .about: return "lock.shield.fill"
@@ -38,7 +42,7 @@ struct SettingsView: View {
                 Divider().overlay(Theme.hairline)
                 detail
             }
-            .frame(width: 760, height: 560)
+            .frame(width: 900, height: 680)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -94,22 +98,32 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 18).padding(.vertical, 14)
             Divider().overlay(Theme.hairline)
+            detailBody
+        }
+    }
 
-            ScrollView {
-                Group {
-                    switch section {
-                    case .apiKey: APIKeySection()
-                    case .generation: GenerationSection()
-                    case .library: LibrarySection()
-                    case .styles: StylesCRUDSection()
-                    case .youtube: YouTubeSettingsSection()
-                    case .output: OutputSection()
-                    case .about: AboutSection()
-                    }
-                }
-                .padding(18)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+    /// Prompt-editing sections (Styles, System Prompt) fill the full height for a roomy, non-modal
+    /// editor (FR-035); everything else stays in a scrollable card layout.
+    @ViewBuilder private var detailBody: some View {
+        switch section {
+        case .apiKey: scroll { APIKeySection() }
+        case .generation: scroll { GenerationSection() }
+        case .library: scroll { LibrarySection() }
+        case .styles:
+            StylesCRUDSection()
+                .padding(18).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        case .systemPrompt:
+            SystemPromptSection()
+                .padding(18).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        case .youtube: scroll { YouTubeSettingsSection() }
+        case .output: scroll { OutputSection() }
+        case .about: scroll { AboutSection() }
+        }
+    }
+
+    private func scroll<C: View>(@ViewBuilder _ content: () -> C) -> some View {
+        ScrollView {
+            content().padding(18).frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -355,11 +369,7 @@ private struct OutputSection: View {
 
             if state.settings.outputFormat == .html {
                 SettingsCard("HTML styling prompt (optional)", systemImage: "paintbrush.fill") {
-                    TextEditor(text: $state.settings.htmlStylingPrompt)
-                        .font(.system(size: 15, design: .monospaced))
-                        .frame(minHeight: 120)
-                        .padding(6)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    BigPromptEditor(text: $state.settings.htmlStylingPrompt, minHeight: 220)
                     Text("Applied to every HTML summary for consistent colors, fonts, and layout. Leave empty for clean semantic HTML.")
                         .font(.uiCaption).foregroundStyle(.secondary)
                 }
@@ -451,6 +461,41 @@ private struct AboutSection: View {
                     .font(.uiBody).foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+// MARK: - System prompt (shared prefix for all styles)
+
+private struct SystemPromptSection: View {
+    @EnvironmentObject private var state: AppState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Prepended to every style", systemImage: "text.alignleft")
+                .font(.uiBody.weight(.semibold)).foregroundStyle(Theme.accent)
+            Text("This text is added in front of every style's prompt, so shared instructions live in one place instead of being repeated in each style. The app still appends its output convention. Leave empty for none.")
+                .font(.uiCaption).foregroundStyle(.secondary)
+            BigPromptEditor(text: $state.settings.systemPrompt, fill: true)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+// MARK: - Shared prompt editor (used by System Prompt, Styles, HTML styling — FR-035)
+
+struct BigPromptEditor: View {
+    @Binding var text: String
+    var fill: Bool = false
+    var minHeight: CGFloat = 220
+
+    var body: some View {
+        TextEditor(text: $text)
+            .font(.system(size: 14, design: .monospaced))
+            .scrollContentBackground(.hidden)
+            .padding(8)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline))
+            .frame(maxWidth: .infinity, minHeight: minHeight, maxHeight: fill ? .infinity : nil)
     }
 }
 

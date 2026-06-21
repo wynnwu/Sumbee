@@ -193,3 +193,19 @@ home-level folder has no TCC gate, so reveal works in dev and shipped builds wit
 **Rejected**: a guided Full Disk Access grant — it only sticks for a stable (signed) identity, so
 ad-hoc dev builds would need re-granting on every rebuild, and FDA's coverage of the reveal path
 was uncertain. Relocating is the guaranteed, prompt-free fix.
+
+## D15. Shared system prompt, unified editor, sticky preview font (Revision 6, FR-034/035/036)
+
+**Decision**: (a) Add `AppSettings.systemPrompt`, prepended by `PromptBuilder` in front of every
+style prompt → assembled order is `[systemPrompt, stylePrompt, convention]`; empty by default so
+it's a no-op until set. (b) Replace the stacked style-editor **sheet** with an inline, full-height
+editor in the Settings detail pane, and route the system prompt, style prompts, and HTML-styling
+prompt through one reusable `BigPromptEditor` (a tall monospaced `TextEditor`). The Settings panel
+is enlarged so editors show many lines. (c) Add `AppSettings.previewFontSize` (default 16) with
++/- controls in the preview toolbar; `MarkdownText` scales body and headings proportionally.
+
+**Rationale**: One place for shared instructions (no duplication across styles); a non-modal,
+roomy editor is far better for writing/reading long prompts than a small floating sheet; readable
+preview is a stated priority and the size must stick. **Decoding made field-tolerant**
+(`decodeIfPresent` + defaults) so adding `systemPrompt`/`previewFontSize` never resets a config —
+the prior synthesized `Codable` would have failed to decode older files and silently reset them.

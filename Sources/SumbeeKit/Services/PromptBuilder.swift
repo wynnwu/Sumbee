@@ -7,8 +7,13 @@ public enum PromptBuilder {
 
     public static func systemPrompt(style: SummaryStyle,
                                     format: OutputFormat,
-                                    htmlStylingPrompt: String) -> String {
-        var parts: [String] = [style.prompt.trimmingCharacters(in: .whitespacesAndNewlines)]
+                                    htmlStylingPrompt: String,
+                                    globalPrompt: String = "") -> String {
+        // Assembled order: shared global system prompt → style prompt → app output convention.
+        var parts: [String] = []
+        let global = globalPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !global.isEmpty { parts.append(global) }
+        parts.append(style.prompt.trimmingCharacters(in: .whitespacesAndNewlines))
         parts.append(convention(format: format, htmlStylingPrompt: htmlStylingPrompt))
         return parts.joined(separator: "\n\n")
     }

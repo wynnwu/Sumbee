@@ -3,6 +3,27 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] — 2026-06-21
+
+### Added
+- **Shared system prompt** — one editable prompt, prepended in front of every style's prompt so
+  common instructions aren't duplicated. Edited in a new Settings ▸ System Prompt section. Empty
+  by default (no change to existing behavior until set).
+- **Unified, non-modal prompt editor** — the system prompt, each style's prompt, and the
+  HTML-styling prompt now share one full-height editor inside Settings (the style editor is no
+  longer a floating sheet); the Settings window is larger so many more lines are visible.
+- **Resizable, sticky preview font** — increase/decrease the preview pane's base font size from
+  its toolbar; the size persists across sessions and scales body text and headings proportionally.
+
+### Changed
+- Settings JSON decoding is now field-tolerant (defaults for missing keys), so adding a new
+  setting never resets an existing config.
+
+### Fixed
+- App icon rendered as garbage in Finder — rebuilt the `.icns` properly from the iconset.
+- The two smallest icon sizes now show the bee only (no summary lines), which were illegible
+  at 16/32 px.
+
 ## [0.1.0] — 2026-06-21
 
 First public release.

@@ -36,7 +36,14 @@ Markdown (or HTML) files in a folder you control.
   and one failure never aborts the batch (with automatic, backed-off retries for transient errors).
 - **YouTube → summary.** Paste a URL, pick a style, and Sumbee summarizes the video's captions.
 - **Full style CRUD** (name, channel, prompt), reflected live in the main window.
+- **Shared system prompt.** One editable prompt is prepended to *every* style, so common
+  instructions live in one place instead of being duplicated across styles.
+- **Unified, roomy prompt editing.** The system prompt, each style's prompt, and the HTML-styling
+  prompt are all edited in one full-height, non-modal editor inside Settings — many lines visible
+  at once, no cramped floating sheet.
 - **Live library browser** grouped by style, with preview, reveal-in-Finder, open, copy, delete.
+- **Readable, resizable preview.** Increase or decrease the preview pane's base font size from its
+  toolbar; the size sticks across sessions and scales headings proportionally.
 - **Secure key storage** in the macOS Keychain; summarizing is gated until a valid key is set, and
   re-gated automatically on an auth failure.
 - **Markdown or HTML output**, with an optional shared HTML-styling prompt.

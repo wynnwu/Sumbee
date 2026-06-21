@@ -56,11 +56,15 @@ A date-stamped **copy** (never a move) of the original under `<root>/source/`:
 | `captionLanguage` | `en` |
 | `outputFormat` | `.markdown` |
 | `htmlStylingPrompt` | `""` |
+| `systemPrompt` | `""` (prepended in front of every style prompt — FR-034) |
+| `previewFontSize` | `16` (sticky preview base font — FR-036) |
 | `ytDlpPath` | `nil` (auto-discover) |
 | `windowState` | last frame |
 
 Stored as JSON at `~/Library/Application Support/Sumbee/config.json`. **Excludes**
 styles (on-disk library) and the API key (Keychain). Versioned for migration (§8.4).
+Decoding is **field-tolerant** (`decodeIfPresent` with defaults), so adding a new field never
+resets an existing config.
 
 ## ModelCatalog & ModelCapabilities (forward-compatible request shaping)
 

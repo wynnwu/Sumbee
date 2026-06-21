@@ -39,6 +39,23 @@ final class PromptBuilderTests: XCTestCase {
         XCTAssertNil(PromptBuilder.extractTitle(from: "no heading here", format: .markdown))
     }
 
+    func testGlobalSystemPromptPrependedBeforeStyle() {
+        let sys = PromptBuilder.systemPrompt(style: style, format: .markdown, htmlStylingPrompt: "",
+                                             globalPrompt: "You are a precise note-taker.")
+        XCTAssertTrue(sys.contains("You are a precise note-taker."))
+        // Global prompt must come before the style prompt, which comes before the convention.
+        let gi = sys.range(of: "precise note-taker")!.lowerBound
+        let si = sys.range(of: "Summarize the meeting")!.lowerBound
+        XCTAssertTrue(gi < si, "global system prompt should precede the style prompt")
+    }
+
+    func testEmptyGlobalSystemPromptIsNoOp() {
+        let withEmpty = PromptBuilder.systemPrompt(style: style, format: .markdown,
+                                                   htmlStylingPrompt: "", globalPrompt: "   ")
+        let without = PromptBuilder.systemPrompt(style: style, format: .markdown, htmlStylingPrompt: "")
+        XCTAssertEqual(withEmpty, without)
+    }
+
     func testUserMessageEmbedsVideoMeta() {
         let meta = VideoMeta(videoID: "abc", title: "Cool Video", channel: "Chan",
                              durationSeconds: 125, uploadDate: "2026-06-20")

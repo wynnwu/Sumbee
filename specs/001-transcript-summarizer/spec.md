@@ -323,6 +323,22 @@ Finder and confirm the in-app list updates.
 - **FR-033**: Submitting a YouTube URL MUST give immediate feedback — the input briefly shows
   "Got it!" and then clears — so it's obvious the job was queued.
 
+### Session 2026-06-21 (Revision 6 — shared system prompt, unified editor, readable preview)
+
+Three changes, added as FR-034..FR-036 below:
+
+- **FR-034**: A single, editable **global system prompt** MUST be prependable in front of every
+  style's prompt, so shared instructions live in one place instead of being duplicated across
+  styles. It is stored in app settings, empty by default, and the assembled prompt order is
+  [global system prompt → style prompt → app output convention]. When empty it changes nothing.
+- **FR-035**: Prompt editing MUST be **unified** and **non-modal**: the system prompt, each
+  style's prompt, and the HTML-styling prompt share one editing surface inside Settings — a
+  full-height editor pane (not a floating modal/sheet) so many more lines of text are visible at
+  once. Editing a style happens inline in the Settings detail, not in a stacked sheet.
+- **FR-036**: The preview pane MUST offer **increase/decrease base-font-size** controls in its
+  toolbar; the chosen size MUST persist across sessions (sticky) and scale the rendered body and
+  headings proportionally.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Summary Style**: A named, user-editable prompt with a stable identifier, a channel

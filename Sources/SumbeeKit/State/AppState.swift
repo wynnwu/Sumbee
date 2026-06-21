@@ -87,6 +87,9 @@ public final class AppState: ObservableObject {
         if !hasKey && ProcessInfo.processInfo.environment["SUMBEE_SHOT"] == nil {
             showSettings = true
         }
+        if ProcessInfo.processInfo.environment["SUMBEE_OPEN_SETTINGS"] == "1" {
+            showSettings = true     // verification hook: capture Settings in a headless shot
+        }
         if hasKey { fetchModels() }
     }
 

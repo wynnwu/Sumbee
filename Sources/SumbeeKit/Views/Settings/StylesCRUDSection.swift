@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Styles list + an inline, full-height prompt editor (no stacked modal — FR-035).
 struct StylesCRUDSection: View {
     @EnvironmentObject private var state: AppState
     @State private var editing: SummaryStyle?
@@ -14,6 +15,16 @@ struct StylesCRUDSection: View {
     }
 
     var body: some View {
+        if creating {
+            StyleEditorInline(mode: .create) { creating = false }
+        } else if let style = editing {
+            StyleEditorInline(mode: .edit(style)) { editing = nil }
+        } else {
+            listView
+        }
+    }
+
+    private var listView: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Each style is an editable prompt that also names a folder in your library.")
@@ -29,17 +40,16 @@ struct StylesCRUDSection: View {
                 Text("No styles yet. Add one, or reset to defaults.")
                     .font(.uiBody).foregroundStyle(.secondary)
             } else {
-                ForEach(sortedStyles) { style in
-                    row(style)
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(sortedStyles) { row($0) }
+                    }
                 }
             }
         }
-        .sheet(item: $editing) { style in
-            StyleEditor(mode: .edit(style))
-        }
-        .sheet(isPresented: $creating) {
-            StyleEditor(mode: .create)
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onAppear { autoEditFirstStyleIfRequested() }
+        .onChange(of: state.library.styles.count) { autoEditFirstStyleIfRequested() }
         .alert("Remove this style?", isPresented: Binding(
             get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }
         )) {
@@ -51,6 +61,14 @@ struct StylesCRUDSection: View {
         } message: {
             Text("Its folder and any summaries inside it are kept. Only the style definition is removed.")
         }
+    }
+
+    /// Verification hook: jump straight into editing the first style for a headless shot.
+    private func autoEditFirstStyleIfRequested() {
+        guard editing == nil, !creating,
+              ProcessInfo.processInfo.environment["SUMBEE_EDIT_FIRST_STYLE"] == "1",
+              let first = sortedStyles.first else { return }
+        editing = first
     }
 
     private func row(_ style: SummaryStyle) -> some View {
@@ -91,10 +109,11 @@ enum StyleEditorMode {
     case edit(SummaryStyle)
 }
 
-private struct StyleEditor: View {
+/// Inline, full-height style editor — replaces the old floating sheet (FR-035).
+private struct StyleEditorInline: View {
     @EnvironmentObject private var state: AppState
-    @Environment(\.dismiss) private var dismiss
     let mode: StyleEditorMode
+    let onClose: () -> Void
 
     @State private var name: String
     @State private var channel: StyleChannel
@@ -102,8 +121,9 @@ private struct StyleEditor: View {
 
     private let original: SummaryStyle?
 
-    init(mode: StyleEditorMode) {
+    init(mode: StyleEditorMode, onClose: @escaping () -> Void) {
         self.mode = mode
+        self.onClose = onClose
         switch mode {
         case .create:
             _name = State(initialValue: "")
@@ -121,9 +141,17 @@ private struct StyleEditor: View {
     private var isCreate: Bool { original == nil }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(isCreate ? "New Style" : "Edit Style")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Button { onClose() } label: { Label("Styles", systemImage: "chevron.left") }
+                    .buttonStyle(GhostButtonStyle())
+                Spacer()
+                Text(isCreate ? "New Style" : "Edit Style").font(.uiHeadline)
+                Spacer()
+                Button(isCreate ? "Create" : "Save") { save() }
+                    .buttonStyle(AccentButtonStyle())
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
 
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -140,26 +168,12 @@ private struct StyleEditor: View {
             }
 
             Text("Prompt").font(.uiCaption).foregroundStyle(.secondary)
-            TextEditor(text: $prompt)
-                .font(.system(size: 15, design: .monospaced))
-                .frame(minHeight: 220)
-                .padding(6)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline))
+            BigPromptEditor(text: $prompt, fill: true)
 
-            Text("The app appends a shared output convention (begin with a title heading, chosen format) automatically.")
+            Text("The shared System Prompt (if set) is prepended automatically, and the app appends a format-aware output convention (begin with a title heading) — so this prompt stays focused on style.")
                 .font(.uiCaption).foregroundStyle(.secondary)
-
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }.buttonStyle(GhostButtonStyle())
-                Button(isCreate ? "Create" : "Save") { save() }
-                    .buttonStyle(AccentButtonStyle())
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
         }
-        .padding(20)
-        .frame(width: 560, height: 480)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private func save() {
@@ -172,6 +186,6 @@ private struct StyleEditor: View {
         } else {
             state.createStyle(name: name, channel: channel, prompt: prompt)
         }
-        dismiss()
+        onClose()
     }
 }
