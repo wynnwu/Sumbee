@@ -3,9 +3,10 @@ name: Screenshot
 # Build Sumbee and post app screenshots as inline previews on the pull request.
 #
 # This runs on pull requests targeting `remote-dev` (plus manual dispatch): local development and
-# the default branch stay screenshot-free, while opening/updating a PR against `remote-dev` builds
-# the app, captures screenshots, commits them to the PR branch under `screenshots/`, and posts a
-# single sticky PR comment that previews them inline. The PNGs are also uploaded as an artifact.
+# the default branch stay screenshot-free, while opening a PR against `remote-dev` - or pushing any
+# new commit to an open one - builds the app, captures screenshots, commits them to the PR branch
+# under `screenshots/`, and posts a single sticky PR comment that previews them inline. The PNGs are
+# also uploaded as an artifact.
 #
 # Why commit the PNGs: GitHub only renders images in a comment from a public URL (e.g.
 # raw.githubusercontent.com); an uploaded artifact is a zip you must download, so it can't preview
@@ -18,6 +19,10 @@ name: Screenshot
 on:
   pull_request:
     branches: [remote-dev]
+    # opened: first PR against remote-dev. synchronize: every subsequent push to the PR's head
+    # branch. reopened: a closed PR brought back. Together this re-runs on any push to an open
+    # PR targeting remote-dev (these are also the GitHub defaults, listed explicitly for clarity).
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 # Avoid piling up runs if several pushes land on the same PR in quick succession.
