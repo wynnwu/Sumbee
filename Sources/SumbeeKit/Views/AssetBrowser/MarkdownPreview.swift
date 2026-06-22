@@ -11,6 +11,8 @@ struct PreviewPane: View {
 
     @EnvironmentObject private var state: AppState
     @State private var content: String = ""
+    @State private var htmlRaw: String = ""
+    @State private var htmlFeatures = HTMLFeatureScanner.Result(hasAdvancedFeatures: false, features: [])
     @State private var keyMonitor: Any?
     @State private var showRegenerate = false
 
@@ -24,10 +26,16 @@ struct PreviewPane: View {
             } else if let asset {
                 toolbar(asset)
                 Divider().overlay(Theme.hairline)
-                ScrollView {
-                    MarkdownText(raw: content, baseSize: state.settings.previewFontSize)
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                if asset.format == .html {
+                    // Basic, static, private in-app HTML viewer (FR-047/048); it scrolls internally.
+                    HTMLWebView(html: htmlRaw, baseSize: state.settings.previewFontSize)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        MarkdownText(raw: content, baseSize: state.settings.previewFontSize)
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             } else {
                 placeholder
@@ -84,6 +92,12 @@ struct PreviewPane: View {
                 .font(.uiBody.weight(.semibold))
                 .lineLimit(1)
             Spacer()
+            // For HTML with interactive/dynamic features the static viewer can't run, offer the
+            // browser (FR-051). Kept top-right and clearly labeled.
+            if asset.format == .html && htmlFeatures.hasAdvancedFeatures {
+                viewInBrowserButton(asset)
+                Divider().frame(height: 16).overlay(Theme.hairline)
+            }
             iconButton("textformat.size.smaller", "Decrease font size") { adjustFont(-1) }
                 .disabled(state.settings.previewFontSize <= Self.minFont)
             iconButton("textformat.size.larger", "Increase font size") { adjustFont(1) }
@@ -105,6 +119,29 @@ struct PreviewPane: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
+    }
+
+    /// A labeled, accent "View in Browser" action shown for HTML summaries with advanced features.
+    private func viewInBrowserButton(_ asset: Asset) -> some View {
+        Button { NSWorkspace.shared.open(asset.url) } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "globe")
+                Text("View in Browser")
+            }
+            .font(.uiCallout.weight(.semibold))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Theme.accent)
+        .help(browserHelp)
+        .accessibilityLabel("View in Browser")
+    }
+
+    /// Tooltip naming the detected features so the user knows why the escape hatch is offered.
+    private var browserHelp: String {
+        let f = htmlFeatures.features
+        guard !f.isEmpty else { return "Open this summary in your browser" }
+        let list = f.map { $0.lowercased() }.joined(separator: ", ")
+        return "This summary uses \(list); open it in your browser for the full experience."
     }
 
     /// Adjust the sticky preview base font size (FR-036) and persist it.
@@ -131,6 +168,8 @@ struct PreviewPane: View {
     }
 
     private func load() {
+        htmlRaw = ""
+        htmlFeatures = HTMLFeatureScanner.Result(hasAdvancedFeatures: false, features: [])
         guard let asset else { content = ""; return }
         guard let raw = try? String(contentsOf: asset.url, encoding: .utf8) else {
             content = "_Couldn’t read this file._"
@@ -140,8 +179,11 @@ struct PreviewPane: View {
         case .markdown:
             content = FrontmatterCodec.parse(raw).body
         case .html:
-            content = "HTML summary. Use **Open** to view it styled in your browser.\n\n"
-                + VTTParser.stripTags(raw)   // reuse tag stripper for a plain-text fallback
+            // Render the document itself in the in-app web viewer (FR-047) and decide whether to
+            // surface "View in Browser" based on its features (FR-050/051).
+            content = ""
+            htmlRaw = raw
+            htmlFeatures = HTMLFeatureScanner.scan(raw)
         }
     }
 }

@@ -58,8 +58,11 @@ uploads or sees your library. No proprietary format, no lock-in.
   toolbar; the size sticks across sessions and scales headings proportionally.
 - **Secure key storage** in the macOS Keychain; summarizing is gated until a valid key is set, and
   re-gated automatically on an auth failure.
-- **Markdown or HTML output**, with an optional shared HTML-styling prompt. The Markdown preview
-  renders tables and clickable links; drag a summary to Finder, or **space-bar Quick Look** it.
+- **Markdown or HTML output**, with an optional shared HTML-styling prompt. Both render in-app: the
+  Markdown preview renders tables and clickable links, and HTML summaries render with their own
+  styling in a built-in viewer that stays basic and private (no scripts run, no remote loads, link
+  clicks open in your browser). Interactive HTML gets a one-click **View in Browser** button. Drag a
+  summary to Finder, or **space-bar Quick Look** it.
 - **Geek mode.** Flip it on in the bottom bar to preview the exact prompt and an estimated token
   count before each summary is sent.
 - **Model-capability aware:** defaults to the latest Claude model and only sends parameters a given

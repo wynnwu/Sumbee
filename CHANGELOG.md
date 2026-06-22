@@ -3,6 +3,17 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **In-app HTML viewer.** HTML summaries now render with their own styling inside the preview pane
+  instead of falling back to plain text. The viewer is deliberately basic and private: it does not
+  run the document's JavaScript, blocks remote network loads, persists no cookies or cache, and
+  opens link clicks in your browser; the preview font controls zoom it. When a summary uses
+  interactive or dynamic features (scripts, embeds, media, forms), a **View in Browser** button
+  appears in the top right for the full experience. (FR-047 to FR-052; see
+  `specs/003-html-preview-viewer/`)
+
 ## [0.2.7] - 2026-06-22
 
 ### Fixed
