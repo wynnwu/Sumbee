@@ -18,7 +18,7 @@ final class ShareContentTests: XCTestCase {
         XCTAssertLessThanOrEqual(ShareContent.tweet.count, 280)
     }
 
-    func testTwitterShareURLIsWellFormedAndEncodesText() {
+    func testTwitterShareURLIsWellFormedAndEncodesText() throws {
         let url = try XCTUnwrap(ShareContent.twitterShareURL)
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
         XCTAssertEqual(components.host, "twitter.com")
@@ -27,7 +27,7 @@ final class ShareContentTests: XCTestCase {
         XCTAssertEqual(text, ShareContent.tweet)
     }
 
-    func testMailtoURLCarriesSubjectAndBody() {
+    func testMailtoURLCarriesSubjectAndBody() throws {
         let url = try XCTUnwrap(ShareContent.mailtoURL)
         XCTAssertEqual(url.scheme, "mailto")
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))

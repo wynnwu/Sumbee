@@ -58,17 +58,8 @@ struct MainPanelView: View {
                 state.showShare = true
             } label: {
                 Label("Share Now", systemImage: "square.and.arrow.up")
-                    .font(.uiCaption.weight(.semibold))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .foregroundStyle(.white)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.smallCorner, style: .continuous)
-                            .fill(Theme.accentDeep)
-                            .shadow(color: Theme.accentGlow(0.4), radius: 5, y: 1)
-                    )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(AccentButtonStyle(compact: true))
         }
         .fixedSize()
     }
