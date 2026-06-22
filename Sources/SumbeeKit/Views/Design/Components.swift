@@ -12,7 +12,7 @@ public struct AccentButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font((compact ? .uiCallout : .uiBody).weight(.semibold))
+            .font((compact ? Font.uiCallout : Font.uiBody).weight(.semibold))
             .padding(.horizontal, compact ? 14 : 18)
             .padding(.vertical, compact ? 7 : 10)
             .foregroundStyle(prominent ? Color.white : Theme.accent)
