@@ -3,6 +3,13 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.6] - 2026-06-22
+
+### Added
+- **Share**: an "Enjoying Sumbee?" prompt with a Share button in the main panel header opens a
+  share sheet (copy a ready-made message, post to X/Twitter, or email) so it's easy to spread the
+  word. (FR-046)
+
 ## [0.2.5] - 2026-06-22
 
 ### Changed
