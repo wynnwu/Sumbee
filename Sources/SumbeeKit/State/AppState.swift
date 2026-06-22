@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import AppKit
 
 /// A transient user-facing notice.
 public struct ToastItem: Identifiable, Equatable {
@@ -19,6 +20,7 @@ public final class AppState: ObservableObject {
     @Published public var settings: AppSettings
     @Published public private(set) var hasKey: Bool
     @Published public var showSettings: Bool = false
+    @Published public var showShare: Bool = false
 
     // Library & jobs (populated as services come online)
     @Published public var library: Library = .empty
@@ -322,4 +324,13 @@ public final class AppState: ObservableObject {
         toast = ToastItem(kind: kind, text: text)
     }
     public func dismissToast() { toast = nil }
+
+    // MARK: - Sharing
+
+    /// Copy the Sumbee repo link to the clipboard and confirm with a toast (FR: viral share).
+    public func copyShareLink() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(ShareContent.repoURLString, forType: .string)
+        present(.success, "Link copied. Thanks for spreading the word!")
+    }
 }

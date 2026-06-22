@@ -43,8 +43,25 @@ struct MainPanelView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            shareCTA
         }
         .padding(.top, 6)
+    }
+
+    /// Top-right "Enjoying Sumbee?" prompt stacked above a compact Share button (FR: viral share).
+    private var shareCTA: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            Text("Enjoying Sumbee?")
+                .font(.uiCaption)
+                .foregroundStyle(.secondary)
+            Button {
+                state.showShare = true
+            } label: {
+                Label("Share Now", systemImage: "square.and.arrow.up")
+            }
+            .buttonStyle(AccentButtonStyle(compact: true))
+        }
+        .fixedSize()
     }
 
     private var keyGateBanner: some View {

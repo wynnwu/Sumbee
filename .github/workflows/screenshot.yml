@@ -1,0 +1,176 @@
+name: Screenshot
+
+# Build Sumbee and post app screenshots as inline previews on the pull request.
+#
+# This runs on pull requests targeting `remote-dev` (plus manual dispatch): local development and
+# the default branch stay screenshot-free, while opening a PR against `remote-dev` - or pushing any
+# new commit to an open one - builds the app, captures screenshots, commits them to the PR branch
+# under `screenshots/`, and posts a single sticky PR comment that previews them inline. The PNGs are
+# also uploaded as an artifact.
+#
+# Why commit the PNGs: GitHub only renders images in a comment from a public URL (e.g.
+# raw.githubusercontent.com); an uploaded artifact is a zip you must download, so it can't preview
+# inline. Committing them to the PR head branch gives each image a stable raw URL to embed.
+#
+# Sumbee is a macOS/AppKit app, so this MUST run on a macOS runner (a Linux runner cannot build it).
+# Screenshots use the app's own headless self-render hooks (SUMBEE_SMOKE / SUMBEE_SHOT / ...),
+# which draw the window via cacheDisplay - no Screen Recording permission or live display needed.
+
+on:
+  pull_request:
+    branches: [remote-dev]
+    # opened: first PR against remote-dev. synchronize: every subsequent push to the PR's head
+    # branch. reopened: a closed PR brought back. Together this re-runs on any push to an open
+    # PR targeting remote-dev (these are also the GitHub defaults, listed explicitly for clarity).
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+# Avoid piling up runs if several pushes land on the same PR in quick succession.
+concurrency:
+  group: screenshot-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write        # commit the captured PNGs back to the PR branch
+  pull-requests: write   # post/update the sticky preview comment
+
+jobs:
+  screenshot:
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    # Forked PRs run with a read-only token and no write access to the head ref, so committing PNGs
+    # and posting a comment would fail. Only run for same-repo PRs (and manual dispatch).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          # Check out the PR's head branch (not the merge ref) so we can commit screenshots to it.
+          ref: ${{ github.head_ref }}
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Build (release)
+        run: swift build -c release
+
+      - name: Capture screenshots
+        run: |
+          set -euo pipefail
+          BIN="$(swift build -c release --show-bin-path)/Sumbee"
+          OUT="$PWD/screenshots"
+          mkdir -p "$OUT"
+
+          # Isolated library so a run never touches a real ~/Sumbee Summaries / ~/Documents.
+          export SUMBEE_LIBRARY="$(mktemp -d)/Sumbee Summaries"
+
+          # Each invocation boots, draws one window, writes the PNG, and self-terminates (~2s).
+          shoot() {
+            local out="$1"; shift
+            echo ">> $out"
+            env SUMBEE_SMOKE=1 SUMBEE_SHOT="$out" "$@" \
+              "$BIN" || true
+          }
+
+          # 1) Main panel
+          shoot "$OUT/screen-01-app.png"
+
+          # 2) Settings - Generation section
+          shoot "$OUT/screen-02-settings-generation.png" \
+            SUMBEE_OPEN_SETTINGS=1 SUMBEE_SETTINGS_SECTION=Generation
+
+          # 3) Styles editor (first style opened)
+          shoot "$OUT/screen-03-styles.png" \
+            SUMBEE_OPEN_SETTINGS=1 SUMBEE_SETTINGS_SECTION=Styles SUMBEE_EDIT_FIRST_STYLE=1
+
+          # 4) Output section
+          shoot "$OUT/screen-04-output.png" \
+            SUMBEE_OPEN_SETTINGS=1 SUMBEE_SETTINGS_SECTION=Output
+
+          echo ">> Captured:"
+          ls -la "$OUT"
+
+      - name: Upload screenshots (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sumbee-screenshots
+          path: screenshots/*.png
+          if-no-files-found: error
+
+      - name: Commit screenshots to PR branch
+        id: commit
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add screenshots/*.png
+
+          if git diff --cached --quiet; then
+            echo "No screenshot changes to commit."
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "ci: update Sumbee screenshots [skip ci]"
+          # Push back to the PR's head branch. [skip ci] keeps this from re-triggering the workflow.
+          git push origin "HEAD:${HEAD_REF}"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Post sticky preview comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = '${{ steps.commit.outputs.sha }}';
+            const repo = `${context.repo.owner}/${context.repo.repo}`;
+            const shots = [
+              ['Main panel', 'screenshots/screen-01-app.png'],
+              ['Settings - Generation', 'screenshots/screen-02-settings-generation.png'],
+              ['Styles editor', 'screenshots/screen-03-styles.png'],
+              ['Output', 'screenshots/screen-04-output.png'],
+            ];
+
+            // Marker lets us find and update our own comment instead of posting a new one each run.
+            const marker = '<!-- sumbee-screenshots -->';
+            const runUrl =
+              `${context.serverUrl}/${repo}/actions/runs/${context.runId}`;
+
+            const images = shots.map(([title, path]) => {
+              const raw = `${context.serverUrl}/${repo}/raw/${sha}/${path}`;
+              return `### ${title}\n\n![${title}](${raw})`;
+            }).join('\n\n');
+
+            const body = [
+              marker,
+              '## Sumbee screenshots',
+              '',
+              `Captured from \`${sha.slice(0, 7)}\`. ` +
+                `Also available as a downloadable [artifact](${runUrl}).`,
+              '',
+              images,
+            ].join('\n');
+
+            const { owner, repo: name } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo: name, issue_number, per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo: name, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo: name, issue_number, body,
+              });
+            }

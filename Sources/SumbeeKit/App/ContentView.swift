@@ -46,6 +46,10 @@ struct ContentView: View {
                                onCancel: { state.cancelPendingPreview() })
                 .environmentObject(state)
         }
+        .sheet(isPresented: $state.showShare) {
+            ShareSheet(onClose: { state.showShare = false })
+                .environmentObject(state)
+        }
         .animation(Theme.spring, value: state.showSettings)
         .animation(Theme.quick, value: state.toast?.id)
         .dynamicTypeSize(.xLarge)          // bump the whole app's text up a notch (FR-027)
