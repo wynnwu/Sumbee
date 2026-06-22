@@ -10,6 +10,10 @@ A native macOS app. Local-first: your summaries are plain Markdown (or HTML) fil
 hard drive, in a folder you choose. You own them like any private local file; the app never
 uploads or sees your library. No proprietary format, no lock-in.
 
+[![Download Sumbee for macOS](https://img.shields.io/badge/Download_Latest-FF8C00?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
+
+**macOS 15 (Sequoia) or later · Apple Silicon (M1 or newer)** · unsigned build (see install steps below)
+
 ![Sumbee](screenshots/screen-01-app.png)
 
 </div>
@@ -87,7 +91,7 @@ uploads or sees your library. No proprietary format, no lock-in.
    [Anthropic API key](https://console.anthropic.com/settings/keys), click **Save & Validate**,
    then drag a transcript onto a style.
 
-**Requirements:** macOS 15 (Sequoia) or later. Optional: [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)
+**Requirements:** macOS 15 (Sequoia) or later, Apple Silicon (M1 or newer). Optional: [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)
 for the YouTube feature (auto-discovered, or installed from Settings).
 
 ## Build from source
