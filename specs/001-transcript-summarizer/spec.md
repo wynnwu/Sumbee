@@ -34,13 +34,13 @@ user before planning; the rest are confirmations of source decisions:
 No [NEEDS CLARIFICATION] markers remain; `/speckit-clarify` produced no blocking
 questions for this feature.
 
-### Session 2026-06-21 (Revision 2 — reliability, drop UX, live models)
+### Session 2026-06-21 (Revision 2 - reliability, drop UX, live models)
 
 Three follow-up changes, added as FR-021..FR-023 below:
 
-- **Resilient retry queue (FR-021).** Transient/environmental failures — no internet,
+- **Resilient retry queue (FR-021).** Transient/environmental failures (no internet,
   the model not being available, or a VPN routing through a country that doesn't permit
-  the model, plus rate limits and overload — must not kill a job. Jobs retry
+  the model, plus rate limits and overload) must not kill a job. Jobs retry
   automatically with exponential backoff capped at 5 minutes, and the user can trigger a
   manual "Run queue" to retry immediately (e.g. after fixing their connection/VPN).
 - **Square drop tiles (FR-022).** File-style targets render as a grid of square tiles
@@ -50,7 +50,7 @@ Three follow-up changes, added as FR-021..FR-023 below:
   available on the Anthropic account (`GET /v1/models`), falling back to the built-in
   presets when offline or before a key is set.
 
-### Session 2026-06-21 (Revision 3 — UI refinement)
+### Session 2026-06-21 (Revision 3 - UI refinement)
 
 Small UX/visual refinements, added as FR-024..FR-028 below:
 
@@ -100,7 +100,7 @@ control were shown while it ran.
 1. **Given** a valid key and a configured file style, **When** the user drops a
    supported transcript file onto that style, **Then** the app extracts the text,
    archives a copy of the original, produces a summary in the configured format, and
-   saves it to the style's folder named `YYYY-MM-DD HHmm — <Title>.md`.
+   saves it to the style's folder named `YYYY-MM-DD HHmm - <Title>.md`.
 2. **Given** several files dropped at once, **When** processing runs, **Then** each
    file becomes its own queued job and its own saved summary, and one file failing
    does not abort the others.
@@ -238,7 +238,7 @@ Finder and confirm the in-app list updates.
   where one failure does not abort the batch.
 - **FR-007**: The app MUST accept a YouTube URL, validate it, fetch captions via an
   external tool, clean them into a transcript, archive the transcript, and summarize
-  with the chosen video style — recording the source URL in metadata.
+  with the chosen video style, recording the source URL in metadata.
 - **FR-008**: The app MUST clearly handle YouTube failure modes (no captions,
   private/region/live, network failure, missing/outdated tool) without crashing or
   aborting other work.
@@ -253,9 +253,9 @@ Finder and confirm the in-app list updates.
   authentication failure; a remove-key action MUST exist.
 - **FR-012**: The app MUST never expose the API key in config files, logs, summaries,
   or any visible surface.
-- **FR-013**: The app MUST expose generation options — model (presets plus a custom
-  value, defaulting to the latest most-capable model), output length, faithfulness
-  control, and any reasoning/effort control — showing only the controls the chosen
+- **FR-013**: The app MUST expose generation options (model, with presets plus a custom
+  value, defaulting to the latest most-capable model; output length; faithfulness
+  control; and any reasoning/effort control), showing only the controls the chosen
   model actually supports.
 - **FR-014**: The app MUST let the user choose the library root folder, show the
   active path, reveal it in Finder, and validate writability; changing it MUST not
@@ -300,11 +300,11 @@ Finder and confirm the in-app list updates.
   larger base fonts/icons; file-style drop tiles MUST present a large, left-aligned style
   name that is faded by default (no helper text) and emphasizes on valid-type hover. Type
   MUST come from a **shared font system** (a small set of named tokens) sized **generously by
-  default** — implementations MUST NOT scatter hard-coded small font sizes through the views
+  default**. Implementations MUST NOT scatter hard-coded small font sizes through the views
   (macOS's default text styles read too small), and MUST NOT rely on `dynamicTypeSize` to
   enlarge built-in styles (it barely moves them on macOS).
 - **FR-028**: During active summarization the bottom bar MUST display a lively, colorful
-  animation; it returns to a calm state when idle. The blend MUST adapt to appearance —
+  animation; it returns to a calm state when idle. The blend MUST adapt to appearance:
   `.plusLighter` glows over dark but washes out on light, so light mode uses a solid (`.normal`)
   higher-opacity wash so the color chase is clearly visible in both schemes.
 - **FR-029**: The original source link (e.g. a YouTube URL) MUST be recorded programmatically
@@ -314,7 +314,7 @@ Finder and confirm the in-app list updates.
   output (8192), since an HTML summary is materially larger than the same content in Markdown.
 - **FR-031**: "Reveal in Finder" MUST open Finder at the selected item's containing folder.
   Diagnosis on the target machine: `selectFile`/`activateFileViewerSelecting` DO succeed
-  (`selectFile` returned `true`) — they select the file — but a pre-existing **Home window
+  (`selectFile` returned `true`); they do select the file, but a pre-existing **Home window
   stays frontmost**, so the selection is hidden behind it and it looks like "it just opens
   Home." The reliable fix is to OPEN the containing FOLDER as a window
   (`NSWorkspace.open(folder, configuration:)` with `activates = true`): opening a folder brings
@@ -322,10 +322,10 @@ Finder and confirm the in-app list updates.
 - **FR-032**: Attempting to quit while one or more summaries are running MUST warn the user
   ("Quit Anyway" / "Keep Working"); confirming cancels in-flight work cleanly (assets are
   written atomically only on completion, so nothing is left partially written).
-- **FR-033**: Submitting a YouTube URL MUST give immediate feedback — the input briefly shows
-  "Got it!" and then clears — so it's obvious the job was queued.
+- **FR-033**: Submitting a YouTube URL MUST give immediate feedback (the input briefly shows
+  "Got it!" and then clears) so it's obvious the job was queued.
 
-### Session 2026-06-21 (Revision 6 — shared system prompt, unified editor, readable preview)
+### Session 2026-06-21 (Revision 6 - shared system prompt, unified editor, readable preview)
 
 Three changes, added as FR-034..FR-036 below:
 
@@ -334,27 +334,27 @@ Three changes, added as FR-034..FR-036 below:
   styles. It is stored in app settings, empty by default, and the assembled prompt order is
   [global system prompt → style prompt → app output convention]. When empty it changes nothing.
 - **FR-035**: Prompt editing MUST be **unified** and **non-modal**: the system prompt, each
-  style's prompt, and the HTML-styling prompt share one editing surface inside Settings — a
+  style's prompt, and the HTML-styling prompt share one editing surface inside Settings: a
   full-height editor pane (not a floating modal/sheet) so many more lines of text are visible at
   once. Editing a style happens inline in the Settings detail, not in a stacked sheet.
 - **FR-036**: The preview pane MUST offer **increase/decrease base-font-size** controls in its
   toolbar; the chosen size MUST persist across sessions (sticky) and scale the rendered body and
   headings proportionally.
 
-### Session 2026-06-21 (Revision 7 — regenerate, geek mode, streaming, power-user touches)
+### Session 2026-06-21 (Revision 7 - regenerate, geek mode, streaming, power-user touches)
 
-Added as FR-037..FR-044 below. Design intent: deepen the core without adding surface area —
-several of these (regenerate, streaming) reuse machinery the app already has (the archived
+Added as FR-037..FR-044 below. Design intent: deepen the core without adding surface area.
+Several of these (regenerate, streaming) reuse machinery the app already has (the archived
 `source/`, the SSE stream, the per-style `modelOverride`).
 
 - **FR-037 (Regenerate)**: A saved summary MUST be re-runnable from its archived source without
   re-dropping the file. The user picks a style (defaulting to the summary's own) and may override
   the model and output format; the app reconstructs the input from the archive (re-extracting an
-  archived file, or re-fetching a YouTube URL) and produces a **new** summary (non-destructive —
+  archived file, or re-fetching a YouTube URL) and produces a **new** summary (non-destructive:
   the original is never overwritten). Regenerate is unavailable if the source can't be located.
 - **FR-038 (Per-style model/format overrides)**: The style editor MUST expose the existing
   per-style `modelOverride` (model, output format, max tokens) so a style can pin its own model/
-  format; unset fields fall back to the global settings. This adds no new data — it surfaces what
+  format; unset fields fall back to the global settings. This adds no new data; it surfaces what
   the model already supports.
 - **FR-039 (Geek mode)**: A bottom-bar **geek mode** toggle (persisted). When ON, starting a
   **single** summary (one dropped file, a YouTube URL, or a regenerate) MUST **immediately** present
@@ -369,20 +369,20 @@ several of these (regenerate, streaming) reuse machinery the app already has (th
 - **FR-041 (Library search)**: The library MUST offer a search/filter field over summary titles;
   **⌘F** focuses it. Filtering is local and instant. Empty query shows everything.
 - **FR-042 (Drag out & Quick Look)**: A summary MUST be **draggable** to Finder/other apps from the
-  **library row**, Finder-style — a quick click selects, a press-and-drag exports the file — while
+  **library row**, Finder-style (a quick click selects, a press-and-drag exports the file) while
   click-selection and arrow-key navigation keep working. Use SwiftUI `.draggable` (NOT the older
   `.onDrag`, which swallows the row's mouse-down and breaks click-to-select). If `.draggable` still
   can't coexist with `List` selection on the target OS, back the list with an AppKit `NSTableView`
   (the guaranteed Finder-exact path). Do NOT put drag on the preview title (the window background is
   movable, so the title would drag the window). **Space bar** Quick Looks the selected summary.
 - **FR-043 (Richer preview)**: The Markdown preview MUST additionally render **tables** and
-  **clickable links** (kept deliberately lightweight — no full CommonMark engine).
+  **clickable links** (kept deliberately lightweight, no full CommonMark engine).
 - **FR-044 (Keyboard shortcuts)**: **⌘N** creates a new style (opens the style editor); together
   with ⌘F (FR-041) and existing ⌘, (Settings), the core flow is keyboard-reachable.
 - **FR-045 (YouTube file naming)**: For YouTube inputs, both the saved summary and the archived
   transcript MUST be named after the **original video title** with a `Youtube - YYYY-MM-DD - ` prefix
   (e.g. `Youtube - 2026-06-22 - How to Build a Mac App.md`), and the summary's library title shows the
-  video title. Non-YouTube assets keep the `YYYY-MM-DD HHmm — <title>` convention.
+  video title. Non-YouTube assets keep the `YYYY-MM-DD HHmm - <title>` convention.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -396,7 +396,7 @@ several of these (regenerate, streaming) reuse machinery the app already has (th
 - **Source (Archived Input)**: A date-stamped copy of an original dropped file or a
   cleaned video transcript, kept so the user can delete the original and lose nothing.
 - **App Settings**: Library location, generation options, caption language, output
-  format and HTML-styling prompt, and window state — stored separately from styles and
+  format and HTML-styling prompt, and window state, stored separately from styles and
   separately from the (Keychain-held) API key; versioned for safe migration.
 
 ## Success Criteria *(mandatory)*

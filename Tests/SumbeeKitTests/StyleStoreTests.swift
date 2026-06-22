@@ -14,13 +14,13 @@ final class StyleStoreTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         let store = StyleStore()
 
-        let style = SummaryStyle(name: "Meetings — General", channel: .file,
+        let style = SummaryStyle(name: "Meetings - General", channel: .file,
                                  prompt: "Summarize faithfully.", order: 1)
         try store.create(style, root: root)
 
         let loaded = try store.loadStyles(root: root)
         XCTAssertEqual(loaded.count, 1)
-        XCTAssertEqual(loaded[0].name, "Meetings — General")
+        XCTAssertEqual(loaded[0].name, "Meetings - General")
         XCTAssertEqual(loaded[0].channel, .file)
         XCTAssertEqual(loaded[0].prompt, "Summarize faithfully.")
         XCTAssertEqual(loaded[0].id, style.id)
@@ -49,7 +49,7 @@ final class StyleStoreTests: XCTestCase {
         let style = SummaryStyle(name: "Keepme", channel: .file, prompt: "p", order: 1)
         try store.create(style, root: root)
         // Drop a fake asset in the folder.
-        let assetURL = root.appendingPathComponent("Keepme/2026-06-20 1200 — note.md")
+        let assetURL = root.appendingPathComponent("Keepme/2026-06-20 1200 - note.md")
         try "summary".data(using: .utf8)!.write(to: assetURL)
 
         try store.delete(style, root: root)

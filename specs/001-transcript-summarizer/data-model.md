@@ -5,19 +5,19 @@ Domain entities and their on-disk representations. Swift types live in
 
 ## SummaryStyle
 
-The core configurable object — a named prompt that also names a library folder.
+The core configurable object: a named prompt that also names a library folder.
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | `UUID` | Stable; survives folder renames. |
-| `name` | `String` | Display name **and** folder name (e.g. "Meetings — General"). |
+| `name` | `String` | Display name **and** folder name (e.g. "Meetings - General"). |
 | `channel` | `Channel` (`.file` / `.youtube`) | `.file` → drop zone; `.youtube` → URL button. |
 | `prompt` | `String` | The per-style instruction body. |
 | `order` | `Int` | Sort order in UI. |
 | `enabled` | `Bool` | Hide without deleting. |
 | `modelOverride` | `ModelOverride?` | Optional per-style model/temperature/effort/format. |
 
-**On disk**: `<root>/<Name>/style-definition/style-definition.md` — YAML frontmatter
+**On disk**: `<root>/<Name>/style-definition/style-definition.md`, with YAML frontmatter
 (`id`, `channel`, `order`, `enabled`, optional overrides) + the prompt as the Markdown
 body. The library folder, not config, is the source of truth (source §3.1, §8.5).
 
@@ -32,7 +32,7 @@ body. The library folder, not config, is the source of truth (source §3.1, §8.
 | `sourceRef` | `source:` metadata → archived original path or YouTube URL. |
 | `format` | `.markdown` / `.html` from extension. |
 
-**On disk**: `<root>/<Style>/YYYY-MM-DD HHmm — <Sanitized Title>.md` (or `.html`).
+**On disk**: `<root>/<Style>/YYYY-MM-DD HHmm - <Sanitized Title>.md` (or `.html`).
 Markdown carries YAML frontmatter; HTML carries `<meta name="…">` tags + a leading
 comment (source §8.2).
 
@@ -47,7 +47,7 @@ A date-stamped **copy** (never a move) of the original under `<root>/source/`:
 | Field | Default |
 |---|---|
 | `schemaVersion` | `2` |
-| `libraryRoot` | `~/Sumbee Summaries` (NOT `~/Documents/…` — that's TCC-protected and blocks Reveal in Finder; a one-time migration moves legacy installs here) |
+| `libraryRoot` | `~/Sumbee Summaries` (NOT `~/Documents/…`, which is TCC-protected and blocks Reveal in Finder; a one-time migration moves legacy installs here) |
 | `model` | `claude-opus-4-8` |
 | `maxOutputTokens` | `8192` (headroom for HTML output) |
 | `temperature` | `0.3` (sent only to models that accept it) |
@@ -56,9 +56,9 @@ A date-stamped **copy** (never a move) of the original under `<root>/source/`:
 | `captionLanguage` | `en` |
 | `outputFormat` | `.markdown` |
 | `htmlStylingPrompt` | `""` |
-| `systemPrompt` | `""` (prepended in front of every style prompt — FR-034) |
-| `previewFontSize` | `16` (sticky preview base font — FR-036) |
-| `geekMode` | `false` (when on, preview exact prompt + token estimate before sending — FR-039) |
+| `systemPrompt` | `""` (prepended in front of every style prompt - FR-034) |
+| `previewFontSize` | `16` (sticky preview base font - FR-036) |
+| `geekMode` | `false` (when on, preview exact prompt + token estimate before sending - FR-039) |
 | `ytDlpPath` | `nil` (auto-discover) |
 
 Per-style overrides (FR-038) live on `SummaryStyle.modelOverride` (already in the model:
@@ -78,7 +78,7 @@ resets an existing config.
 |---|---|---|---|---|
 | `supportsTemperature` | false | true | true | true (conservative) |
 | `supportsEffort` | true | true | false | false |
-| `effortLevels` | low…xhigh,max | low…max | — | — |
+| `effortLevels` | low…xhigh,max | low…max | - | - |
 | `supportsAdaptiveThinking` | true | true | false | false |
 | `maxOutputCeiling` | 128000 | 64000 | 64000 | 8192 |
 

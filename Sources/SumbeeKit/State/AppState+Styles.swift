@@ -42,7 +42,7 @@ public extension AppState {
         catch { present(.error, "\(error)") }
     }
 
-    /// Delete a style definition (keeps the folder + its summaries — spec FR-10).
+    /// Delete a style definition (keeps the folder + its summaries; spec FR-10).
     func deleteStyle(_ style: SummaryStyle) {
         do {
             try styleStore.delete(style, root: root)
@@ -84,7 +84,7 @@ public extension AppState {
         reloadLibrary()
     }
 
-    /// Restore the seeded default styles (additive — never deletes user content).
+    /// Restore the seeded default styles (additive, never deletes user content).
     func resetStylesToDefaults() {
         do {
             try styleStore.seedDefaults(root: root)

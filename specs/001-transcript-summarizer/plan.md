@@ -13,7 +13,7 @@ app streams summaries from the Anthropic Messages API (key held in Keychain),
 archives every source, and presents a glass/orange, light-and-dark, futuristic but
 restrained single-window UI. Technical approach: a SwiftPM package with a testable
 `SumbeeKit` library and a thin executable shell bundled into a `.app`, **zero
-third-party/build-time-network dependencies** — every parser and integration uses a
+third-party/build-time-network dependencies**: every parser and integration uses a
 system framework or system binary (PDFKit, `NSAttributedString`, `XMLParser` +
 `/usr/bin/unzip`, `URLSession` SSE, Security/Keychain, `Process` for yt-dlp).
 
@@ -23,7 +23,7 @@ system framework or system binary (PDFKit, `NSAttributedString`, `XMLParser` +
 language mode v5 for a frictionless first build; strict-concurrency migration is a
 documented later step).
 
-**Primary Dependencies**: None third-party. System frameworks only — SwiftUI, AppKit,
+**Primary Dependencies**: None third-party. System frameworks only: SwiftUI, AppKit,
 Foundation, PDFKit, Security, UniformTypeIdentifiers, CoreServices (FSEvents). System
 binary: `/usr/bin/unzip` (DOCX). External user tool (runtime, optional): `yt-dlp`.
 
@@ -134,4 +134,4 @@ no XcodeGen, no network). This directly serves Constitution principles I and II.
 
 ## Complexity Tracking
 
-> No constitution violations — section intentionally empty.
+> No constitution violations; section intentionally empty.

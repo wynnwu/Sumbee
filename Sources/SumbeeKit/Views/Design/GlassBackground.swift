@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// Real macOS vibrancy via `NSVisualEffectView` — the genuine "glass" the UI is built on.
+/// Real macOS vibrancy via `NSVisualEffectView`, the genuine "glass" the UI is built on.
 public struct VisualEffectView: NSViewRepresentable {
     public var material: NSVisualEffectView.Material
     public var blendingMode: NSVisualEffectView.BlendingMode

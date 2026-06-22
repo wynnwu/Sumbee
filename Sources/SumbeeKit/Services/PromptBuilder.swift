@@ -18,7 +18,7 @@ public enum PromptBuilder {
         return parts.joined(separator: "\n\n")
     }
 
-    /// Assemble the exact (system, user) pair the engine will send — used by geek mode's
+    /// Assemble the exact (system, user) pair the engine will send, used by geek mode's
     /// prompt preview (FR-039) so the preview can't drift from what's actually sent.
     public static func assemble(style: SummaryStyle, format: OutputFormat, htmlStylingPrompt: String,
                                 globalPrompt: String, transcript: String,
@@ -50,7 +50,7 @@ public enum PromptBuilder {
             - Begin your response with a single top-level title on the first line: \
             `# <a concise 4–8 word title>`, then the body. Use `##` for the section \
             headings described above.
-            - Output only the summary document itself — no preamble, no sign-off, and no \
+            - Output only the summary document itself: no preamble, no sign-off, and no \
             commentary about the task or these instructions.
             - Never invent information that is not supported by the source; if something is \
             unclear or missing, say so plainly.
@@ -62,7 +62,7 @@ public enum PromptBuilder {
             `</html>`).
             - Begin the document body with a single `<h1>` containing a concise 4–8 word \
             title, then the body. Map the sections described above onto `<h2>` headings.
-            - Output only the HTML document — no Markdown code fences, no preamble, and no \
+            - Output only the HTML document: no Markdown code fences, no preamble, and no \
             commentary.
             - Never invent information that is not supported by the source; if something is \
             unclear or missing, say so plainly.

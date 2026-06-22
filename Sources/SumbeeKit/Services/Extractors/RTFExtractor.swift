@@ -1,7 +1,7 @@
 import Foundation
 import AppKit
 
-/// `.rtf` — native conversion via `NSAttributedString`, which handles RTF markup and
+/// `.rtf`: native conversion via `NSAttributedString`, which handles RTF markup and
 /// HTML entities for us (no third-party RTF parser needed).
 struct RTFExtractor: FileTextExtractor {
     func extract(from url: URL) throws -> String {

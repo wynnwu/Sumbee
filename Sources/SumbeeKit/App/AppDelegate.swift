@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
                 let windows = NSApp.windows.filter { $0.isVisible }
 
-                // Optional self-screenshot (renders our own window — no Screen Recording perm needed).
+                // Optional self-screenshot (renders our own window, no Screen Recording perm needed).
                 if let shotPath = ProcessInfo.processInfo.environment["SUMBEE_SHOT"],
                    let window = windows.first, let view = window.contentView,
                    let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) {

@@ -82,7 +82,7 @@ struct DropZoneView: View {
         }
     }
 
-    /// Accepted content types — used for the valid-type hover highlight and the file picker.
+    /// Accepted content types - used for the valid-type hover highlight and the file picker.
     static let highlightTypes: [UTType] = {
         var types: [UTType] = [.plainText, .pdf, .rtf]
         if let md = UTType(filenameExtension: "md") { types.append(md) }

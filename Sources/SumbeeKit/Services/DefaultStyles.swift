@@ -4,10 +4,10 @@ import Foundation
 public enum DefaultStyles {
     public static func make() -> [SummaryStyle] {
         [
-            SummaryStyle(name: "Meetings — General", channel: .file, prompt: meetingsGeneral, order: 1),
-            SummaryStyle(name: "Meetings — Product Review", channel: .file, prompt: productReview, order: 2),
-            SummaryStyle(name: "Interviews — Short", channel: .file, prompt: interviewShort, order: 3),
-            SummaryStyle(name: "Interviews — Long", channel: .file, prompt: interviewLong, order: 4),
+            SummaryStyle(name: "Meetings - General", channel: .file, prompt: meetingsGeneral, order: 1),
+            SummaryStyle(name: "Meetings - Product Review", channel: .file, prompt: productReview, order: 2),
+            SummaryStyle(name: "Interviews - Short", channel: .file, prompt: interviewShort, order: 3),
+            SummaryStyle(name: "Interviews - Long", channel: .file, prompt: interviewLong, order: 4),
             SummaryStyle(name: "YouTube", channel: .youtube, prompt: youtube, order: 5),
         ]
     }
@@ -31,7 +31,7 @@ public enum DefaultStyles {
 
     ## Action Items
     A checklist. For each item: the task, the owner (name) if stated, and a due date if stated.
-    Format: "- [ ] <task> — <owner> (due <date>)". Omit owner/date if not mentioned rather than
+    Format: "- [ ] <task> - <owner> (due <date>)". Omit owner/date if not mentioned rather than
     guessing.
 
     ## Open Questions / Parking Lot
@@ -43,7 +43,7 @@ public enum DefaultStyles {
 
     static let productReview = """
     You are summarizing a product review meeting. The single most important output is a list of
-    DEFINITIVE, actionable to-dos — specific enough that an owner could pick one up and start
+    DEFINITIVE, actionable to-dos that are specific enough that an owner could pick one up and start
     without re-watching the meeting. Be precise and concrete. Never produce vague to-dos like
     "improve onboarding"; instead capture the specific change, scope, and acceptance criteria
     discussed. Do not invent owners, dates, or decisions.
@@ -62,8 +62,8 @@ public enum DefaultStyles {
 
     ## Definitive To-Dos
     A checklist of concrete, owned actions. For each:
-    "- [ ] <specific action with enough scope to act on> — <owner if stated> (due <date if
-    stated>) — Acceptance: <how we'll know it's done, if discussed>"
+    "- [ ] <specific action with enough scope to act on> - <owner if stated> (due <date if
+    stated>) - Acceptance: <how we'll know it's done, if discussed>"
     Split compound items into separate to-dos. Flag any to-do that lacks an owner as
     "(owner: UNASSIGNED)".
 
@@ -95,7 +95,7 @@ public enum DefaultStyles {
     1–3 brief highlights (a strong/weak/illustrative response), paraphrased.
 
     ## Recommendation
-    One of: Strong Hire / Hire / Lean Hire / Lean No / No Hire — with a one–two sentence
+    One of: Strong Hire / Hire / Lean Hire / Lean No / No Hire, with a one–two sentence
     rationale and your confidence (low/medium/high). Note this is decision support, not a final
     verdict.
     """
@@ -142,7 +142,7 @@ public enum DefaultStyles {
     static let youtube = """
     You are summarizing a YouTube video from its transcript. The transcript may include rough
     timestamps; when present, cite them as (mm:ss) so the reader can jump to the relevant part.
-    Auto-generated captions can be messy or mis-transcribe names/terms — infer sensible meaning
+    Auto-generated captions can be messy or mis-transcribe names/terms, so infer sensible meaning
     but do not invent facts. If the video's topic or structure is unclear, say so.
 
     Use these sections:
@@ -155,7 +155,7 @@ public enum DefaultStyles {
 
     ## Detailed Notes
     The substance of the video in order, grouped by topic/segment, with (mm:ss) timestamps where
-    available. Capture the reasoning, examples, and any steps or arguments — enough that the
+    available. Capture the reasoning, examples, and any steps or arguments, enough that the
     reader gets the value without watching.
 
     ## Notable Quotes
@@ -165,7 +165,7 @@ public enum DefaultStyles {
     Tools, people, links, books, or references mentioned in the video.
 
     ## Actionable Insights
-    What a viewer could actually do with this — concrete takeaways or next steps. Omit if not
+    What a viewer could actually do with this: concrete takeaways or next steps. Omit if not
     applicable.
     """
 }

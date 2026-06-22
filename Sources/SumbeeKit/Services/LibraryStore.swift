@@ -97,9 +97,9 @@ public struct LibraryStore: LibraryStoring {
                      created: created, sourceRef: source, format: format)
     }
 
-    /// Strip a leading "YYYY-MM-DD HHmm — " prefix for a friendlier display title.
+    /// Strip a leading "YYYY-MM-DD HHmm - " prefix for a friendlier display title.
     private func filenameTitle(_ filename: String) -> String {
-        if let range = filename.range(of: "— ") {
+        if let range = filename.range(of: " - ") {
             let after = String(filename[range.upperBound...]).trimmingCharacters(in: .whitespaces)
             if !after.isEmpty { return after }
         }

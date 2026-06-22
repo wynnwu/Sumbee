@@ -1,4 +1,4 @@
-# CLAUDE.md — working on Sumbee
+# CLAUDE.md - working on Sumbee
 
 Guidance for Claude (and humans) working in this repo.
 
@@ -13,12 +13,12 @@ breaking Reveal-in-Finder; `.onDrag` breaking `List` selection; ad-hoc-signing p
 A native macOS app (SwiftUI + AppKit, macOS 15+) that turns transcripts and YouTube videos into
 Markdown/HTML summaries saved as plain files. Local-first; the only network calls are the
 Anthropic summarization request and YouTube caption fetch. Bundle id `com.sumbee.app`; library
-defaults to `~/Sumbee Summaries` (deliberately NOT `~/Documents` — see learnings #2).
+defaults to `~/Sumbee Summaries` (deliberately NOT `~/Documents`; see learnings #2).
 
 ## Design process (Spec Kit)
 Design lives in `specs/`. `001-transcript-summarizer/` is the shipped app (FRs, research decisions
 D1–D16, contracts, tasks). `002-recording-transcription/` is the planned on-device recording /
-transcription / diarization feature (spec + plan + research + contracts + tasks — not yet built).
+transcription / diarization feature (spec + plan + research + contracts + tasks, not yet built).
 **Update the relevant spec when you change behavior** (this project keeps specs current so a
 greenfield rebuild inherits every decision). For new features, follow the existing doc structure.
 
@@ -26,7 +26,7 @@ greenfield rebuild inherits every decision). For new features, follow the existi
 SwiftPM package: `SumbeeKit` (library: all logic + SwiftUI views, unit-tested) + `Sumbee` (thin
 executable). `Sources/SumbeeKit/{Models,Services,State,Views}`. `AppState` is the `@MainActor`
 root store; services run off-actor. Recording is a transcript *producer* that feeds the existing
-summarize pipeline — keep new input sources behind that seam (see 002 FR-018).
+summarize pipeline; keep new input sources behind that seam (see 002 FR-018).
 
 ## Build / verify
 ```bash
@@ -36,7 +36,7 @@ swift test             # keep green (47+ tests)
 open dist/Sumbee.app
 ```
 Headless smoke + screenshot hooks exist for verification (`SUMBEE_SMOKE/SHOT/LIBRARY`,
-`SUMBEE_OPEN_SETTINGS/SETTINGS_SECTION/EDIT_FIRST_STYLE`) — see how existing screenshots are taken.
+`SUMBEE_OPEN_SETTINGS/SETTINGS_SECTION/EDIT_FIRST_STYLE`); see how existing screenshots are taken.
 Verify each change group builds before moving on (learnings #14).
 
 ## Conventions

@@ -116,7 +116,7 @@ public enum ModelCatalog {
     /// one of these families must NOT be sent temperature, or the API returns 400.
     static let noTemperatureFamilies = ["opus-4-7", "opus-4-8", "opus-4-9", "fable", "mythos"]
 
-    /// Capabilities for any model id — exact preset match, then a family heuristic for custom
+    /// Capabilities for any model id - exact preset match, then a family heuristic for custom
     /// ids, else a conservative default. Treating capabilities as data keeps the request
     /// builder forward-compatible (FR-013 / SC-010).
     public static func capabilities(for modelID: String) -> ModelCapabilities {

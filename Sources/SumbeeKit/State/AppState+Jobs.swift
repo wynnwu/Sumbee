@@ -116,7 +116,7 @@ public extension AppState {
                 guard !Task.isCancelled else { return }
                 self.previewPhase = .ready(preview)
             } catch is CancellationError {
-                // user cancelled the modal mid-prepare — phase already cleared
+                // user cancelled the modal mid-prepare; phase already cleared
             } catch {
                 self.previewPhase = nil
                 self.present(.error, "Couldn’t prepare preview: \(error.localizedDescription)")
@@ -128,7 +128,7 @@ public extension AppState {
     func confirmPendingPreview() {
         guard case .ready(let p)? = previewPhase else { return }
         var job = Job(input: p.input, displayName: p.displayName, styleID: p.style.id, styleName: p.style.name)
-        job.prepared = p.prepared       // skip re-prepare — runJob reuses the cache
+        job.prepared = p.prepared       // skip re-prepare; runJob reuses the cache
         jobs.append(job)
         previewPhase = nil
         startProcessing()
@@ -341,7 +341,7 @@ public extension AppState {
         guard attempt <= delays.count else {
             jobs[idx].phase = .failed(message)
             jobs[idx].nextRetryAt = nil
-            present(.error, "\(message) Stopped auto-retrying after \(delays.count) attempts — use Run queue to try again.")
+            present(.error, "\(message) Stopped auto-retrying after \(delays.count) attempts. Use Run queue to try again.")
             return
         }
         let delay = delays[attempt - 1]

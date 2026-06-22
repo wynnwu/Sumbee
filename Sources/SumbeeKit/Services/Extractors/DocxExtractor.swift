@@ -1,6 +1,6 @@
 import Foundation
 
-/// `.docx` — a DOCX is a ZIP whose main content is `word/document.xml`. We extract that
+/// `.docx`: a DOCX is a ZIP whose main content is `word/document.xml`. We extract that
 /// entry with the system `unzip` binary (zero third-party deps) and pull the text runs
 /// out with Foundation's `XMLParser`.
 struct DocxExtractor: FileTextExtractor {

@@ -1,4 +1,4 @@
-# Contract — Audio Capture
+# Contract - Audio Capture
 
 Capture is two interchangeable sources behind one coordinator. Output everywhere is **16 kHz mono
 Float32** PCM frames tagged with a `channelID` and a capture timestamp, so transcription and
@@ -36,7 +36,7 @@ protocol SystemAudioDiscovering { func audioProducingApps() -> [CaptureTarget] }
 
 - **FileAudioSource** (`AudioCapturing`, FR-017): decodes an imported file (`.m4a/.mp3/.wav/.aiff/.caf`)
   via `AVAudioFile`/`AVAssetReader` + `AVAudioConverter` to 16 kHz mono and emits `AudioFrames`
-  (`channelID = 0`) in **batch** — as fast as the transcriber consumes them — then signals end-of-file.
+  (`channelID = 0`) in **batch**, as fast as the transcriber consumes them, then signals end-of-file.
   No permissions, no real-time pacing; reports determinate progress (total duration is known).
 
 > `AudioCapturing` is the universal **`AudioFramesProducer`**: mic, system tap, and file all conform,

@@ -1,4 +1,4 @@
-# Contract — Transcription, Diarization, Models, Gate
+# Contract - Transcription, Diarization, Models, Gate
 
 All on-device. All inputs are the `AudioFrames` from `capture.md`. All outputs flow to
 `RecordingState` on the main actor.
@@ -45,14 +45,14 @@ protocol Diarizing: AnyObject {
 - **EmbeddingDiarizer** (Phase 3): wraps `ChannelDiarizer` for the prior, then on the **system**
   channel computes a voice embedding for the segment's voiced window (`SpeakerEmbedder`, Core ML) and
   assigns it to the nearest existing centroid by cosine similarity, or spawns a new speaker when below
-  threshold; centroids update as running means; periodic light re-clustering. **Never drops text** —
+  threshold; centroids update as running means; periodic light re-clustering. **Never drops text**:
   an unconfident segment is attributed to an "Unknown" speaker rather than discarded (FR-008).
 
 ```swift
 protocol SpeakerEmbedding: AnyObject { func embed(_ samples: [Float]) -> [Float]? }   // Core ML ECAPA-style
 ```
 
-## ModelManager (runtime model acquisition — FR-011)
+## ModelManager (runtime model acquisition, FR-011)
 
 ```swift
 enum ModelKind: Equatable { case whisper(size: String); case speakerEmbedding }
@@ -67,7 +67,7 @@ Downloads into `~/Library/Application Support/Sumbee/models/`, verifies (size/ch
 update. Mirrors the `yt-dlp` runtime-acquisition pattern → repo and build stay network-free. UI shows
 a "model not installed → Install (xxx MB)" state before the first recording.
 
-## FeatureGate (licensing seam — FR-014, no gate now)
+## FeatureGate (licensing seam, FR-014, no gate now)
 
 ```swift
 enum GateDecision: Equatable { case allowed; case needsLicense(trialsUsed: Int, limit: Int) }
@@ -79,7 +79,7 @@ protocol FeatureGate {
 
 Consulted once at record start. Today `DefaultFeatureGate` always returns `.allowed`. A future
 `LicensedFeatureGate` returns `.needsLicense(20)` once the counter reaches the limit and no StoreKit
-entitlement is present — the *only* change required to monetize.
+entitlement is present, the *only* change required to monetize.
 
 ## Cross-cutting invariants
 

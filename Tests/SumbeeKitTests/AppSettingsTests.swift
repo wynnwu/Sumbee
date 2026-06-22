@@ -4,7 +4,7 @@ import XCTest
 final class AppSettingsTests: XCTestCase {
 
     /// An older config.json (no systemPrompt / previewFontSize) must decode with defaults for the
-    /// new fields and keep every existing value — never silently reset (FR-034/036, D15).
+    /// new fields and keep every existing value - never silently reset (FR-034/036, D15).
     func testDecodeToleratesMissingNewFields() throws {
         let json = """
         {"schemaVersion":2,"libraryRootPath":"~/Sumbee Summaries","model":"claude-opus-4-8",

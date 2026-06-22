@@ -1,6 +1,6 @@
 import Foundation
 
-/// `.txt` / `.md` — read as UTF-8, falling back to other common encodings.
+/// `.txt` / `.md`: read as UTF-8, falling back to other common encodings.
 struct PlainTextExtractor: FileTextExtractor {
     func extract(from url: URL) throws -> String {
         if let s = try? String(contentsOf: url, encoding: .utf8) { return s }

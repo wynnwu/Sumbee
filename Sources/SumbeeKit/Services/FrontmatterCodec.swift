@@ -94,7 +94,7 @@ public enum FrontmatterCodec {
         }
 
         guard foundClose else {
-            // Malformed: no closing delimiter — treat entire content as body.
+            // Malformed: no closing delimiter, treat entire content as body.
             return Document(frontmatter: Frontmatter(), body: content)
         }
 

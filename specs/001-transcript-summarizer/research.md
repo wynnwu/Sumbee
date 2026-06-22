@@ -36,7 +36,7 @@ binary without a bundle (no proper dock icon / menubar / activation).
 | `.docx` | `/usr/bin/unzip -p <f> word/document.xml` → `XMLParser` over `w:t`/`w:p`/`w:tab`/`w:br` |
 | YouTube captions | `Process` → `yt-dlp` (VTT) → in-house `VTTParser` |
 | API | `URLSession.bytes(for:)` SSE parse (no SDK) |
-| Secret storage | Security framework Keychain (`SecItem*`) — the native `safeStorage` equivalent |
+| Secret storage | Security framework Keychain (`SecItem*`), the native `safeStorage` equivalent |
 | Live library refresh | CoreServices FSEvents (`FSEventStreamCreate`) |
 
 **Rationale**: Eliminates all third-party packages and any build-time network; uses
@@ -75,7 +75,7 @@ Opus 4.8 with thinking disabled does not leak reasoning into the summary; `tempe
 never persisted elsewhere.
 
 **Rationale**: Native, encrypted at rest, equivalent to/stronger than Electron
-`safeStorage`. Ad-hoc signing may re-prompt across rebuilds in dev — acceptable for v1.
+`safeStorage`. Ad-hoc signing may re-prompt across rebuilds in dev, acceptable for v1.
 
 ## D6. yt-dlp strategy (no build-time binary)
 
@@ -116,10 +116,10 @@ agnostic; enables automatic, collision-safe filenames (D in file-layout contract
 **Decision**: Retry at the **job** level, not inside the API client. A job caches its
 extracted text + archived `source` ref after the first successful prepare; on a transient
 failure it is re-queued (never re-extracting/re-archiving) with exponential backoff
-(`5, 15, 30, 60, 120, 300`s — capped at 5 min, 6 auto-attempts) then left as a retryable
+(`5, 15, 30, 60, 120, 300`s, capped at 5 min, 6 auto-attempts) then left as a retryable
 failure. A 1 s ticker promotes due jobs back to `queued`; a manual "Run queue" requeues
 all waiting/failed jobs immediately and resets their backoff. Retryable = network,
-overload, rate limit, and `403/404` (model unavailable / region-blocked — covers the
+overload, rate limit, and `403/404` (model unavailable / region-blocked, covers the
 "VPN wrong country" case); non-retryable = bad/empty file, no captions, invalid key.
 
 **Rationale**: Job-level retry covers environment failures (offline, VPN/region, model
@@ -159,7 +159,7 @@ hard-coding sizes per view. Sizes start deliberately large (body ≈ 16pt) becau
 default text styles render small.
 
 **Rationale**: One place to tune scale; consistent typography; avoids the drift this version
-had before (scattered `.caption`/`.callout` literals). **Rejected**: `dynamicTypeSize` — on
+had before (scattered `.caption`/`.callout` literals). **Rejected**: `dynamicTypeSize`. On
 macOS it barely scales the built-in text styles, so it cannot deliver an app-wide bump.
 Fixed `.system(size:)` literals remain only for a few large display elements (icons, the drop
 tile name) where an exact size is intentional.
@@ -167,7 +167,7 @@ tile name) where an exact size is intentional.
 ## D13. Programmatic source link + HTML-aware token preset (Revision 4, FR-029/030)
 
 **Decision**: The original source URL is never placed in the prompt (so the model can't alter
-it) — `PromptBuilder` sends only title/channel/duration. The app stamps the URL itself: the
+it); `PromptBuilder` sends only title/channel/duration. The app stamps the URL itself: the
 Markdown `source:` front-matter, and for HTML a small centered grey underlined `<a>` injected
 just before `</body>`. The default `maxOutputTokens` is 8192 (was 4096) because an HTML
 document of the same summary is ~1.5–2× the tokens; a `schemaVersion` 1→2 migration adopts it
@@ -185,12 +185,12 @@ old default; custom locations and the `SUMBEE_LIBRARY` test override are left un
 **Rationale**: `~/Documents` (like `~/Desktop`/`~/Downloads`) is **TCC-protected**. Direct file
 I/O works once the app has the Documents grant, but asking Finder to *open/reveal* a path inside
 it is a stricter, separate operation that macOS silently refuses for apps it can't stably
-identify — and an **ad-hoc-signed** dev build has no stable identity, so every rebuild looks like
+identify, and an **ad-hoc-signed** dev build has no stable identity, so every rebuild looks like
 a new app. The result was the long-running "Reveal in Finder just opens Home" bug (no error, no
 second window). Verified empirically: revealing a non-protected folder (`~/Library/Application
 Support/Sumbee`) worked while the `~/Documents` path silently fell back to Home. A plain
 home-level folder has no TCC gate, so reveal works in dev and shipped builds with zero prompts.
-**Rejected**: a guided Full Disk Access grant — it only sticks for a stable (signed) identity, so
+**Rejected**: a guided Full Disk Access grant. It only sticks for a stable (signed) identity, so
 ad-hoc dev builds would need re-granting on every rebuild, and FDA's coverage of the reveal path
 was uncertain. Relocating is the guaranteed, prompt-free fix.
 
@@ -207,7 +207,7 @@ is enlarged so editors show many lines. (c) Add `AppSettings.previewFontSize` (d
 **Rationale**: One place for shared instructions (no duplication across styles); a non-modal,
 roomy editor is far better for writing/reading long prompts than a small floating sheet; readable
 preview is a stated priority and the size must stick. **Decoding made field-tolerant**
-(`decodeIfPresent` + defaults) so adding `systemPrompt`/`previewFontSize` never resets a config —
+(`decodeIfPresent` + defaults) so adding `systemPrompt`/`previewFontSize` never resets a config:
 the prior synthesized `Codable` would have failed to decode older files and silently reset them.
 
 ## D16. Regenerate, geek mode, streaming, power-user touches (Revision 7, FR-037..044)
@@ -215,21 +215,21 @@ the prior synthesized `Codable` would have failed to decode older files and sile
 **Decisions & rationale**:
 - **Regenerate (FR-037)** reuses the archived `source/` copy: the engine gains
   `prepareFromArchive(summaryURL:)` that reads the summary's front-matter `source`, then either
-  re-extracts the archived file or re-fetches the YouTube URL — producing a `PreparedInput` WITHOUT
+  re-extracts the archived file or re-fetches the YouTube URL, producing a `PreparedInput` WITHOUT
   re-archiving. `finish(...)` then runs with the chosen style/model/format and writes a **new**
   file. Non-destructive by design (re-running is exploratory; never clobber a kept result).
 - **Geek mode (FR-039)** is a confirmation gate, not a new pipeline: when on, single-input actions
   route through a `PromptPreview` sheet (assembled `system` + `user` message from `PromptBuilder`)
   with a token estimate, then enqueue on Send. Token estimate uses a **local heuristic**
   (`ceil(chars / 3.7)`, labelled "~") rather than the count-tokens API, so it's instant and offline
-  — accuracy beyond an order-of-magnitude isn't the point of an inspect mode. Batches skip the
+  (accuracy beyond an order-of-magnitude isn't the point of an inspect mode). Batches skip the
   per-item gate to avoid N modal prompts.
 - **Streaming preview (FR-040)** adds `AppState.streamingText`/`streamingJobID`, appended on
   `.streamDelta` (full text, not just the bottom-bar's 320-char tail). The preview pane shows the
   live text while a job runs, then falls back to the selected asset. One surface, no new window.
-- **Per-style overrides (FR-038)** surface existing `SummaryStyle.modelOverride` in the editor —
+- **Per-style overrides (FR-038)** surface existing `SummaryStyle.modelOverride` in the editor;
   no model change.
-- **Touches**: library search is a local title filter (NOT a tag/index system — folders stay the
+- **Touches**: library search is a local title filter (NOT a tag/index system; folders stay the
   organizing model); drag-out exposes the file URL via `.onDrag`; Quick Look uses `QLPreviewPanel`;
   table/link rendering is a small extension to the existing `MarkdownText` (no CommonMark dep);
   ⌘F/⌘N via SwiftUI `commands`/`focused` state. All chosen to add capability without surface area.

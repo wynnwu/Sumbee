@@ -22,7 +22,7 @@ public enum Theme {
         accent.opacity(opacity)
     }
 
-    // MARK: Geometry — square edges for a futuristic, minimal look (FR-027)
+    // MARK: Geometry - square edges for a futuristic, minimal look (FR-027)
     public static let cornerRadius: CGFloat = 0
     public static let smallCorner: CGFloat = 0
     public static let cardPadding: CGFloat = 18
@@ -32,7 +32,7 @@ public enum Theme {
     public static let spring = Animation.spring(response: 0.34, dampingFraction: 0.82)
     public static let quick = Animation.easeOut(duration: 0.18)
 
-    // MARK: Typography (larger base sizes — FR-027)
+    // MARK: Typography (larger base sizes - FR-027)
     public static func title(_ text: String) -> Text {
         Text(text).font(.uiTitle)
     }

@@ -1,7 +1,7 @@
 import Foundation
 import PDFKit
 
-/// `.pdf` — text layer via PDFKit. Image-only/scanned PDFs yield no text → `.noText`.
+/// `.pdf`: text layer via PDFKit. Image-only/scanned PDFs yield no text → `.noText`.
 struct PDFExtractor: FileTextExtractor {
     func extract(from url: URL) throws -> String {
         guard let doc = PDFDocument(url: url) else {

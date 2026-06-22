@@ -40,7 +40,7 @@ public struct SummarizationEngine {
         self.youtube = youtube
     }
 
-    // MARK: Prepare (run once per job — not retried, to avoid duplicate source archives)
+    // MARK: Prepare (run once per job, not retried, to avoid duplicate source archives)
 
     public func prepareFile(_ url: URL, settings: AppSettings,
                             progress: @escaping @Sendable (SummarizationEvent) -> Void) async throws -> PreparedInput {
@@ -63,7 +63,7 @@ public struct SummarizationEngine {
                              fallbackTitle: meta.title, videoMeta: meta)
     }
 
-    /// Rebuild a `PreparedInput` from a saved summary's archived source — for Regenerate (FR-037).
+    /// Rebuild a `PreparedInput` from a saved summary's archived source, for Regenerate (FR-037).
     /// Re-extracts an archived file (no re-archiving) or re-fetches a YouTube URL.
     public func prepareFromArchive(summaryURL: URL, settings: AppSettings,
                                    progress: @escaping @Sendable (SummarizationEvent) -> Void) async throws -> PreparedInput {
@@ -113,7 +113,7 @@ public struct SummarizationEngine {
         if finalText.count > allowedChars {
             finalText = String(finalText.prefix(allowedChars))
                 + "\n\n[NOTE: transcript truncated to fit the model's context window.]"
-            progress(.notice("Input exceeded the model context window — truncated with a notice."))
+            progress(.notice("Input exceeded the model context window; truncated with a notice."))
         }
 
         let user = PromptBuilder.userMessage(transcript: finalText, videoMeta: prepared.videoMeta)
@@ -169,7 +169,7 @@ public struct SummarizationEngine {
         } else {
             let parsed = PromptBuilder.extractTitle(from: output, format: format)
             displayTitle = (parsed?.isEmpty == false ? parsed! : fallbackTitle)
-            baseName = "\(DateUtil.assetTimestamp(created)) — \(Sanitizer.sanitizeTitle(displayTitle))"
+            baseName = "\(DateUtil.assetTimestamp(created)) - \(Sanitizer.sanitizeTitle(displayTitle))"
         }
         let filename = Sanitizer.uniqueFilename(baseName: baseName, ext: format.fileExtension, in: styleFolder)
         let fileURL = styleFolder.appendingPathComponent(filename)

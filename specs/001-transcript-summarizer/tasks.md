@@ -2,7 +2,7 @@
 
 **Input**: Design documents from `specs/001-transcript-summarizer/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
-**Tests**: Included (light) per the user request — deterministic core only.
+**Tests**: Included (light) per the user request - deterministic core only.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -25,22 +25,22 @@
 
 **⚠️ Must complete before user-story work.**
 
-- [ ] T005 [P] `Models/SummaryStyle.swift` — `SummaryStyle`, `Channel`, `ModelOverride`.
-- [ ] T006 [P] `Models/Asset.swift` — `Asset`, `SourceRef`, `OutputFormat`.
-- [ ] T007 [P] `Models/AppSettings.swift` — versioned `Codable` settings + load/save (Application Support).
-- [ ] T008 [P] `Models/ModelCatalog.swift` — presets + `ModelCapabilities` (temperature/effort/thinking/ceiling) + lookup with conservative default.
-- [ ] T009 [P] `Services/FrontmatterCodec.swift` — read/write YAML-ish frontmatter + body.
-- [ ] T010 [P] `Services/Sanitizer.swift` — filename sanitize + collision suffixing.
-- [ ] T011 [P] `Services/KeychainStore.swift` — Security-framework generic-password save/load/remove/hasKey.
-- [ ] T012 `Views/Design/Theme.swift` + `GlassBackground.swift` + `Components.swift` — orange accent, materials, `NSVisualEffectView` representable, glass card / pill button / toast.
-- [ ] T013 `State/AppState.swift` — `@MainActor` root store skeleton (settings, key-gate, library, jobs) wired to KeychainStore + AppSettings.
-- [ ] T014 `App/SumbeeApp.swift` + `App/ContentView.swift` + `Sources/Sumbee/main.swift` — scene, window config (size/min/material), 3-region shell + bottom bar, `SumbeeApp.main()`.
+- [ ] T005 [P] `Models/SummaryStyle.swift` - `SummaryStyle`, `Channel`, `ModelOverride`.
+- [ ] T006 [P] `Models/Asset.swift` - `Asset`, `SourceRef`, `OutputFormat`.
+- [ ] T007 [P] `Models/AppSettings.swift` - versioned `Codable` settings + load/save (Application Support).
+- [ ] T008 [P] `Models/ModelCatalog.swift` - presets + `ModelCapabilities` (temperature/effort/thinking/ceiling) + lookup with conservative default.
+- [ ] T009 [P] `Services/FrontmatterCodec.swift` - read/write YAML-ish frontmatter + body.
+- [ ] T010 [P] `Services/Sanitizer.swift` - filename sanitize + collision suffixing.
+- [ ] T011 [P] `Services/KeychainStore.swift` - Security-framework generic-password save/load/remove/hasKey.
+- [ ] T012 `Views/Design/Theme.swift` + `GlassBackground.swift` + `Components.swift` - orange accent, materials, `NSVisualEffectView` representable, glass card / pill button / toast.
+- [ ] T013 `State/AppState.swift` - `@MainActor` root store skeleton (settings, key-gate, library, jobs) wired to KeychainStore + AppSettings.
+- [ ] T014 `App/SumbeeApp.swift` + `App/ContentView.swift` + `Sources/Sumbee/main.swift` - scene, window config (size/min/material), 3-region shell + bottom bar, `SumbeeApp.main()`.
 
 **Checkpoint**: app builds and launches to an empty glass shell.
 
 ---
 
-## Phase 3: User Story 1 — Summarize a dropped transcript (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Summarize a dropped transcript (Priority: P1) 🎯 MVP
 
 **Goal**: Drop a transcript onto a style → saved summary + archived source.
 **Independent Test**: quickstart steps 1–3.
@@ -75,7 +75,7 @@
 
 ---
 
-## Phase 4: User Story 3 — Create and edit styles (Priority: P2)
+## Phase 4: User Story 3 - Create and edit styles (Priority: P2)
 
 **Goal**: Full style CRUD reflected live in the main window.
 **Independent Test**: spec US3 independent test.
@@ -89,7 +89,7 @@
 
 ---
 
-## Phase 5: User Story 2 — Summarize a YouTube video (Priority: P2)
+## Phase 5: User Story 2 - Summarize a YouTube video (Priority: P2)
 
 **Goal**: URL + style button → saved summary from captions.
 **Independent Test**: spec US2 independent test (needs yt-dlp + network).
@@ -105,7 +105,7 @@
 
 ---
 
-## Phase 6: User Story 4 — Browse & manage the library (Priority: P3)
+## Phase 6: User Story 4 - Browse & manage the library (Priority: P3)
 
 **Goal**: Grouped, live, actionable library browser with preview.
 **Independent Test**: spec US4 independent test.
@@ -132,7 +132,7 @@
 
 ---
 
-## Phase 8: Revision 2 — Reliability, Drop UX, Live Models
+## Phase 8: Revision 2 - Reliability, Drop UX, Live Models
 
 - [ ] T057 [US1] Retry queue (FR-021): split `SummarizationEngine` into `prepare`/`finish`;
   add `attempt`/prepared-cache fields + `.waitingRetry(Date)` phase to `Job`; rework
@@ -147,7 +147,7 @@
   fallback; tests for model parse + retry classification.
 - [ ] T061 Rebuild `.app`, `swift test`, launch-verify; focused review of the retry logic.
 
-## Phase 9: Revision 3 — UI refinement
+## Phase 9: Revision 3 - UI refinement
 
 - [ ] T062 Bottom-bar model menu (FR-024): make the model chip a `Menu` over `availableModels`.
 - [ ] T063 Library tabs + one-line rows (FR-025): segmented Summaries/Source tabs in

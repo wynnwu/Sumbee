@@ -92,7 +92,7 @@ public struct ToastView: View {
     }
 }
 
-/// A flat segmented control (no native bezel/drop shadow) — matches the bottom bar's toggle style.
+/// A flat segmented control (no native bezel/drop shadow) that matches the bottom bar's toggle style.
 public struct FlatSegmented<T: Hashable>: View {
     @Binding public var selection: T
     public let options: [(value: T, label: String)]

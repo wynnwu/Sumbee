@@ -6,7 +6,7 @@
 
 **Turn meeting transcripts and YouTube videos into clean, structured summaries you own.**
 
-A native macOS app. Local-first — your summaries are plain Markdown (or HTML) files on your own
+A native macOS app. Local-first: your summaries are plain Markdown (or HTML) files on your own
 hard drive, in a folder you choose. You own them like any private local file; the app never
 uploads or sees your library. No proprietary format, no lock-in.
 
@@ -19,7 +19,7 @@ uploads or sees your library. No proprietary format, no lock-in.
 ## Why Sumbee
 
 - **You own your data.** Summaries and archived sources are plain files on your hard drive (in
-  `~/Sumbee Summaries`, or anywhere you choose) — yours like any private local file, usable in
+  `~/Sumbee Summaries`, or anywhere you choose), yours like any private local file, usable in
   Finder, Obsidian, or git with the app closed. The app never uploads or sees your library; the
   on-disk files *are* the source of truth. **No proprietary format, no lock-in.**
 - **Local-first.** Everything stays on your Mac except the two actions you start: sending
@@ -27,7 +27,7 @@ uploads or sees your library. No proprietary format, no lock-in.
 - **Fully private summarization is coming.** Local models via **Ollama** (on-device, nothing leaves
   your Mac) are on the roadmap.
 - **Styles are just prompts.** Each summary **style** is an editable prompt that also names a
-  folder in your library — make one per use-case (standups, interviews, research videos…).
+  folder in your library: make one per use-case (standups, interviews, research videos…).
 - **Native & beautiful.** SwiftUI + AppKit, real vibrancy/"glass", automatic light/dark, an
   orange accent, and a single responsive window.
 - **Zero third-party dependencies.** Builds offline with only the Apple Swift toolchain.
@@ -39,15 +39,15 @@ uploads or sees your library. No proprietary format, no lock-in.
   and one failure never aborts the batch (with automatic, backed-off retries for transient errors).
 - **YouTube → summary.** Paste a URL, pick a style, and Sumbee summarizes the video's captions.
 - **Regenerate.** Re-run any saved summary from its archived original with a different style,
-  model, or format — produces a new summary, the original is kept.
+  model, or format. Produces a new summary, the original is kept.
 - **Live streaming preview.** Watch the summary write itself into the preview pane as it generates.
 - **Library search.** Instant title filter (⌘F); **⌘N** starts a new style.
-- **Full style CRUD** (name, channel, prompt), reflected live in the main window — with optional
+- **Full style CRUD** (name, channel, prompt), reflected live in the main window, with optional
   **per-style model & output-format overrides**.
 - **Shared system prompt.** One editable prompt is prepended to *every* style, so common
   instructions live in one place instead of being duplicated across styles.
 - **Unified, roomy prompt editing.** The system prompt, each style's prompt, and the HTML-styling
-  prompt are all edited in one full-height, non-modal editor inside Settings — many lines visible
+  prompt are all edited in one full-height, non-modal editor inside Settings: many lines visible
   at once, no cramped floating sheet.
 - **Live library browser** grouped by style, with preview, reveal-in-Finder, open, copy, delete.
 - **Readable, resizable preview.** Increase or decrease the preview pane's base font size from its
@@ -70,10 +70,10 @@ uploads or sees your library. No proprietary format, no lock-in.
 ## Download & install
 
 > **Heads-up:** the build is **ad-hoc signed, not notarized** (no paid Apple Developer
-> certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that — you
+> certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that, and you
 > only do it once.
 
-1. Download **`Sumbee-0.2.4.zip`** from the [latest release](../../releases/latest).
+1. Download **`Sumbee-0.2.5.zip`** from the [latest release](../../releases/latest).
 2. Unzip it and drag **Sumbee.app** to your **Applications** folder.
 3. Remove the quarantine flag (the reliable way to open an unsigned app), then launch:
    ```bash
@@ -83,7 +83,7 @@ uploads or sees your library. No proprietary format, no lock-in.
    **Or** without Terminal: right-click **Sumbee.app → Open → Open**. If macOS still blocks it
    (common on recent macOS), go to **System Settings → Privacy & Security**, scroll to the
    "Sumbee was blocked" notice, and click **Open Anyway**.
-4. On first launch Sumbee opens to **Settings** — paste your
+4. On first launch Sumbee opens to **Settings**: paste your
    [Anthropic API key](https://console.anthropic.com/settings/keys), click **Save & Validate**,
    then drag a transcript onto a style.
 
@@ -110,9 +110,9 @@ Your library lives at **`~/Sumbee Summaries`** (change it in Settings ▸ Librar
 
 ```
 ~/Sumbee Summaries/
-├── Meetings — General/
+├── Meetings - General/
 │   ├── style-definition/style-definition.md     # the style's prompt + metadata
-│   └── 2026-06-21 1432 — Q2 Roadmap Sync.md      # a summary
+│   └── 2026-06-21 1432 - Q2 Roadmap Sync.md      # a summary
 ├── YouTube/style-definition/style-definition.md
 └── source/                                        # archived copies of every processed input
 ```
@@ -149,14 +149,14 @@ yt-dlp via `Process`, live refresh via FSEvents. No SPM dependencies, no build-t
 
 - **Add a model:** append a `ModelPreset` (with its `ModelCapabilities`) in
   `Models/ModelCatalog.swift`. The request builder consults capabilities, so unsupported
-  parameters are never sent — no other code changes.
+  parameters are never sent, with no other code changes.
 - **Add/edit a style:** in-app (Settings ▸ Styles), or edit the `style-definition.md` file in the
   style's library folder directly.
 - **Change the default styles:** `Services/DefaultStyles.swift`.
 
 ## Roadmap
 
-- **Local models via [Ollama](https://ollama.com)** — fully on-device, fully-private summarization
+- **Local models via [Ollama](https://ollama.com)**: fully on-device, fully-private summarization
   (nothing leaves your Mac). *Coming soon.*
 - On-device recording, real-time transcription & speaker diarization (see `specs/002`)
 - Audio/video transcription (Whisper) for inputs without captions
@@ -167,7 +167,7 @@ yt-dlp via `Process`, live refresh via FSEvents. No SPM dependencies, no build-t
 
 ## Contributing
 
-Issues and PRs welcome. The design rationale lives in [`specs/`](specs/001-transcript-summarizer/) —
+Issues and PRs welcome. The design rationale lives in [`specs/`](specs/001-transcript-summarizer/),
 worth a skim before larger changes. Please run `swift test` before opening a PR.
 
 ## License

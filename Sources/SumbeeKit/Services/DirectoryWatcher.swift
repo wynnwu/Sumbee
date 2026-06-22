@@ -2,7 +2,7 @@ import Foundation
 import CoreServices
 
 /// Watches the library root recursively via FSEvents and fires `onChange` (coalesced) when
-/// anything is added/removed/modified — so the asset browser stays in sync with Finder.
+/// anything is added/removed/modified, so the asset browser stays in sync with Finder.
 public final class DirectoryWatcher {
     private var stream: FSEventStreamRef?
     private var onChange: (() -> Void)?

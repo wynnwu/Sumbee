@@ -24,7 +24,7 @@ public final class AppState: ObservableObject {
     @Published public var library: Library = .empty
     @Published public var jobs: [Job] = []
 
-    /// Models offered in the picker — defaults to presets, replaced by the live account list.
+    /// Models offered in the picker; defaults to presets, replaced by the live account list.
     @Published public var availableModels: [ModelPreset] = ModelCatalog.presets
     /// A 1 Hz clock published by the retry ticker so retry countdowns re-render.
     @Published public private(set) var clock = Date()
@@ -88,7 +88,7 @@ public final class AppState: ObservableObject {
             loaded.libraryRootPath = lib
         }
         self.settings = loaded
-        // Skip the Keychain read in headless smoke runs — for ad-hoc builds, reading an item created
+        // Skip the Keychain read in headless smoke runs. For ad-hoc builds, reading an item created
         // under a prior code identity pops a blocking "allow access" prompt (learnings #4).
         self.hasKey = ProcessInfo.processInfo.environment["SUMBEE_SMOKE"] == "1" ? false : keychain.hasKey
         AppState.current = self
@@ -207,7 +207,7 @@ public final class AppState: ObservableObject {
 
     /// One-time move of the library from a pre-rename default location into the current default
     /// `~/Sumbee Summaries`, so "Reveal in Finder" works (see AppSettings.defaultLibraryRootPath:
-    /// `~/Documents` is TCC-protected). Only fires for installs still pointed at a legacy default —
+    /// `~/Documents` is TCC-protected). Only fires for installs still pointed at a legacy default:
     /// custom locations and the SUMBEE_LIBRARY test override are left untouched. On any failure it
     /// keeps the old location (no data loss).
     func migrateLibraryToDefaultIfNeeded() {
@@ -230,7 +230,7 @@ public final class AppState: ObservableObject {
                 present(.success, "Moved your library to “Sumbee Summaries”.")
             } catch {
                 present(.error, "Couldn’t move the library to ~/Sumbee Summaries (\(error.localizedDescription)). Keeping the old location.")
-                return                                   // keep legacy path on failure — no data loss
+                return                                   // keep legacy path on failure, no data loss
             }
         }
         // Point settings at the new location (ensureLibrary seeds it fresh if nothing was moved).
@@ -296,7 +296,7 @@ public final class AppState: ObservableObject {
         catch { present(.error, "Couldn’t save settings: \(error.localizedDescription)") }
     }
 
-    /// Debounced settings save — coalesces rapid edits (e.g. typing in a text field) into one
+    /// Debounced settings save: coalesces rapid edits (e.g. typing in a text field) into one
     /// write rather than persisting on every keystroke.
     public func scheduleSave() {
         saveTask?.cancel()

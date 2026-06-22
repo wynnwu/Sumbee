@@ -208,7 +208,7 @@ private struct APIKeySection: View {
                 .buttonStyle(AccentButtonStyle())
                 .disabled(keyInput.isEmpty || validating)
 
-                if state.hasKey {     // updating — allow backing out
+                if state.hasKey {     // updating - allow backing out
                     Button("Cancel") { editing = false; keyInput = ""; statusText = nil }
                         .buttonStyle(GhostButtonStyle())
                 }
@@ -324,7 +324,7 @@ private struct GenerationSection: View {
         }
         .onAppear { state.fetchModels() }
         .onChange(of: state.settings.model) {
-            // Shared normalization (effort clamp + token ceiling) — same path the bottom-bar
+            // Shared normalization (effort clamp + token ceiling) - same path the bottom-bar
             // model menu uses, so Settings and the bar stay in sync.
             state.normalizeGenerationForModel()
         }
@@ -498,7 +498,7 @@ private struct AboutSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SettingsCard("Privacy", systemImage: "lock.shield.fill") {
-                Text("Your summaries are plain files on your Mac. You own them like any private local file — keep them wherever you like — and the app never uploads or sees your library. No proprietary format, no lock-in.")
+                Text("Your summaries are plain files on your Mac. You own them like any private local file, keep them wherever you like, and the app never uploads or sees your library. No proprietary format, no lock-in.")
                     .font(.uiBody)
                 Text("Everything stays on your Mac except two actions you start:")
                     .font(.uiBody)
@@ -512,7 +512,7 @@ private struct AboutSection: View {
                       systemImage: "sparkles").font(.uiBody).foregroundStyle(Theme.accent)
             }
             SettingsCard("About", systemImage: "info.circle.fill") {
-                Text("Sumbee — a local-first macOS app. Your summaries are plain files you own.")
+                Text("Sumbee is a local-first macOS app. Your summaries are plain files you own.")
                     .font(.uiBody).foregroundStyle(.secondary)
                 Text(Self.versionLine)
                     .font(.uiCaption).foregroundStyle(.secondary).textSelection(.enabled)
@@ -524,7 +524,7 @@ private struct AboutSection: View {
     static var versionLine: String {
         let info = Bundle.main.infoDictionary
         let version = info?["CFBundleShortVersionString"] as? String ?? "dev"
-        let build = info?["CFBundleVersion"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "-"
         return "Version \(version) (build \(build))"
     }
 }
@@ -546,7 +546,7 @@ private struct SystemPromptSection: View {
     }
 }
 
-// MARK: - Shared prompt editor (used by System Prompt, Styles, HTML styling — FR-035)
+// MARK: - Shared prompt editor (used by System Prompt, Styles, HTML styling - FR-035)
 
 struct BigPromptEditor: View {
     @Binding var text: String
@@ -579,7 +579,7 @@ struct SettingsCard<Content: View>: View {
     }
 
     var body: some View {
-        // Flat settings section — no elevated card/shadow (just a labeled group on the pane).
+        // Flat settings section - no elevated card/shadow (just a labeled group on the pane).
         VStack(alignment: .leading, spacing: 10) {
             Label(title, systemImage: systemImage)
                 .font(.uiBody.weight(.semibold))

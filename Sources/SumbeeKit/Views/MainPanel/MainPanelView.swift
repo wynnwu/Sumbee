@@ -71,7 +71,7 @@ struct MainPanelView: View {
 
     private var fileStylesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Theme.sectionLabel("File styles — drop transcripts")
+            Theme.sectionLabel("Summary Styles - Drag & Drop Transcript Files Here (txt, md, pdf, docx, rtf)")
                 .foregroundStyle(.secondary)
 
             if state.fileStyles.isEmpty {
@@ -93,7 +93,7 @@ struct MainPanelView: View {
 
     private var youtubeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Theme.sectionLabel("YouTube — summarize from captions")
+            Theme.sectionLabel("YouTube - Summarize from Captions")
                 .foregroundStyle(.secondary)
             YouTubeSection()
         }

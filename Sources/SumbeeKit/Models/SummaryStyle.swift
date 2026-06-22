@@ -46,13 +46,13 @@ public struct ModelOverride: Codable, Equatable, Sendable {
 
 /// The core configurable object. A style is a named prompt that also names a library folder.
 ///
-/// Persisted on disk at `<root>/<name>/style-definition/style-definition.md` — the prompt is
+/// Persisted on disk at `<root>/<name>/style-definition/style-definition.md`. The prompt is
 /// the Markdown body, the rest is YAML frontmatter. The on-disk library, not config, is the
 /// source of truth (see specs contract `file-layout.md`).
 public struct SummaryStyle: Identifiable, Equatable, Sendable {
     /// Stable identifier; survives folder renames.
     public var id: UUID
-    /// Display name AND folder name (e.g. "Meetings — General").
+    /// Display name AND folder name (e.g. "Meetings - General").
     public var name: String
     public var channel: StyleChannel
     /// The instruction text sent to the model (the shared output convention is appended by the app).

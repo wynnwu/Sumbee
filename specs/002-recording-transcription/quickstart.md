@@ -1,7 +1,7 @@
-# Quickstart — Recording / Transcription / Diarization
+# Quickstart - Recording / Transcription / Diarization
 
 How to build, run, and (manually) verify the feature. Most of it can only be exercised on a real Mac
-with a microphone and a meeting playing — note the device-only caveats.
+with a microphone and a meeting playing; note the device-only caveats.
 
 ## Prerequisites
 - macOS 15+ (the process tap needs 14.4+, always satisfied).
@@ -19,8 +19,8 @@ open dist/Sumbee.app
 ```
 
 ## Permissions (first run)
-- **Microphone** — granted on first record (NSMicrophoneUsageDescription explains why).
-- **Audio capture** (for the system tap) — granted when you first capture the far side; if denied,
+- **Microphone**: granted on first record (NSMicrophoneUsageDescription explains why).
+- **Audio capture** (for the system tap): granted when you first capture the far side; if denied,
   recording continues **mic-only** with a notice.
 - **Ad-hoc signing caveat:** because dev builds are ad-hoc signed, TCC grants can reset on every
   rebuild (same issue as feature 001's reveal). For stable testing, grant again after a rebuild, or
@@ -31,7 +31,7 @@ open dist/Sumbee.app
    `… (recording).md` into `source/`; summarize it with a style.
 1b. **Audio file import (Phase 1B):** Drop an `.m4a`/`.mp3`/`.wav` onto Sumbee; it transcribes in
    batch (determinate progress), writes a `… (import).md` into `source/`, and summarizes with a style.
-   (No mic/permission needed — the easiest end-to-end test of the pipeline.)
+   (No mic/permission needed, the easiest end-to-end test of the pipeline.)
 2. **Both sides (Phase 2):** Join a Meet in your browser, pick the browser in the source picker,
    Record (don't make Sumbee join). Confirm your voice and the remote voices both appear, labeled
    Me vs Remote. Use **headphones** to avoid echo.

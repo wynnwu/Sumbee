@@ -7,12 +7,12 @@ the deterministic ones (filenames, frontmatter, style-definition parsing).
 
 ```text
 <root>/
-├── Meetings — General/
+├── Meetings - General/
 │   ├── style-definition/style-definition.md     # this style's prompt + metadata
-│   └── 2026-06-20 1432 — Q2 Roadmap Sync.md
-├── Meetings — Product Review/style-definition/style-definition.md
-├── Interviews — Short/style-definition/style-definition.md
-├── Interviews — Long/style-definition/style-definition.md
+│   └── 2026-06-20 1432 - Q2 Roadmap Sync.md
+├── Meetings - Product Review/style-definition/style-definition.md
+├── Interviews - Short/style-definition/style-definition.md
+├── Interviews - Long/style-definition/style-definition.md
 ├── YouTube/style-definition/style-definition.md
 └── source/
     ├── q2-sync__2026-06-20_143205.docx
@@ -42,7 +42,7 @@ attached; `id` tracks the style across renames.
 ## Asset filename
 
 ```text
-YYYY-MM-DD HHmm — <Sanitized Title>.md        # .html when HTML output selected
+YYYY-MM-DD HHmm - <Sanitized Title>.md        # .html when HTML output selected
 ```
 
 - Date-time = job completion (local), zero-padded, filesystem-safe (no `:`).
@@ -55,7 +55,7 @@ YYYY-MM-DD HHmm — <Sanitized Title>.md        # .html when HTML output selecte
 ```yaml
 ---
 title: Q2 Roadmap Sync
-style: Meetings — General
+style: Meetings - General
 created: 2026-06-20T14:32:05-07:00
 source: source/q2-sync__2026-06-20_143205.docx     # or a YouTube URL
 model: claude-opus-4-8
@@ -79,5 +79,5 @@ chronologically in Finder. Guarantees: delete the original, lose nothing.
 
 ## App config (not in the library)
 
-`~/Library/Application Support/Sumbee/config.json` — settings only (see data-model).
+`~/Library/Application Support/Sumbee/config.json` holds settings only (see data-model).
 API key → Keychain. Both excluded from the library tree.

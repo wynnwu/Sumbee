@@ -9,14 +9,14 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
 - **Symptom**: after adding a property, users' saved config reset to defaults.
 - **Cause**: synthesized `Codable` decoding **fails entirely** if a key is missing, and our loader
   fell back to `AppSettings()` on any decode error → total reset.
-- **Rule**: settings use a **field-tolerant** `init(from:)` — every key is
+- **Rule**: settings use a **field-tolerant** `init(from:)`; every key is
   `decodeIfPresent(...) ?? default`. Adding a field must never fail to decode an older file.
   (See `AppSettings.swift` / research D15.) Add new fields to: properties, memberwise `init`,
   `CodingKeys`, **and** `init(from:)`.
 
 ## Permissions, TCC & signing
 
-### 2. `~/Documents` (and Desktop/Downloads) are TCC-protected — "Reveal in Finder" silently opened Home
+### 2. `~/Documents` (and Desktop/Downloads) are TCC-protected: "Reveal in Finder" silently opened Home
 - **Symptom**: reveal "worked" (`exists=true`, `open` returned 0) but Finder showed the home folder.
 - **Cause**: driving Finder to open a path inside a TCC-protected folder from an **unsigned/ad-hoc**
   app is silently refused; Finder falls back to Home. Direct file *reads* still worked, which masked it.
@@ -33,7 +33,7 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
 ### 4. Reading a Keychain item created under a *different* identity blocks on a prompt (hung headless)
 - **Symptom**: smoke run hung (watchdog SIGKILL / exit 137) after adding a "migrate old API key" step.
 - **Cause**: reading a Keychain item whose ACL belongs to a prior (ad-hoc) identity triggers an
-  **interactive** "allow access" dialog — which blocks, and can't be answered headlessly.
+  **interactive** "allow access" dialog, which blocks, and can't be answered headlessly.
 - **Rule**: don't auto-read Keychain items created by a different code identity. Prefer asking the
   user to re-enter, or migrate only with explicit UI.
 
@@ -80,7 +80,7 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
 - **Cause**: on macOS, Dynamic Type has little effect on the standard text styles.
 - **Rule**: use **explicit point sizes** via a small shared font-token set (`Font.uiTitle/uiBody/…`)
   rather than relying on Dynamic Type. Fixed `.system(size:)` fonts don't scale with Dynamic Type
-  either — that's a feature here.
+  either; that's a feature here.
 
 ### 11. `LazyVGrid(.adaptive)` inside `HSplitView` caused layout-cycle hangs
 - **Rule**: avoid `.adaptive` grid columns inside `HSplitView`; use fixed/flexible columns.
@@ -93,7 +93,7 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
 - **Cause**: the `.icns` was a single malformed `icp4` entry (a 1024px image under a 16×16 tag).
 - **Rule**: produce icons with `iconutil -c icns Name.iconset` from a complete `.iconset`
   (16…1024, @1x/@2x). Validate by extracting back: `iconutil -c iconset Name.icns`. For the two
-  smallest sizes, ship a simplified mark (we use bee-only) — fine detail is illegible at 16/32 px.
+  smallest sizes, ship a simplified mark (we use bee-only); fine detail is illegible at 16/32 px.
 
 ### 13. macOS `sed` is BSD, not GNU
 - **Symptom**: a rename `sed 's#~/Old\b#~/New#'` didn't match; paths got collapsed wrong.
@@ -105,7 +105,7 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
 ### 14. The headless smoke watchdog can kill the app prematurely under build load
 - **Symptom**: smoke screenshot run exits 137 with no shot right after a release build.
 - **Cause**: the kill-watchdog fires before the app finishes booting while the machine is busy
-  compiling — not a real hang.
+  compiling, not a real hang.
 - **Rule**: give the smoke run a generous window (~30–40 s); retry once the build settles before
   concluding there's a hang. Build each feature group and confirm `swift build` is clean before moving on.
 
@@ -115,7 +115,7 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
   `sample <pid>`); a clean rebuild ran fine with no code change.
 - **Rule**: when the app hangs at launch after back-to-back/mixed incremental builds, **`rm -rf
   .build dist` and rebuild before bisecting code**. Profile a suspected hang with
-  `sample <pid> 5 -file out.txt` — if it's all `AG::Graph::UpdateStack::update` / scene-list updates,
+  `sample <pid> 5 -file out.txt`: if it's all `AG::Graph::UpdateStack::update` / scene-list updates,
   it's a SwiftUI update cycle (or a bad build), not I/O.
 
 ### 16. SwiftUI materials flicker/blur behind a hosted `NSScrollView` (e.g. `TextEditor`)

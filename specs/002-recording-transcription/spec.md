@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-21
 
-**Status**: Draft (design — not yet implemented)
+**Status**: Draft (design, not yet implemented)
 
 **Input**: User: "On-device recording, real-time transcripts, and speaker diarization. Be thoughtful
 and careful. A paid feature in the future (≈20 free trials), no gates for now. Record both sides of
@@ -13,7 +13,7 @@ a Google Meet call without joining the meeting. Use the full, detailed Spec Kit 
 ## Summary
 
 Add the ability to **record audio on the Mac**, **transcribe it live on-device**, and **attribute
-text to speakers** — including capturing **both sides of a video call (e.g. Google Meet) without
+text to speakers**, including capturing **both sides of a video call (e.g. Google Meet) without
 Sumbee joining the call**, by mixing the local microphone with a tap of the meeting app's audio
 output. A finished recording becomes a transcript that flows into Sumbee's existing
 style→summarize→library pipeline unchanged. Everything (capture + ASR + diarization) runs **locally**;
@@ -24,7 +24,7 @@ The same on-device transcription→diarization pipeline also powers **importing 
 *sources* into one shared, modular pipeline.
 
 This is intended to become a **paid feature** (≈20 free recordings, then a license). For now it is
-**ungated** — the trial counter and licensing seam exist but never block.
+**ungated**: the trial counter and licensing seam exist but never block.
 
 ## Clarifications
 
@@ -33,11 +33,11 @@ This is intended to become a **paid feature** (≈20 free recordings, then a lic
 - Q: On-device real-time ASR engine / minimum OS? → **A: Bundle `whisper.cpp`** (Metal-accelerated).
   Best accuracy, any language, fully offline, keeps the feature on **macOS 15+**. Accepted as a
   deliberate, scoped exception to the zero-dependency principle (see research D9 / constitution note).
-- Q: Speaker diarization scope for v1? → **A: True per-person diarization** — distinguish each
+- Q: Speaker diarization scope for v1? → **A: True per-person diarization** that distinguishes each
   individual speaker, not merely "Me vs Remote." The two capture channels (mic vs system) are used
   as a strong prior; voice-embedding + online clustering separates multiple people within a channel.
 - Q: How to capture the call's far side without joining? → **A: Core Audio process tap**
-  (`AudioHardwareCreateProcessTap`, macOS 14.4+) on the meeting app/browser — audio-only, no Screen
+  (`AudioHardwareCreateProcessTap`, macOS 14.4+) on the meeting app/browser, audio-only, no Screen
   Recording permission. ScreenCaptureKit is the documented fallback (research D2).
 ### Session 2026-06-22 (audio file import + modular pipeline)
 
@@ -47,25 +47,25 @@ This is intended to become a **paid feature** (≈20 free recordings, then a lic
   summarizes via the existing styles. (See FR-017.)
 - Q: Architectural implication? → **A: Modularize.** The transcription/diarization stage MUST be a
   **source-agnostic module** (`TranscriptionPipeline`) that consumes audio *frames* from any producer
-  — live mic, the system tap, or a file reader — in either **streaming** (live) or **batch** (file)
+  (live mic, the system tap, or a file reader) in either **streaming** (live) or **batch** (file)
   mode. Live recording and file import are just two `AudioFramesProducer`s. (See FR-018, research D11/D12.)
 - Note: a single dropped file is usually **one mixed channel**, so the channel prior (mic-vs-system)
-  doesn't apply — file diarization relies on embedding clustering alone (FR-019).
+  doesn't apply; file diarization relies on embedding clustering alone (FR-019).
 
-- Resolved without asking: **on-device only** (no cloud ASR — preserves the privacy promise);
+- Resolved without asking: **on-device only** (no cloud ASR, preserving the privacy promise);
   **ungated now** but a `FeatureGate` + trial counter (target 20) are built as a seam;
   a **one-time consent/ethics notice** is shown before the first recording (recording others may
   require their consent); the **whisper model and the speaker-embedding model are downloaded at
-  runtime** into Application Support (like `yt-dlp`) — the repo and build stay network-free.
+  runtime** into Application Support (like `yt-dlp`), so the repo and build stay network-free.
 
 ## User Scenarios & Testing *(mandatory)*
 
 A new **Record** entry point (alongside drop-a-file and paste-a-YouTube-URL). Starting a recording
 opens a live panel: levels, elapsed time, and a **live transcript that labels speakers as it runs**.
 Stopping saves the transcript (and optionally the audio) into the library's `source/`, from which the
-user picks a style and summarizes — reusing the entire existing pipeline.
+user picks a style and summarizes, reusing the entire existing pipeline.
 
-### User Story 1 — Record a meeting and get a live, speaker-labeled transcript (Priority: P1)
+### User Story 1 - Record a meeting and get a live, speaker-labeled transcript (Priority: P1)
 
 A user clicks **Record**, grants microphone (and, for the far side, audio-capture) permission, and
 watches the transcript appear in real time with speaker labels. On stop, a transcript file is saved
@@ -83,11 +83,11 @@ be summarized.
 3. **Given** no mic permission, **When** the user tries to record, **Then** a clear permission
    prompt/explainer is shown and no capture starts.
 
-### User Story 2 — Capture both sides of a Google Meet without joining (Priority: P1)
+### User Story 2 - Capture both sides of a Google Meet without joining (Priority: P1)
 
 A user is in a Meet call in their browser. They click **Record** in Sumbee. Sumbee captures the
-**microphone** (local voice) **and** taps the **browser's audio** (remote voices) — without Sumbee
-joining the meeting — and produces a single transcript with both sides attributed.
+**microphone** (local voice) **and** taps the **browser's audio** (remote voices), without Sumbee
+joining the meeting, and produces a single transcript with both sides attributed.
 
 **Independent test**: Play two distinct voices through the system output (simulating remote) while
 speaking into the mic; verify the transcript contains both, with the local voice and the system
@@ -101,7 +101,7 @@ voices attributed to different speakers.
 3. **Given** the meeting app can't be tapped (permission denied / unsupported), **Then** Sumbee
    degrades to mic-only with a clear notice rather than failing.
 
-### User Story 3 — Per-person diarization (Priority: P2)
+### User Story 3 - Per-person diarization (Priority: P2)
 
 Within the remote channel, multiple participants are separated into distinct speakers; the user can
 **rename** speakers (e.g., "Speaker 2" → "Priya"), and the summary uses those names.
@@ -112,7 +112,7 @@ Within the remote channel, multiple participants are separated into distinct spe
 3. Diarization errors are recoverable: speaker labels are editable post-hoc; a wrong split/merge
    never loses transcript text.
 
-### User Story 4 — Trial seam, no gate (Priority: P2)
+### User Story 4 - Trial seam, no gate (Priority: P2)
 
 Recording is free and unlimited **now**, but each completed recording increments a counter, and a
 `FeatureGate` abstraction is consulted (always allowing) so a future build can enforce ≈20 free
@@ -121,11 +121,11 @@ trials + a license without re-architecting.
 **Acceptance**: Recording is never blocked; the completed-recording count persists; `FeatureGate`
 is the single checkpoint that a future paid build flips to enforcing.
 
-### User Story 5 — Import your own audio file → transcript → summary (Priority: P1)
+### User Story 5 - Import your own audio file → transcript → summary (Priority: P1)
 
 A user drags an existing audio recording (a `.m4a` voice memo, an `.mp3`, a `.wav` interview) into
 Sumbee. It is transcribed on-device with speaker labels, saved as a transcript, and summarized with a
-chosen style — reusing the exact same pipeline as live recording, just with a file as the source.
+chosen style, reusing the exact same pipeline as live recording, just with a file as the source.
 
 **Independent test**: Drop a known `.m4a` containing two speakers; verify a transcript file appears
 in `source/` with per-speaker segments, and that it summarizes with a style.
@@ -146,7 +146,7 @@ in `source/` with per-speaker segments, and that it summarizes with a style.
 - **FR-002**: The app MUST capture the **microphone** on-device using a documented AVFoundation path,
   after obtaining microphone permission (with a usage-description string).
 - **FR-003**: The app MUST capture the **far-side/system audio of a specific app** (e.g. the browser
-  running Google Meet) via a **Core Audio process tap** — *without joining the meeting* and without
+  running Google Meet) via a **Core Audio process tap**, *without joining the meeting* and without
   requiring Screen Recording permission. ScreenCaptureKit is an allowed fallback.
 - **FR-004**: Mic and system audio MUST be kept as **distinct, time-aligned sources** so that (a)
   the local speaker is always separable from remote, and (b) downstream diarization can cluster
@@ -155,7 +155,7 @@ in `source/` with per-speaker segments, and that it summarizes with a style.
   (streaming/sliding-window), emitting **partial** (volatile) and **finalized** segments with
   start/end timestamps.
 - **FR-006**: The recording audio MUST NOT leave the device. Only the final **transcript text** is
-  sent to the summarization API, and only when the user summarizes — identical to today's disclosure.
+  sent to the summarization API, and only when the user summarizes, identical to today's disclosure.
 - **FR-007**: Diarization MUST attribute each finalized segment to a **speaker**: the local source is
   one speaker; the system source is split into **one or more** speakers via voice-embedding +
   **online clustering**. Speakers MUST have stable IDs for the session.
@@ -171,7 +171,7 @@ in `source/` with per-speaker segments, and that it summarizes with a style.
   manager handles download/verify/update and a clear "model not installed" state.
 - **FR-012**: All required permissions (microphone; audio capture for the tap; whichever TCC class
   the chosen APIs need) MUST be requested with clear explanations, and every denial MUST degrade
-  gracefully (mic-only, or a clear blocked state) — never a silent failure.
+  gracefully (mic-only, or a clear blocked state), never a silent failure.
 - **FR-013**: Before the **first** recording, a one-time **consent/ethics notice** MUST be shown
   (recording others may require their consent; laws vary). It is acknowledged once and recorded.
 - **FR-014**: Recording MUST be **ungated now**: a `FeatureGate` is consulted before each recording
@@ -180,7 +180,7 @@ in `source/` with per-speaker segments, and that it summarizes with a style.
 - **FR-015**: The feature MUST be resilient to long sessions (≥60 min): bounded memory (stream to
   disk, don't hold all audio in RAM), no unbounded transcript growth in a single view, and graceful
   handling of device changes (e.g., switching output/AirPods mid-call).
-- **FR-016**: Echo/feedback MUST be mitigated — the mic source and the tapped system source are
+- **FR-016**: Echo/feedback MUST be mitigated: the mic source and the tapped system source are
   captured **separately** (not mixed before ASR) so the mic doesn't double-transcribe remote audio
   played through speakers; recommend the user wear headphones, and apply AEC/voice isolation where
   available.
@@ -190,8 +190,8 @@ in `source/` with per-speaker segments, and that it summarizes with a style.
   that summarizes via the existing styles. Unsupported/unreadable files fail with a clear inline
   message and start no job.
 - **FR-018 (Modular, source-agnostic pipeline)**: Transcription + diarization MUST be a **single
-  reusable module** consuming audio *frames* from any `AudioFramesProducer` — mic, system tap, or
-  file reader — in **streaming** (live) or **batch** (file) mode. Adding a future source MUST require
+  reusable module** consuming audio *frames* from any `AudioFramesProducer` (mic, system tap, or
+  file reader) in **streaming** (live) or **batch** (file) mode. Adding a future source MUST require
   only a new producer, not changes to the transcription/diarization/summary stages.
 - **FR-019 (File diarization)**: For a single mixed file (no channel prior), diarization MUST rely on
   embedding clustering alone; if it cannot separate speakers confidently it MUST fall back to a single
@@ -221,7 +221,7 @@ in `source/` with per-speaker segments, and that it summarizes with a style.
 - **SC-005**: Recording is never blocked; the trial counter increments and persists.
 - **SC-006**: A denied permission always yields a clear, recoverable state.
 - **SC-007**: A dropped supported audio file produces a saved, speaker-labeled transcript via the
-  same pipeline and is summarizable — with no new code in the transcription/diarization/summary
+  same pipeline and is summarizable, with no new code in the transcription/diarization/summary
   stages beyond the file producer (validates the modular boundary, FR-018).
 
 ## Edge cases
@@ -238,5 +238,5 @@ in `source/` with per-speaker segments, and that it summarizes with a style.
 
 - Cloud transcription; meeting-bot auto-join; calendar integration; video capture.
 - Live translation; real-time summarization during the call (summary still runs after, via styles).
-- A full audio editor. Speaker ID across *different* recordings (voiceprints/enrollment) — future.
+- A full audio editor. Speaker ID across *different* recordings (voiceprints/enrollment) is future.
 - Shipping StoreKit/licensing UI (only the gate seam + counter ship now).

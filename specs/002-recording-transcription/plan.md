@@ -1,4 +1,4 @@
-# Implementation Plan — Recording / Transcription / Diarization
+# Implementation Plan - Recording / Transcription / Diarization
 
 Pairs with `spec.md`, `research.md`, `data-model.md`, and `contracts/`. Builds in the de-risking
 phase order from research D10. Min OS unchanged (macOS 15+); process tap is 14.4+ so always present.
@@ -61,7 +61,7 @@ copy the xcframework into the app bundle.
 
 ## Integration with existing code
 
-- `AppSettings`: add the `RecordingSettings` fields (rides field-tolerant decoding — no migration).
+- `AppSettings`: add the `RecordingSettings` fields (rides field-tolerant decoding, no migration).
 - `MainPanelView`: add the **Record** entry (button) next to drop tiles / YouTube.
 - Output: `TranscriptWriter` writes into `source/` using `DateUtil` naming; the user summarizes via
   the existing file flow. **No change** to `SummarizationEngine`, styles, or library.
@@ -69,35 +69,35 @@ copy the xcframework into the app bundle.
 
 ## Phasing (each independently shippable + on-device testable)
 
-**Phase 1 — Mic → transcript (proves the core).**
+**Phase 1 - Mic → transcript (proves the core).**
 ModelManager (whisper download) · MicCapture · WhisperTranscriber (windowed) · RecordingState ·
 RecordingPanel (levels, elapsed, live text, Stop) · TranscriptWriter · summarize the result.
 Acceptance: User Story 1.
 
-**Phase 1B — Audio file import (nearly free once Phase 1 exists).**
+**Phase 1B - Audio file import (nearly free once Phase 1 exists).**
 `AudioFramesProducer` protocol · `FileAudioSource` (AVFoundation decode → frames) ·
 `TranscriptionPipeline` in **batch** mode · route audio-typed file drops here (text drops still go
-straight to summary) · determinate progress · save → summarize. No permissions, no real-time — the
+straight to summary) · determinate progress · save → summarize. No permissions, no real-time: the
 lowest-risk way to exercise the whole on-device pipeline end-to-end.
 Acceptance: User Story 5.
 
-**Phase 2 — Both sides + channel diarization.**
+**Phase 2 - Both sides + channel diarization.**
 SystemAudioTap (Core Audio process tap) + SourcePicker · two-source capture + alignment ·
 ChannelDiarizer (Me/Remote) · echo handling · graceful tap-denied degrade.
 Acceptance: User Story 2 + SC-002.
 
-**Phase 3 — Per-person diarization + hardening.**
+**Phase 3 - Per-person diarization + hardening.**
 SpeakerEmbedder (Core ML) · EmbeddingDiarizer (online clustering) · editable/renamable speakers ·
 long-session memory bounds · consent notice · trial counter + FeatureGate seam.
 Acceptance: User Story 3, 4 + SC-003/005/006.
 
-**Phase 4 — (future, paid).** Enforce ≈20-trial gate via FeatureGate + StoreKit; speaker enrollment
+**Phase 4 - (future, paid).** Enforce ≈20-trial gate via FeatureGate + StoreKit; speaker enrollment
 across recordings; larger model option. Not in this feature.
 
 ## Testability
 
 Pure/unit-testable without devices/audio:
-- `TranscriptWriter` (segments → expected Markdown shape) — like existing codec tests.
+- `TranscriptWriter` (segments → expected Markdown shape), like existing codec tests.
 - Online clustering (synthetic embedding vectors → stable IDs; threshold behavior).
 - `FeatureGate` (counter increments; decision today always `.allowed`).
 - `ModelManager` path/state logic (installed/not-installed) with a stubbed downloader.

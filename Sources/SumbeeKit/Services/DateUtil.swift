@@ -4,7 +4,7 @@ import Foundation
 public enum DateUtil {
     private static let posix = Locale(identifier: "en_US_POSIX")
 
-    /// "yyyy-MM-dd" — date-only, used for YouTube file naming ("Youtube - <date> - <title>").
+    /// "yyyy-MM-dd" - date-only, used for YouTube file naming ("Youtube - <date> - <title>").
     public static func dateStamp(_ date: Date = Date()) -> String {
         let f = DateFormatter()
         f.locale = posix
@@ -12,7 +12,7 @@ public enum DateUtil {
         return f.string(from: date)
     }
 
-    /// "yyyy-MM-dd HHmm" — used as the asset filename prefix.
+    /// "yyyy-MM-dd HHmm" - used as the asset filename prefix.
     public static func assetTimestamp(_ date: Date = Date()) -> String {
         let f = DateFormatter()
         f.locale = posix
@@ -20,7 +20,7 @@ public enum DateUtil {
         return f.string(from: date)
     }
 
-    /// "yyyy-MM-dd_HHmmss" — used in archived source filenames (no spaces/colons).
+    /// "yyyy-MM-dd_HHmmss" - used in archived source filenames (no spaces/colons).
     public static func archiveTimestamp(_ date: Date = Date()) -> String {
         let f = DateFormatter()
         f.locale = posix

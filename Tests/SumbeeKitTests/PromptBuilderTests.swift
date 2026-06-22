@@ -2,7 +2,7 @@ import XCTest
 @testable import SumbeeKit
 
 final class PromptBuilderTests: XCTestCase {
-    private let style = SummaryStyle(name: "Meetings — General", channel: .file,
+    private let style = SummaryStyle(name: "Meetings - General", channel: .file,
                                      prompt: "Summarize the meeting. Use ## sections.", order: 1)
 
     func testMarkdownConventionIncludesStylePromptAndTitleRule() {

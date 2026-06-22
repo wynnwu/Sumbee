@@ -29,11 +29,11 @@ final class FrontmatterCodecTests: XCTestCase {
 
     func testValueWithColonIsQuotedAndPreserved() {
         var fm = Frontmatter()
-        fm["title"] = "Q2: Roadmap — Notes"
+        fm["title"] = "Q2: Roadmap - Notes"
         let serialized = FrontmatterCodec.serialize(.init(frontmatter: fm, body: "x"))
-        XCTAssertTrue(serialized.contains("\"Q2: Roadmap — Notes\""))
+        XCTAssertTrue(serialized.contains("\"Q2: Roadmap - Notes\""))
         let parsed = FrontmatterCodec.parse(serialized)
-        XCTAssertEqual(parsed.frontmatter["title"], "Q2: Roadmap — Notes")
+        XCTAssertEqual(parsed.frontmatter["title"], "Q2: Roadmap - Notes")
     }
 
     func testCRLFNormalized() {

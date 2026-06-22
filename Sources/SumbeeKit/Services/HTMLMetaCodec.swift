@@ -62,7 +62,7 @@ public enum HTMLMetaCodec {
         return decode(String(html[contentOpen.upperBound..<contentClose.lowerBound]))
     }
 
-    /// Reverse of `escape` — decode the four entities (`&amp;` LAST to avoid double-decoding).
+    /// Reverse of `escape`: decode the four entities (`&amp;` LAST to avoid double-decoding).
     public static func decode(_ s: String) -> String {
         s.replacingOccurrences(of: "&lt;", with: "<")
          .replacingOccurrences(of: "&gt;", with: ">")

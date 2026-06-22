@@ -23,7 +23,7 @@ swift test             # runs SumbeeKitTests (deterministic core)
 open dist/Sumbee.app
 ```
 
-First launch (no key stored) opens to **Settings** with summarization disabled — paste
+First launch (no key stored) opens to **Settings** with summarization disabled. Paste
 an Anthropic API key, Save & Validate, then drop a transcript onto a style.
 
 Gatekeeper note (local/unsigned v1): if macOS blocks first launch, right-click the
@@ -33,7 +33,7 @@ Gatekeeper note (local/unsigned v1): if macOS blocks first launch, right-click t
 
 1. Launch with no key → app opens to Settings, drop zones disabled (US1 AS4).
 2. Save a key → drop zones enable.
-3. Drop a `.txt`/`.md`/`.pdf`/`.docx`/`.rtf` onto a file style → a `YYYY-MM-DD HHmm —
+3. Drop a `.txt`/`.md`/`.pdf`/`.docx`/`.rtf` onto a file style → a `YYYY-MM-DD HHmm -
    <Title>.md` appears in that style's folder; original archived under `source/` (US1).
 4. Toggle system Dark/Light → UI adapts; orange accent + glass remain legible (SC-009).
 5. Browse: the right pane lists summaries grouped by style, newest first; reveal/open/

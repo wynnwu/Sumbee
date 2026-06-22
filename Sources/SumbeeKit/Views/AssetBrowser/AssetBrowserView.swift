@@ -180,8 +180,8 @@ struct AssetBrowserView: View {
 
     /// Reveal an item in Finder. We diagnosed (selectFile returned `true`) that *selecting* the
     /// file succeeds but a stale Home window stays frontmost, hiding it. So instead we OPEN the
-    /// containing folder as a window — opening a folder brings *that* folder's window to the
-    /// front (over Home) — which is also the original ask ("open Finder at the path"). The modern
+    /// containing folder as a window. Opening a folder brings *that* folder's window to the
+    /// front (over Home), which is also the original ask ("open Finder at the path"). The modern
     /// `open(_:configuration:)` with `activates = true` foregrounds Finder; the completion handler
     /// surfaces any real failure.
     private func revealURL(_ url: URL) {
@@ -220,7 +220,7 @@ struct AssetBrowserView: View {
     }
 }
 
-/// One row in the library list — a single line: title left, date-time right.
+/// One row in the library list - a single line: title left, date-time right.
 struct AssetRowView: View {
     let asset: Asset
 

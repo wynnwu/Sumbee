@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Styles list + an inline, full-height prompt editor (no stacked modal — FR-035).
+/// Styles list + an inline, full-height prompt editor (no stacked modal - FR-035).
 struct StylesCRUDSection: View {
     @EnvironmentObject private var state: AppState
     @State private var editing: SummaryStyle?
@@ -122,7 +122,7 @@ enum StyleEditorMode {
     case edit(SummaryStyle)
 }
 
-/// Inline, full-height style editor — replaces the old floating sheet (FR-035).
+/// Inline, full-height style editor - replaces the old floating sheet (FR-035).
 private struct StyleEditorInline: View {
     @EnvironmentObject private var state: AppState
     let mode: StyleEditorMode
@@ -192,7 +192,7 @@ private struct StyleEditorInline: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Name").font(.uiCaption).foregroundStyle(.secondary)
-                    TextField("Meetings — General", text: $name).textFieldStyle(.roundedBorder)
+                    TextField("Meetings - General", text: $name).textFieldStyle(.roundedBorder)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Channel").font(.uiCaption).foregroundStyle(.secondary)
@@ -221,13 +221,13 @@ private struct StyleEditorInline: View {
                 .font(.uiCaption)
                 .padding(.top, 4)
             } label: {
-                Text("Advanced — per-style model & format").font(.uiCaption).foregroundStyle(.secondary)
+                Text("Advanced: per-style model & format").font(.uiCaption).foregroundStyle(.secondary)
             }
 
             Text("Prompt").font(.uiCaption).foregroundStyle(.secondary)
             BigPromptEditor(text: $prompt, fill: true)
 
-            Text("The shared System Prompt (if set) is prepended automatically, and the app appends a format-aware output convention (begin with a title heading) — so this prompt stays focused on style.")
+            Text("The shared System Prompt (if set) is prepended automatically, and the app appends a format-aware output convention (begin with a title heading), so this prompt stays focused on style.")
                 .font(.uiCaption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

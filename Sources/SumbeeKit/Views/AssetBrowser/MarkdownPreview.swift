@@ -140,7 +140,7 @@ struct PreviewPane: View {
         case .markdown:
             content = FrontmatterCodec.parse(raw).body
         case .html:
-            content = "HTML summary — use **Open** to view it styled in your browser.\n\n"
+            content = "HTML summary. Use **Open** to view it styled in your browser.\n\n"
                 + VTTParser.stripTags(raw)   // reuse tag stripper for a plain-text fallback
         }
     }
@@ -302,7 +302,7 @@ private struct RegeneratePopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Regenerate").font(.uiHeadline)
-            Text("Re-runs from the archived original into a new summary — the current one is kept.")
+            Text("Re-runs from the archived original into a new summary. The current one is kept.")
                 .font(.uiCaption).foregroundStyle(.secondary)
 
             Picker("Style", selection: $styleID) {

@@ -79,7 +79,7 @@ struct PromptPreviewSheet: View {
     private func section(_ title: String, _ text: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.uiBody.weight(.semibold)).foregroundStyle(Theme.accent)
-            Text(text.isEmpty ? "—" : text)
+            Text(text.isEmpty ? "-" : text)
                 .font(.system(size: 13, design: .monospaced))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)

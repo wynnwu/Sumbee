@@ -27,7 +27,7 @@ public enum AnthropicError: Error, Equatable, Sendable {
     case invalidKey
     case rateLimited(retryAfter: Int?)
     case overloaded
-    /// 403/404 — model not available, no access, or region/VPN-blocked. Retryable: the user
+    /// 403/404 - model not available, no access, or region/VPN-blocked. Retryable: the user
     /// can fix their environment (e.g. VPN country) and the queue will succeed.
     case unavailable(String)
     case network(String)
@@ -80,7 +80,7 @@ public protocol AnthropicStreaming: Sendable {
     func listModels(_ apiKey: String) async -> [RemoteModel]
 }
 
-/// Anthropic Messages API client over `URLSession` with manual SSE parsing — no SDK.
+/// Anthropic Messages API client over `URLSession` with manual SSE parsing, no SDK.
 public struct AnthropicClient: AnthropicStreaming {
     public static let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
     public static let apiVersion = "2023-06-01"

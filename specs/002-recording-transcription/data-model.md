@@ -1,4 +1,4 @@
-# Phase 1 Data Model — Recording / Transcription / Diarization
+# Phase 1 Data Model - Recording / Transcription / Diarization
 
 New Swift types live in `Sources/SumbeeKit/Models/` (recording) and a new `Services/Recording/`
 group. Nothing here changes existing summarization/library types; a recording's *output* is an
@@ -91,15 +91,15 @@ protocol FeatureGate {
 
 `DefaultFeatureGate` returns `.allowed` always and increments the counter. A future
 `LicensedFeatureGate` returns `.needsLicense` once `recordingsCompleted >= 20` and no license is
-present (StoreKit) — the only behavioral change required to monetize.
+present (StoreKit). This is the only behavioral change required to monetize.
 
 ## On-disk output (reuses existing conventions)
 
 A finished recording **or import** writes, into `<library>/source/`:
-- `YYYY-MM-DD HHmm — <title> (recording).md` (live) or `… (import).md` (file) — the transcript:
+- `YYYY-MM-DD HHmm - <title> (recording).md` (live) or `… (import).md` (file), the transcript:
   front-matter (`source: recording` or `source: import`,
-  `recordedAt`, `durationSeconds`, `speakers`), then Markdown body of `**Speaker** (mm:ss)` lines —
+  `recordedAt`, `durationSeconds`, `speakers`), then Markdown body of `**Speaker** (mm:ss)` lines,
   the **same shape the summarizer already understands** for transcripts.
-- Optionally `… .wav/.m4a` — the raw audio, only if `saveAudio`.
+- Optionally `… .wav/.m4a`, the raw audio, only if `saveAudio`.
 
 The user then summarizes the transcript with any style via the existing flow (no new summarize path).
