@@ -300,7 +300,7 @@ public extension AppState {
             }
         } catch let e as YouTubeError {
             if Task.isCancelled { markCancelled(job.id) }
-            else if e == .network { scheduleRetry(job.id, message: e.userMessage) }
+            else if e == .network || e == .rateLimited { scheduleRetry(job.id, message: e.userMessage) }
             else { fail(job.id, e.userMessage) }
         } catch let e as ExtractionError {
             fail(job.id, "\(job.displayName): \(e.userMessage)")

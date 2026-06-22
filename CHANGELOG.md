@@ -3,6 +3,15 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.7] - 2026-06-22
+
+### Fixed
+- **YouTube caption fetch hitting HTTP 429 ("Too Many Requests").** The app requested
+  `--sub-langs "en.*"`, which matched every auto-translated track (en-ar, en-fr, …) and made yt-dlp
+  download dozens of subtitle files per video, tripping YouTube's rate limit. It now requests only
+  the specific language variants, spaces requests out (`--sleep-requests`, `--retries`), and treats
+  429 as a transient rate-limit so the queue retries with backoff instead of hard-failing the batch.
+
 ## [0.2.6] - 2026-06-22
 
 ### Added

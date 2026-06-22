@@ -127,6 +127,20 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
   surface (`Color(nsColor: .windowBackgroundColor)` for panels, `.textBackgroundColor` for the
   editor fill). Solid is also the conventional macOS Settings look.
 
+## External tools (yt-dlp)
+
+### 17. `yt-dlp --sub-langs "en.*"` pulls every auto-translated track and triggers HTTP 429
+- **Symptom**: caption fetch failed across a batch with "HTTP Error 429: Too Many Requests", and an
+  odd subtitle track like `en-ar` in the message.
+- **Cause**: the glob `en.*` matches not only `en`/`en-US`/`en-GB` but **every auto-translated
+  track** (`en-ar`, `en-fr`, `en-de`, …). yt-dlp downloads one file per matched language, so it made
+  ~30 subtitle requests per video; across a batch that tripped YouTube's rate limit. One track's 429
+  fails the entire run.
+- **Rule**: request **specific** subtitle codes (`<lang>,<lang>-orig,<lang>-US,<lang>-GB`), never
+  `<lang>.*`. Add `--sleep-requests` + `--retries`/`--extractor-retries` to be gentle, and classify
+  `429` / "too many requests" as a **transient/retryable** error so the job queue backs off (we use
+  `YouTubeError.rateLimited`) instead of hard-failing the batch.
+
 ## Meta-rule
 When a fix doesn't work after **two** attempts, stop guessing: add a diagnostic that reports the
 actual state/return values, or reproduce the primitive in isolation (a tiny script / standalone

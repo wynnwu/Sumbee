@@ -24,6 +24,7 @@ public enum YouTubeError: Error, Equatable {
     case regionLocked
     case liveStream
     case network
+    case rateLimited
     case failed(String)
 
     public var userMessage: String {
@@ -37,6 +38,7 @@ public enum YouTubeError: Error, Equatable {
         case .regionLocked: return "This video isn’t available in your region."
         case .liveStream: return "Live streams aren’t supported."
         case .network: return "Network problem reaching YouTube."
+        case .rateLimited: return "YouTube is rate-limiting requests (HTTP 429). Retrying with backoff."
         case .failed(let m): return "Couldn’t fetch captions: \(m)"
         }
     }
@@ -107,13 +109,20 @@ public struct YouTubeService: YouTubeServicing {
         defer { try? fm.removeItem(at: tmp) }
 
         let printTemplate = "%(id)s|||%(title)s|||%(channel)s|||%(duration)s|||%(upload_date)s"
+        // Request only the requested language and its common variants — NOT "\(language).*", which
+        // also matches every auto-translated track (en-ar, en-fr, …) and makes yt-dlp download
+        // dozens of subtitle files per video, hammering YouTube into HTTP 429.
+        let subLangs = "\(language),\(language)-orig,\(language)-US,\(language)-GB"
         let args = [
             "--no-warnings",
             "--skip-download",
             "--write-subs", "--write-auto-subs",
-            "--sub-langs", "\(language).*",
+            "--sub-langs", subLangs,
             "--sub-format", "vtt",
             "--convert-subs", "vtt",
+            "--retries", "3",                // ride out transient HTTP errors within one run
+            "--extractor-retries", "3",
+            "--sleep-requests", "1",         // space out requests so we don't trip rate limits
             "--no-simulate",                 // required so --print still writes the subs
             "--print", printTemplate,
             "-o", tmp.appendingPathComponent("%(id)s.%(ext)s").path,
@@ -192,6 +201,7 @@ public struct YouTubeService: YouTubeServicing {
         if s.contains("live event") || s.contains("is live") { return .liveStream }
         if s.contains("unavailable") || s.contains("removed") || s.contains("does not exist") { return .unavailable }
         if s.contains("no subtitles") || s.contains("there are no subtitles") { return .noCaptions }
+        if s.contains("429") || s.contains("too many requests") { return .rateLimited }
         if s.contains("urlopen error") || s.contains("network") || s.contains("timed out") || s.contains("resolve") {
             return .network
         }
