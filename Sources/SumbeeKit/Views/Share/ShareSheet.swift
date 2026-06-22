@@ -96,14 +96,14 @@ struct ShareSheet: View {
     private var actions: some View {
         HStack(spacing: 10) {
             Button {
-                ShareContent.twitterShareURL.map { NSWorkspace.shared.open($0) }
+                if let url = ShareContent.twitterShareURL { NSWorkspace.shared.open(url) }
             } label: {
                 Label("Post on X", systemImage: "bubble.left.and.text.bubble.right.fill")
             }
             .buttonStyle(AccentButtonStyle())
 
             Button {
-                ShareContent.mailtoURL.map { NSWorkspace.shared.open($0) }
+                if let url = ShareContent.mailtoURL { NSWorkspace.shared.open(url) }
             } label: {
                 Label("Email a friend", systemImage: "envelope.fill")
             }
