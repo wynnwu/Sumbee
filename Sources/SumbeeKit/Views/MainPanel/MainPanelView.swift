@@ -48,18 +48,27 @@ struct MainPanelView: View {
         .padding(.top, 6)
     }
 
-    /// Top-right "Enjoying Sumbee? [Share Now]" call to action (FR: viral share).
+    /// Top-right "Enjoying Sumbee?" prompt stacked above a compact Share button (FR: viral share).
     private var shareCTA: some View {
-        HStack(spacing: 10) {
+        VStack(alignment: .trailing, spacing: 4) {
             Text("Enjoying Sumbee?")
-                .font(.uiCallout)
+                .font(.uiCaption)
                 .foregroundStyle(.secondary)
             Button {
                 state.showShare = true
             } label: {
-                Label("Share Now", systemImage: "square.and.arrow.up")
+                Label("Share", systemImage: "square.and.arrow.up")
+                    .font(.uiCaption.weight(.semibold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .foregroundStyle(.white)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.smallCorner, style: .continuous)
+                            .fill(Theme.accentGradient)
+                            .shadow(color: Theme.accentGlow(0.4), radius: 5, y: 1)
+                    )
             }
-            .buttonStyle(AccentButtonStyle())
+            .buttonStyle(.plain)
         }
         .fixedSize()
     }
