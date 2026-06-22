@@ -3,6 +3,22 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] — 2026-06-22
+
+### Changed
+- **Settings is flatter & more readable**: removed the elevated card/drop-shadow on every section;
+  the Model picker and the segmented controls (Output format, Reasoning effort, per-style override)
+  are now flat (no native bezel/shadow); the panel uses a brighter surface so the small grey
+  caption text is legible.
+- **API Key**: when a key is active it shows a large green check + **Update Key** / **Remove Key**
+  (no entry box). **Update Key** reveals the entry form with **Save & Validate** / **Cancel**.
+- **Styles**: reorder by **drag-and-drop** (handlebars on the left); removed the up/down buttons;
+  the edit icon is larger.
+
+### Internal
+- Headless smoke runs skip the Keychain read (it was triggering ad-hoc access prompts).
+- Added a "stale incremental build can hang at launch" entry to `docs/swift-macos-learnings.md`.
+
 ## [0.2.1] — 2026-06-22
 
 ### Fixed

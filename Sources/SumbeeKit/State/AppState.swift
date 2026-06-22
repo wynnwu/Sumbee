@@ -88,7 +88,9 @@ public final class AppState: ObservableObject {
             loaded.libraryRootPath = lib
         }
         self.settings = loaded
-        self.hasKey = keychain.hasKey
+        // Skip the Keychain read in headless smoke runs — for ad-hoc builds, reading an item created
+        // under a prior code identity pops a blocking "allow access" prompt (learnings #4).
+        self.hasKey = ProcessInfo.processInfo.environment["SUMBEE_SMOKE"] == "1" ? false : keychain.hasKey
         AppState.current = self
     }
 

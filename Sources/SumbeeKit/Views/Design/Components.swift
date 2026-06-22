@@ -92,6 +92,42 @@ public struct ToastView: View {
     }
 }
 
+/// A flat segmented control (no native bezel/drop shadow) — matches the bottom bar's toggle style.
+public struct FlatSegmented<T: Hashable>: View {
+    @Binding public var selection: T
+    public let options: [(value: T, label: String)]
+
+    public init(selection: Binding<T>, options: [(value: T, label: String)]) {
+        self._selection = selection
+        self.options = options
+    }
+
+    public var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options, id: \.value) { opt in
+                let active = selection == opt.value
+                Button { selection = opt.value } label: {
+                    Text(opt.label)
+                        .font(.uiCallout.weight(active ? .semibold : .regular))
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .foregroundStyle(active ? Color.white : Color.secondary)
+                        .background {
+                            if active {
+                                RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.accentGradient)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.06)))
+    }
+}
+
 /// A small status capsule (used for per-job phase, model badges, etc.).
 public struct StatusChip: View {
     public var systemImage: String?

@@ -71,6 +71,19 @@ public extension AppState {
         } catch { present(.error, "\(error)") }
     }
 
+    /// Drag-to-reorder: apply the new visual order from the styles list and persist `order`.
+    /// `current` is the displayed (sorted) array; after the move, `order` is reassigned by index.
+    func reorderStyles(from source: IndexSet, to destination: Int, current: [SummaryStyle]) {
+        var arr = current
+        arr.move(fromOffsets: source, toOffset: destination)
+        for (i, style) in arr.enumerated() where style.order != i {
+            var u = style
+            u.order = i
+            try? styleStore.update(u, root: root)
+        }
+        reloadLibrary()
+    }
+
     /// Restore the seeded default styles (additive — never deletes user content).
     func resetStylesToDefaults() {
         do {

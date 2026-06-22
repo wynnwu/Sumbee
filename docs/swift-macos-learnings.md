@@ -109,6 +109,15 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
 - **Rule**: give the smoke run a generous window (~30–40 s); retry once the build settles before
   concluding there's a hang. Build each feature group and confirm `swift build` is clean before moving on.
 
+### 15. A stale incremental build can produce a binary that hangs at launch
+- **Symptom**: after rapid edits + mixing `swift build` (debug) and an incremental `bundle.sh`
+  (release), the app launched into a **100%-CPU SwiftUI scene-instantiation loop** (caught with
+  `sample <pid>`); a clean rebuild ran fine with no code change.
+- **Rule**: when the app hangs at launch after back-to-back/mixed incremental builds, **`rm -rf
+  .build dist` and rebuild before bisecting code**. Profile a suspected hang with
+  `sample <pid> 5 -file out.txt` — if it's all `AG::Graph::UpdateStack::update` / scene-list updates,
+  it's a SwiftUI update cycle (or a bad build), not I/O.
+
 ## Meta-rule
 When a fix doesn't work after **two** attempts, stop guessing: add a diagnostic that reports the
 actual state/return values, or reproduce the primitive in isolation (a tiny script / standalone

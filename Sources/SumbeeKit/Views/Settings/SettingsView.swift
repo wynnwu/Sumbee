@@ -43,7 +43,8 @@ struct SettingsView: View {
                 detail
             }
             .frame(width: 900, height: 680)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            // Thicker (brighter, more opaque) surface so the small grey caption text is legible.
+            .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
@@ -143,46 +144,78 @@ private struct APIKeySection: View {
     @State private var validating = false
     @State private var statusText: String?
     @State private var statusOK = false
+    @State private var editing = false      // showing the key-entry form (no key, or "Update Key")
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SettingsCard("Anthropic API key", systemImage: "key.fill") {
-                HStack(spacing: 6) {
-                    Image(systemName: state.hasKey ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(state.hasKey ? .green : .orange)
-                    Text(state.hasKey ? "A key is stored in your Keychain." : "No key stored yet.")
-                        .font(.uiBody).foregroundStyle(.secondary)
+                if state.hasKey && !editing {
+                    activeState
+                } else {
+                    entryForm
                 }
-
-                SecureField("sk-ant-…", text: $keyInput)
-                    .textFieldStyle(.roundedBorder)
-
-                HStack {
-                    Button {
-                        Task { await validate() }
-                    } label: {
-                        if validating { ProgressView().controlSize(.small) } else { Text("Save & Validate") }
-                    }
-                    .buttonStyle(AccentButtonStyle())
-                    .disabled(keyInput.isEmpty || validating)
-
-                    if state.hasKey {
-                        Button("Remove key", role: .destructive) {
-                            state.removeKey(); keyInput = ""; statusText = nil
-                        }
-                        .buttonStyle(GhostButtonStyle())
-                    }
-                    Spacer()
-                }
-
-                if let statusText {
-                    Label(statusText, systemImage: statusOK ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                        .font(.uiCaption)
-                        .foregroundStyle(statusOK ? .green : .red)
-                }
-
                 Text("Stored securely in the macOS Keychain and read only when summarizing. It is never written to files or logs.")
                     .font(.uiCaption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // Active key: a prominent check, no entry box, Update/Remove.
+    private var activeState: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 30))
+                    .foregroundStyle(.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("API key active").font(.uiBody.weight(.semibold))
+                    Text("A key is stored securely in your Keychain.")
+                        .font(.uiCaption).foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            HStack {
+                Button("Update Key") {
+                    editing = true; keyInput = ""; statusText = nil
+                }.buttonStyle(AccentButtonStyle())
+                Button("Remove Key", role: .destructive) {
+                    state.removeKey(); keyInput = ""; statusText = nil; editing = false
+                }.buttonStyle(GhostButtonStyle())
+                Spacer()
+            }
+        }
+    }
+
+    // Entry form: shown when there's no key, or when updating an existing one.
+    private var entryForm: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if !state.hasKey {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("No key stored yet.").font(.uiBody).foregroundStyle(.secondary)
+                }
+            }
+            SecureField("sk-ant-…", text: $keyInput)
+                .textFieldStyle(.roundedBorder)
+            HStack {
+                Button {
+                    Task { await validate() }
+                } label: {
+                    if validating { ProgressView().controlSize(.small) } else { Text("Save & Validate") }
+                }
+                .buttonStyle(AccentButtonStyle())
+                .disabled(keyInput.isEmpty || validating)
+
+                if state.hasKey {     // updating — allow backing out
+                    Button("Cancel") { editing = false; keyInput = ""; statusText = nil }
+                        .buttonStyle(GhostButtonStyle())
+                }
+                Spacer()
+            }
+            if let statusText {
+                Label(statusText, systemImage: statusOK ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                    .font(.uiCaption)
+                    .foregroundStyle(statusOK ? .green : .red)
             }
         }
     }
@@ -197,8 +230,9 @@ private struct APIKeySection: View {
             statusText = error
         } else {
             statusOK = true
-            statusText = "Key validated and saved."
+            statusText = nil
             keyInput = ""
+            editing = false           // back to the active state (green check)
         }
     }
 }
@@ -214,14 +248,28 @@ private struct GenerationSection: View {
         VStack(alignment: .leading, spacing: 14) {
             SettingsCard("Model", systemImage: "cpu") {
                 HStack {
-                    Picker("Model", selection: modelBinding) {
-                        ForEach(state.modelsForPicker) { preset in
-                            Text(preset.displayName).tag(preset.id)
+                    Menu {
+                        // Inline picker keeps the existing selection logic (incl. "Custom…").
+                        Picker("Model", selection: modelBinding) {
+                            ForEach(state.modelsForPicker) { preset in
+                                Text(preset.displayName).tag(preset.id)
+                            }
+                            Text("Custom…").tag("__custom__")
                         }
-                        Text("Custom…").tag("__custom__")
+                        .pickerStyle(.inline)
+                        .labelsHidden()
+                    } label: {
+                        HStack {
+                            Text(currentModelLabel)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.06)))
+                        .contentShape(Rectangle())
                     }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
                     Button { state.fetchModels() } label: { Image(systemName: "arrow.clockwise") }
                         .buttonStyle(.plain).foregroundStyle(.secondary)
                         .help("Refresh the model list from your Anthropic account")
@@ -259,13 +307,8 @@ private struct GenerationSection: View {
 
             if caps.supportsEffort {
                 SettingsCard("Reasoning effort", systemImage: "brain") {
-                    Picker("Effort", selection: effortBinding) {
-                        Text("Default").tag("")
-                        ForEach(caps.effortLevels, id: \.self) { lvl in
-                            Text(lvl.capitalized).tag(lvl)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+                    FlatSegmented(selection: effortBinding,
+                                  options: [("", "Default")] + caps.effortLevels.map { ($0, $0.capitalized) })
                 }
             }
 
@@ -283,6 +326,12 @@ private struct GenerationSection: View {
             // model menu uses, so Settings and the bar stay in sync.
             state.normalizeGenerationForModel()
         }
+    }
+
+    private var currentModelLabel: String {
+        let m = state.settings.model
+        if !modelIsKnown(m) { return m.isEmpty ? "Custom…" : m }
+        return state.modelsForPicker.first { $0.id == m }?.displayName ?? m
     }
 
     private func modelIsKnown(_ id: String) -> Bool {
@@ -361,10 +410,8 @@ private struct OutputSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SettingsCard("Output format", systemImage: "doc.fill") {
-                Picker("Format", selection: $state.settings.outputFormat) {
-                    ForEach(OutputFormat.allCases) { Text($0.displayName).tag($0) }
-                }
-                .pickerStyle(.segmented)
+                FlatSegmented(selection: $state.settings.outputFormat,
+                              options: OutputFormat.allCases.map { ($0, $0.displayName) })
                 Text("Markdown is the default. HTML produces a self-contained styled document.")
                     .font(.uiCaption).foregroundStyle(.secondary)
             }
@@ -515,6 +562,7 @@ struct SettingsCard<Content: View>: View {
     }
 
     var body: some View {
+        // Flat settings section — no elevated card/shadow (just a labeled group on the pane).
         VStack(alignment: .leading, spacing: 10) {
             Label(title, systemImage: systemImage)
                 .font(.uiBody.weight(.semibold))
@@ -522,7 +570,6 @@ struct SettingsCard<Content: View>: View {
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .glassCard()
+        .padding(.vertical, 6)
     }
 }

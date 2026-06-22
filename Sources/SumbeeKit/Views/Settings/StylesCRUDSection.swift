@@ -40,11 +40,18 @@ struct StylesCRUDSection: View {
                 Text("No styles yet. Add one, or reset to defaults.")
                     .font(.uiBody).foregroundStyle(.secondary)
             } else {
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(sortedStyles) { row($0) }
+                List {
+                    ForEach(sortedStyles) { style in
+                        row(style)
+                            .listRowSeparator(.visible)
+                            .listRowBackground(Color.clear)
+                    }
+                    .onMove { from, to in
+                        state.reorderStyles(from: from, to: to, current: sortedStyles)
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -81,6 +88,10 @@ struct StylesCRUDSection: View {
 
     private func row(_ style: SummaryStyle) -> some View {
         HStack(spacing: 10) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 14))
+                .foregroundStyle(.tertiary)
+                .help("Drag to reorder")
             Image(systemName: style.channel == .file ? "arrow.down.doc.fill" : "play.rectangle.fill")
                 .foregroundStyle(Theme.accent).frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
@@ -94,21 +105,15 @@ struct StylesCRUDSection: View {
             ))
             .labelsHidden().toggleStyle(.switch).help("Enabled")
 
-            Button { state.moveStyle(style, up: true) } label: { Image(systemName: "chevron.up") }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
-                .help("Move up").accessibilityLabel("Move \(style.name) up")
-            Button { state.moveStyle(style, up: false) } label: { Image(systemName: "chevron.down") }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
-                .help("Move down").accessibilityLabel("Move \(style.name) down")
-            Button { editing = style } label: { Image(systemName: "pencil") }
+            Button { editing = style } label: { Image(systemName: "square.and.pencil").font(.system(size: 18)) }
                 .buttonStyle(.plain).foregroundStyle(.secondary).help("Edit")
                 .accessibilityLabel("Edit \(style.name)")
-            Button { deleteTarget = style } label: { Image(systemName: "trash") }
+            Button { deleteTarget = style } label: { Image(systemName: "trash").font(.system(size: 15)) }
                 .buttonStyle(.plain).foregroundStyle(.secondary).help("Remove")
                 .accessibilityLabel("Remove \(style.name)")
         }
-        .padding(12)
-        .glassCard()
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
     }
 }
 
@@ -206,9 +211,9 @@ private struct StyleEditorInline: View {
                             Picker("Model", selection: $ovModel) {
                                 ForEach(state.modelsForPicker) { Text($0.displayName).tag($0.id) }
                             }.frame(maxWidth: 300)
-                            Picker("Output", selection: $ovFormat) {
-                                ForEach(OutputFormat.allCases) { Text($0.displayName).tag($0) }
-                            }.frame(width: 210)
+                            FlatSegmented(selection: $ovFormat,
+                                          options: OutputFormat.allCases.map { ($0, $0.displayName) })
+                                .frame(width: 210)
                         }
                         Stepper("Max output tokens: \(ovMaxTokens)", value: $ovMaxTokens, in: 512...64000, step: 512)
                     }

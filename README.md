@@ -70,7 +70,7 @@ Markdown (or HTML) files in a folder you control.
 > certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that — you
 > only do it once.
 
-1. Download **`Sumbee-0.2.1.zip`** from the [latest release](../../releases/latest).
+1. Download **`Sumbee-0.2.2.zip`** from the [latest release](../../releases/latest).
 2. Unzip it and drag **Sumbee.app** to your **Applications** folder.
 3. Remove the quarantine flag (the reliable way to open an unsigned app), then launch:
    ```bash
