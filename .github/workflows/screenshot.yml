@@ -1,0 +1,81 @@
+name: Screenshot
+
+# Build Sumbee and capture app screenshots as CI artifacts.
+#
+# This deliberately runs ONLY on the `remote-dev` branch (plus manual dispatch): local development
+# and the default branch stay artifact-free, while pushing/merging to `remote-dev` produces
+# screenshots you can download from the run's "Artifacts" section.
+#
+# Sumbee is a macOS/AppKit app, so this MUST run on a macOS runner (a Linux runner cannot build it).
+# Screenshots use the app's own headless self-render hooks (SUMBEE_SMOKE / SUMBEE_SHOT / ...),
+# which draw the window via cacheDisplay - no Screen Recording permission or live display needed.
+
+on:
+  push:
+    branches: [remote-dev]
+  workflow_dispatch:
+
+# Avoid piling up runs if several pushes land on remote-dev in quick succession.
+concurrency:
+  group: screenshot-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  screenshot:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Build (release)
+        run: swift build -c release
+
+      - name: Capture screenshots
+        run: |
+          set -euo pipefail
+          BIN="$(swift build -c release --show-bin-path)/Sumbee"
+          OUT="$PWD/screenshots-ci"
+          mkdir -p "$OUT"
+
+          # Isolated library so a run never touches a real ~/Sumbee Summaries / ~/Documents.
+          export SUMBEE_LIBRARY="$(mktemp -d)/Sumbee Summaries"
+
+          # Each invocation boots, draws one window, writes the PNG, and self-terminates (~2s).
+          shoot() {
+            local out="$1"; shift
+            echo ">> $out"
+            env SUMBEE_SMOKE=1 SUMBEE_SHOT="$out" "$@" \
+              "$BIN" || true
+          }
+
+          # 1) Main panel
+          shoot "$OUT/screen-01-app.png"
+
+          # 2) Settings - Generation section
+          shoot "$OUT/screen-02-settings-generation.png" \
+            SUMBEE_OPEN_SETTINGS=1 SUMBEE_SETTINGS_SECTION=Generation
+
+          # 3) Styles editor (first style opened)
+          shoot "$OUT/screen-03-styles.png" \
+            SUMBEE_OPEN_SETTINGS=1 SUMBEE_SETTINGS_SECTION=Styles SUMBEE_EDIT_FIRST_STYLE=1
+
+          # 4) Output section
+          shoot "$OUT/screen-04-output.png" \
+            SUMBEE_OPEN_SETTINGS=1 SUMBEE_SETTINGS_SECTION=Output
+
+          echo ">> Captured:"
+          ls -la "$OUT"
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: sumbee-screenshots
+          path: screenshots-ci/*.png
+          if-no-files-found: error
