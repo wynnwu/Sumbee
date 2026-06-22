@@ -38,10 +38,13 @@ struct ContentView: View {
                     .zIndex(10)
             }
         }
-        .sheet(item: Binding(get: { state.pendingPreview }, set: { state.pendingPreview = $0 })) { preview in
-            PromptPreviewSheet(preview: preview,
-                               onSend: { state.confirmPendingPreview() },
+        .sheet(isPresented: Binding(
+            get: { state.previewPhase != nil },
+            set: { if !$0 { state.cancelPendingPreview() } }
+        )) {
+            PromptPreviewSheet(onSend: { state.confirmPendingPreview() },
                                onCancel: { state.cancelPendingPreview() })
+                .environmentObject(state)
         }
         .animation(Theme.spring, value: state.showSettings)
         .animation(Theme.quick, value: state.toast?.id)

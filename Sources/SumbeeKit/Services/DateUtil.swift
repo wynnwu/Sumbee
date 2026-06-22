@@ -4,6 +4,14 @@ import Foundation
 public enum DateUtil {
     private static let posix = Locale(identifier: "en_US_POSIX")
 
+    /// "yyyy-MM-dd" — date-only, used for YouTube file naming ("Youtube - <date> - <title>").
+    public static func dateStamp(_ date: Date = Date()) -> String {
+        let f = DateFormatter()
+        f.locale = posix
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
+    }
+
     /// "yyyy-MM-dd HHmm" — used as the asset filename prefix.
     public static func assetTimestamp(_ date: Date = Date()) -> String {
         let f = DateFormatter()

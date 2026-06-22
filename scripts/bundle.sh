@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 
 APP_NAME="Sumbee"
 BUNDLE_ID="com.sumbee.app"
-VERSION="0.2.0"
+VERSION="0.2.1"
 DIST="dist"
 APP="${DIST}/${APP_NAME}.app"
 

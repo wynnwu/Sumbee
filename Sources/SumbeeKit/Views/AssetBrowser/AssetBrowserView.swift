@@ -244,7 +244,9 @@ struct AssetRowView: View {
             }
         }
         .padding(.vertical, 4)
-        .onDrag { NSItemProvider(object: asset.url as NSURL) }   // drag the file out (FR-042)
+        // Finder-style: quick click selects, press-and-drag exports the file. `.draggable`
+        // (unlike the older `.onDrag`) is meant to coexist with List click-selection (FR-042).
+        .draggable(asset.url)
     }
 
     private var icon: String {

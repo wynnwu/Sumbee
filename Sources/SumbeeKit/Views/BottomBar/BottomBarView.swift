@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BottomBarView: View {
     @EnvironmentObject private var state: AppState
+    @Environment(\.colorScheme) private var colorScheme
 
     private var activelyRunningJob: Job? {
         state.jobs.first {
@@ -18,24 +19,19 @@ struct BottomBarView: View {
     private var finishedCount: Int { state.jobs.filter { $0.phase.isTerminal }.count }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button { state.showSettings = true } label: {
-                Image(systemName: "gearshape.fill").font(.system(size: 18))
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("Settings (⌘,)")
-            .accessibilityLabel("Settings")
-
+        HStack(spacing: 14) {
+            settingsButton
+            barDivider
             modelMenu
+            barDivider
+            outputToggle
+            barDivider
+            geekToggle
 
             if !state.hasKey {
+                barDivider
                 StatusChip(systemImage: "key", text: "No API key", tint: .orange)
             }
-
-            outputToggle
-
-            geekToggle
 
             Spacer()
 
@@ -75,6 +71,25 @@ struct BottomBarView: View {
         .frame(height: 46)
         .background(barBackground)
         .overlay(alignment: .top) { topEdge }
+    }
+
+    private var settingsButton: some View {
+        Button { state.showSettings = true } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "gearshape.fill").font(.system(size: 16))
+                Text("Settings").font(.uiCallout)
+            }
+            .foregroundStyle(.secondary)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Settings (⌘,)")
+        .accessibilityLabel("Settings")
+    }
+
+    /// Thin vertical separator between bottom-bar controls.
+    private var barDivider: some View {
+        Divider().frame(height: 18).overlay(Theme.hairline)
     }
 
     // MARK: Model menu (FR-024)
@@ -192,8 +207,9 @@ struct BottomBarView: View {
                         endPoint: UnitPoint(x: shift + 0.6, y: 0.5)
                     )
                     .hueRotation(.degrees(t.truncatingRemainder(dividingBy: 12) * 30))
-                    .opacity(0.45)
-                    .blendMode(.plusLighter)
+                    // `.plusLighter` glows over dark, but washes out on light → use a solid wash there.
+                    .opacity(colorScheme == .dark ? 0.45 : 0.7)
+                    .blendMode(colorScheme == .dark ? .plusLighter : .normal)
                 }
                 .allowsHitTesting(false)
             }

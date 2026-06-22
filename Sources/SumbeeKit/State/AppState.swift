@@ -42,7 +42,8 @@ public final class AppState: ObservableObject {
     // Command / cross-view coordination (FR-039/041/044)
     @Published public var focusSearchToken = 0
     @Published public var pendingNewStyle = false
-    @Published public var pendingPreview: PendingPreview?
+    /// Geek-mode prompt-preview modal phase: `.preparing` (spinner) → `.ready` (full preview).
+    @Published public var previewPhase: PreviewPhase?
 
     /// Focus the library search field (⌘F).
     public func requestSearchFocus() { focusSearchToken &+= 1 }
@@ -65,6 +66,7 @@ public final class AppState: ObservableObject {
     func setClock(_ d: Date) { clock = d }
     private var saveTask: Task<Void, Never>?
     private var modelsTask: Task<Void, Never>?
+    var previewTask: Task<Void, Never>?
 
     public init(keychain: KeychainStoring = KeychainStore(),
                 styleStore: StyleStoring = StyleStore(),

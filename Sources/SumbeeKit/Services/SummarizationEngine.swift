@@ -58,7 +58,7 @@ public struct SummarizationEngine {
         progress(.phase(.fetching))
         let (transcript, meta) = try await youtube.fetchTranscript(url, language: settings.captionLanguage, ytDlp: ytDlp)
         try Task.checkCancellation()
-        _ = try archiveTranscript(transcript, videoID: meta.videoID, root: settings.libraryRootURL, originalURL: url)
+        _ = try archiveTranscript(transcript, title: meta.title, root: settings.libraryRootURL, originalURL: url)
         return PreparedInput(text: transcript, sourceRef: url.absoluteString,   // record the URL as the source
                              fallbackTitle: meta.title, videoMeta: meta)
     }
@@ -131,7 +131,8 @@ public struct SummarizationEngine {
         let originalLink = prepared.videoMeta != nil ? prepared.sourceRef : nil
         return try saveAsset(output: output, style: style, format: format, root: root,
                              sourceRef: prepared.sourceRef, model: request.model,
-                             fallbackTitle: prepared.fallbackTitle, originalLink: originalLink)
+                             fallbackTitle: prepared.fallbackTitle, originalLink: originalLink,
+                             videoTitle: prepared.videoMeta?.title)
     }
 
     /// Resolve the request, sending only parameters the chosen model accepts (capability-gated).
@@ -154,15 +155,22 @@ public struct SummarizationEngine {
 
     func saveAsset(output: String, style: SummaryStyle, format: OutputFormat, root: URL,
                    sourceRef: String?, model: String, fallbackTitle: String,
-                   originalLink: String? = nil) throws -> Asset {
+                   originalLink: String? = nil, videoTitle: String? = nil) throws -> Asset {
         let styleFolder = root.appendingPathComponent(style.name, isDirectory: true)
         try fm.createDirectory(at: styleFolder, withIntermediateDirectories: true)
 
-        let parsedTitle = PromptBuilder.extractTitle(from: output, format: format)
-        let displayTitle = (parsedTitle?.isEmpty == false ? parsedTitle! : fallbackTitle)
-        let safe = Sanitizer.sanitizeTitle(displayTitle)
         let created = Date()
-        let baseName = "\(DateUtil.assetTimestamp(created)) — \(safe)"
+        let displayTitle: String
+        let baseName: String
+        if let videoTitle, !videoTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // YouTube: name the file after the original video title (FR-045).
+            displayTitle = videoTitle
+            baseName = "Youtube - \(DateUtil.dateStamp(created)) - \(Sanitizer.sanitizeTitle(videoTitle))"
+        } else {
+            let parsed = PromptBuilder.extractTitle(from: output, format: format)
+            displayTitle = (parsed?.isEmpty == false ? parsed! : fallbackTitle)
+            baseName = "\(DateUtil.assetTimestamp(created)) — \(Sanitizer.sanitizeTitle(displayTitle))"
+        }
         let filename = Sanitizer.uniqueFilename(baseName: baseName, ext: format.fileExtension, in: styleFolder)
         let fileURL = styleFolder.appendingPathComponent(filename)
 
@@ -215,10 +223,11 @@ public struct SummarizationEngine {
         return "source/\(dest.lastPathComponent)"
     }
 
-    func archiveTranscript(_ transcript: String, videoID: String, root: URL, originalURL: URL) throws -> String {
+    func archiveTranscript(_ transcript: String, title: String, root: URL, originalURL: URL) throws -> String {
         let sourceDir = root.appendingPathComponent("source", isDirectory: true)
         try fm.createDirectory(at: sourceDir, withIntermediateDirectories: true)
-        let base = "\(DateUtil.archiveTimestamp())__\(videoID)"   // datetime prefix (FR-026)
+        // Name the archived YouTube transcript after the video title (FR-045).
+        let base = "Youtube - \(DateUtil.dateStamp()) - \(Sanitizer.sanitizeTitle(title))"
         let filename = Sanitizer.uniqueFilename(baseName: base, ext: "txt", in: sourceDir)
         let dest = sourceDir.appendingPathComponent(filename)
         let header = "Source: \(originalURL.absoluteString)\n\n"

@@ -3,6 +3,28 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] — 2026-06-22
+
+### Fixed
+- Clicking a library item now selects it reliably — the row's drag gesture was swallowing the click
+  (arrow keys still worked, which was the tell).
+- The summarizing animation on the bottom bar is now clearly visible in **light mode** (the glow
+  blend washed out on light backgrounds).
+
+### Changed
+- **Drag-to-export** moved to the library **row** (Finder-style: quick click selects, press-and-drag
+  exports) via `.draggable`; removed the preview-title drag (it dragged the window).
+- **YouTube** summaries and archived transcripts are now named `Youtube - YYYY-MM-DD - <video title>`
+  and the library shows the video title.
+- **Geek mode** now opens its prompt-preview as an immediate modal (spinner → full preview), instead
+  of leaving the UI live and popping the preview in afterward.
+- Bottom bar: more spacing + vertical dividers between controls, and the gear now has a "Settings"
+  label. Drop-zone style names use a lighter, thin weight.
+
+### Docs
+- Added `docs/swift-macos-learnings.md` (gotchas we hit + rules) referenced from `CLAUDE.md`, and the
+  full design spec for the planned on-device recording/transcription/diarization feature (`specs/002`).
+
 ## [0.2.0] — 2026-06-21
 
 ### Added

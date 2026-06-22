@@ -304,7 +304,9 @@ Finder and confirm the in-app list updates.
   (macOS's default text styles read too small), and MUST NOT rely on `dynamicTypeSize` to
   enlarge built-in styles (it barely moves them on macOS).
 - **FR-028**: During active summarization the bottom bar MUST display a lively, colorful
-  animation; it returns to a calm state when idle.
+  animation; it returns to a calm state when idle. The blend MUST adapt to appearance —
+  `.plusLighter` glows over dark but washes out on light, so light mode uses a solid (`.normal`)
+  higher-opacity wash so the color chase is clearly visible in both schemes.
 - **FR-029**: The original source link (e.g. a YouTube URL) MUST be recorded programmatically
   and never sent to/returned from the model: in Markdown it lives in the `source:` front-matter;
   in HTML it is also rendered as a small, centered, grey, underlined link just before `</body>`.
@@ -355,21 +357,32 @@ several of these (regenerate, streaming) reuse machinery the app already has (th
   format; unset fields fall back to the global settings. This adds no new data — it surfaces what
   the model already supports.
 - **FR-039 (Geek mode)**: A bottom-bar **geek mode** toggle (persisted). When ON, starting a
-  **single** summary (one dropped file, a YouTube URL, or a regenerate) MUST first show a preview
-  of the **exact prompt to be sent** (assembled system prompt + user message) together with an
-  **estimated token count**, with Send / Cancel. When OFF, behavior is unchanged. Multi-file batch
-  drops are not individually previewed (power-user bulk path); the estimate is a fast local
-  heuristic so it works offline and adds no latency.
+  **single** summary (one dropped file, a YouTube URL, or a regenerate) MUST **immediately** present
+  a **modal** that blocks the rest of the UI: first a spinner ("Preparing prompt stats and preview…")
+  while the input is prepared, then it reveals the **exact prompt to be sent** (assembled system
+  prompt + user message) with an **estimated token count**, and Send / Cancel. Cancelling during
+  preparation aborts the prepare. When OFF, behavior is unchanged. Multi-file batch drops are not
+  individually previewed (power-user bulk path); the estimate is a fast local heuristic (offline,
+  no added latency).
 - **FR-040 (Streaming preview)**: While a summary is generating, the preview pane MUST show the
   output **streaming in live**, then settle on the saved file when done. No separate window.
 - **FR-041 (Library search)**: The library MUST offer a search/filter field over summary titles;
   **⌘F** focuses it. Filtering is local and instant. Empty query shows everything.
-- **FR-042 (Drag out & Quick Look)**: A summary row/preview MUST be **draggable** to Finder or
-  other apps (the underlying file), and **space bar** MUST Quick Look the selected summary.
+- **FR-042 (Drag out & Quick Look)**: A summary MUST be **draggable** to Finder/other apps from the
+  **library row**, Finder-style — a quick click selects, a press-and-drag exports the file — while
+  click-selection and arrow-key navigation keep working. Use SwiftUI `.draggable` (NOT the older
+  `.onDrag`, which swallows the row's mouse-down and breaks click-to-select). If `.draggable` still
+  can't coexist with `List` selection on the target OS, back the list with an AppKit `NSTableView`
+  (the guaranteed Finder-exact path). Do NOT put drag on the preview title (the window background is
+  movable, so the title would drag the window). **Space bar** Quick Looks the selected summary.
 - **FR-043 (Richer preview)**: The Markdown preview MUST additionally render **tables** and
   **clickable links** (kept deliberately lightweight — no full CommonMark engine).
 - **FR-044 (Keyboard shortcuts)**: **⌘N** creates a new style (opens the style editor); together
   with ⌘F (FR-041) and existing ⌘, (Settings), the core flow is keyboard-reachable.
+- **FR-045 (YouTube file naming)**: For YouTube inputs, both the saved summary and the archived
+  transcript MUST be named after the **original video title** with a `Youtube - YYYY-MM-DD - ` prefix
+  (e.g. `Youtube - 2026-06-22 - How to Build a Mac App.md`), and the summary's library title shows the
+  video title. Non-YouTube assets keep the `YYYY-MM-DD HHmm — <title>` convention.
 
 ### Key Entities *(include if feature involves data)*
 

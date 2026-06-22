@@ -1,5 +1,12 @@
 import Foundation
 
+/// Geek-mode prompt preview modal (FR-039): show the modal immediately while preparing, then
+/// reveal the full assembled prompt + token estimate.
+public enum PreviewPhase {
+    case preparing
+    case ready(PendingPreview)
+}
+
 /// A pending, fully-assembled request awaiting user confirmation in geek mode (FR-039).
 public struct PendingPreview: Identifiable {
     public let id = UUID()
@@ -78,8 +85,9 @@ public extension AppState {
     /// job is enqueued with the prepared input cached (so it isn't prepared twice).
     private func previewSingle(input: Job.Input, displayName: String, style: SummaryStyle) {
         let settingsSnapshot = settings
-        present(.info, "Preparing prompt preview…")
-        Task { [weak self] in
+        previewPhase = .preparing         // show the modal + spinner immediately (FR-039)
+        previewTask?.cancel()
+        previewTask = Task { [weak self] in
             guard let self else { return }
             let noop: @Sendable (SummarizationEvent) -> Void = { _ in }
             do {
@@ -92,6 +100,7 @@ public extension AppState {
                 case .regenerate(let url, _):
                     prepared = try await engine.prepareFromArchive(summaryURL: url, settings: settingsSnapshot, progress: noop)
                 }
+                try Task.checkCancellation()
                 var effStyle = style
                 if case .regenerate(_, let o) = input, let o { effStyle.modelOverride = o }
                 let format = effStyle.modelOverride?.outputFormat ?? settingsSnapshot.outputFormat
@@ -99,12 +108,17 @@ public extension AppState {
                 let (system, user) = PromptBuilder.assemble(
                     style: effStyle, format: format, htmlStylingPrompt: settingsSnapshot.htmlStylingPrompt,
                     globalPrompt: settingsSnapshot.systemPrompt, transcript: prepared.text, videoMeta: prepared.videoMeta)
-                self.pendingPreview = PendingPreview(
+                let preview = PendingPreview(
                     system: system, user: user,
                     estimatedTokens: TokenEstimator.estimate(system + "\n\n" + user),
                     modelName: model, prepared: prepared, style: style,
                     displayName: displayName, input: input)
+                guard !Task.isCancelled else { return }
+                self.previewPhase = .ready(preview)
+            } catch is CancellationError {
+                // user cancelled the modal mid-prepare — phase already cleared
             } catch {
+                self.previewPhase = nil
                 self.present(.error, "Couldn’t prepare preview: \(error.localizedDescription)")
             }
         }
@@ -112,15 +126,19 @@ public extension AppState {
 
     /// Send the previewed request (geek mode): enqueue with the already-prepared input.
     func confirmPendingPreview() {
-        guard let p = pendingPreview else { return }
+        guard case .ready(let p)? = previewPhase else { return }
         var job = Job(input: p.input, displayName: p.displayName, styleID: p.style.id, styleName: p.style.name)
         job.prepared = p.prepared       // skip re-prepare — runJob reuses the cache
         jobs.append(job)
-        pendingPreview = nil
+        previewPhase = nil
         startProcessing()
     }
 
-    func cancelPendingPreview() { pendingPreview = nil }
+    func cancelPendingPreview() {
+        previewTask?.cancel()
+        previewTask = nil
+        previewPhase = nil
+    }
 
     func cancel(_ jobID: UUID) {
         if jobID == currentJobID {
