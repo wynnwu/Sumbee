@@ -43,8 +43,25 @@ struct MainPanelView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            shareCTA
         }
         .padding(.top, 6)
+    }
+
+    /// Top-right "Enjoying Sumbee? [Share Now]" call to action (FR: viral share).
+    private var shareCTA: some View {
+        HStack(spacing: 10) {
+            Text("Enjoying Sumbee?")
+                .font(.uiCallout)
+                .foregroundStyle(.secondary)
+            Button {
+                state.showShare = true
+            } label: {
+                Label("Share Now", systemImage: "square.and.arrow.up")
+            }
+            .buttonStyle(AccentButtonStyle())
+        }
+        .fixedSize()
     }
 
     private var keyGateBanner: some View {
