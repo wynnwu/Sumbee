@@ -43,11 +43,13 @@ struct SettingsView: View {
                 detail
             }
             .frame(width: 900, height: 680)
-            // Thicker (brighter, more opaque) surface so the small grey caption text is legible.
-            .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            // Solid, opaque surface. A SwiftUI material here flickers/blurs behind the prompt
+            // editor's hosted NSScrollView (learnings #16); the window background is bright, flat,
+            // glitch-free, and the conventional macOS settings surface.
+            .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                    .strokeBorder(Theme.hairline, lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.4), radius: 34, y: 12)
         }

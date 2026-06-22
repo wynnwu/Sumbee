@@ -3,6 +3,13 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.4] — 2026-06-22
+
+### Fixed
+- **Glitchy shadowing/blurring behind the prompt editor** — the Settings panel used a translucent
+  material, which flickers and casts shadow-like artifacts behind the prompt editor's (AppKit)
+  scroll view. The panel is now a solid, flat surface (also the conventional macOS Settings look).
+
 ## [0.2.3] — 2026-06-22
 
 ### Changed

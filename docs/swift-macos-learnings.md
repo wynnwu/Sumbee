@@ -118,6 +118,15 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
   `sample <pid> 5 -file out.txt` — if it's all `AG::Graph::UpdateStack::update` / scene-list updates,
   it's a SwiftUI update cycle (or a bad build), not I/O.
 
+### 16. SwiftUI materials flicker/blur behind a hosted `NSScrollView` (e.g. `TextEditor`)
+- **Symptom**: glitchy shadowing/blurring around and under the prompt `TextEditor` in Settings.
+- **Cause**: the Settings panel used a SwiftUI material (`.thickMaterial`); `TextEditor` is an
+  AppKit `NSScrollView` hosted in SwiftUI, and its redraw/scroll re-samples the material behind it,
+  producing flicker and shadow-like artifacts at the edges.
+- **Rule**: don't put a SwiftUI **material** behind a hosted AppKit scroll view. Use a **solid**
+  surface (`Color(nsColor: .windowBackgroundColor)` for panels, `.textBackgroundColor` for the
+  editor fill). Solid is also the conventional macOS Settings look.
+
 ## Meta-rule
 When a fix doesn't work after **two** attempts, stop guessing: add a diagnostic that reports the
 actual state/return values, or reproduce the primitive in isolation (a tiny script / standalone
