@@ -6,8 +6,9 @@
 
 **Turn meeting transcripts and YouTube videos into clean, structured summaries you own.**
 
-A native macOS app. Local-first, no accounts, no telemetry — summaries are saved as plain
-Markdown (or HTML) files in a folder you control.
+A native macOS app. Local-first — your summaries are plain Markdown (or HTML) files on your own
+hard drive, in a folder you choose. You own them like any private local file; the app never
+uploads or sees your library. No proprietary format, no lock-in.
 
 ![Sumbee](screenshots/screen-01-app.png)
 
@@ -17,12 +18,14 @@ Markdown (or HTML) files in a folder you control.
 
 ## Why Sumbee
 
-- **Local-first & private.** Everything stays on your Mac except the two actions you start:
-  sending transcript text to the Anthropic API to summarize, and fetching YouTube captions via
-  `yt-dlp`. No accounts, no analytics.
-- **You own the output.** Summaries and archived sources are plain files in `~/Sumbee Summaries`
-  — usable in Finder, Obsidian, or git with the app closed. The on-disk library *is* the source
-  of truth.
+- **You own your data.** Summaries and archived sources are plain files on your hard drive (in
+  `~/Sumbee Summaries`, or anywhere you choose) — yours like any private local file, usable in
+  Finder, Obsidian, or git with the app closed. The app never uploads or sees your library; the
+  on-disk files *are* the source of truth. **No proprietary format, no lock-in.**
+- **Local-first.** Everything stays on your Mac except the two actions you start: sending
+  transcript text to the Anthropic API to summarize, and fetching YouTube captions via `yt-dlp`.
+- **Fully private summarization is coming.** Local models via **Ollama** (on-device, nothing leaves
+  your Mac) are on the roadmap.
 - **Styles are just prompts.** Each summary **style** is an editable prompt that also names a
   folder in your library — make one per use-case (standups, interviews, research videos…).
 - **Native & beautiful.** SwiftUI + AppKit, real vibrancy/"glass", automatic light/dark, an
@@ -70,7 +73,7 @@ Markdown (or HTML) files in a folder you control.
 > certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that — you
 > only do it once.
 
-1. Download **`Sumbee-0.2.2.zip`** from the [latest release](../../releases/latest).
+1. Download **`Sumbee-0.2.3.zip`** from the [latest release](../../releases/latest).
 2. Unzip it and drag **Sumbee.app** to your **Applications** folder.
 3. Remove the quarantine flag (the reliable way to open an unsigned app), then launch:
    ```bash
@@ -153,6 +156,9 @@ yt-dlp via `Process`, live refresh via FSEvents. No SPM dependencies, no build-t
 
 ## Roadmap
 
+- **Local models via [Ollama](https://ollama.com)** — fully on-device, fully-private summarization
+  (nothing leaves your Mac). *Coming soon.*
+- On-device recording, real-time transcription & speaker diarization (see `specs/002`)
 - Audio/video transcription (Whisper) for inputs without captions
 - Chunked map-reduce for transcripts exceeding the context window
 - Per-style model overrides UI, library search/tags

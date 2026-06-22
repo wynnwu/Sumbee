@@ -5,7 +5,9 @@ cd "$(dirname "$0")/.."
 
 APP_NAME="Sumbee"
 BUNDLE_ID="com.sumbee.app"
-VERSION="0.2.2"
+VERSION="0.2.3"
+# Incremental build number = git commit count (monotonic, no state file); fallback 1.
+BUILD="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 DIST="dist"
 APP="${DIST}/${APP_NAME}.app"
 
@@ -50,7 +52,7 @@ cat > "${APP}/Contents/Info.plist" <<PLIST
 	<key>CFBundleIdentifier</key>
 	<string>${BUNDLE_ID}</string>
 	<key>CFBundleVersion</key>
-	<string>${VERSION}</string>
+	<string>${BUILD}</string>
 	<key>CFBundleShortVersionString</key>
 	<string>${VERSION}</string>
 	<key>CFBundlePackageType</key>

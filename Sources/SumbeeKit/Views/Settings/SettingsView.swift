@@ -496,20 +496,34 @@ private struct AboutSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SettingsCard("Privacy", systemImage: "lock.shield.fill") {
+                Text("Your summaries are plain files on your Mac. You own them like any private local file — keep them wherever you like — and the app never uploads or sees your library. No proprietary format, no lock-in.")
+                    .font(.uiBody)
                 Text("Everything stays on your Mac except two actions you start:")
                     .font(.uiBody)
                 Label("Transcript text and your prompt are sent to the Anthropic API for summarization.",
                       systemImage: "arrow.up.circle").font(.uiBody)
                 Label("YouTube caption fetching contacts YouTube via yt-dlp.",
                       systemImage: "arrow.up.circle").font(.uiBody)
-                Text("No analytics or telemetry. Browsing and opening existing summaries works offline.")
-                    .font(.uiCaption).foregroundStyle(.secondary)
+                Text("Browsing and opening existing summaries works offline.")
+                    .font(.uiBody)
+                Label("Coming soon: fully on-device summarization with local models via Ollama.",
+                      systemImage: "sparkles").font(.uiBody).foregroundStyle(Theme.accent)
             }
             SettingsCard("About", systemImage: "info.circle.fill") {
-                Text("Summarizer — a local-first macOS app. Your summaries are plain files you own.")
+                Text("Sumbee — a local-first macOS app. Your summaries are plain files you own.")
                     .font(.uiBody).foregroundStyle(.secondary)
+                Text(Self.versionLine)
+                    .font(.uiCaption).foregroundStyle(.secondary).textSelection(.enabled)
             }
         }
+    }
+
+    /// "Version X.Y.Z (build N)" from the bundle Info.plist; "dev" when run unbundled.
+    static var versionLine: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "dev"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "Version \(version) (build \(build))"
     }
 }
 
@@ -542,7 +556,8 @@ struct BigPromptEditor: View {
             .font(.system(size: 14, design: .monospaced))
             .scrollContentBackground(.hidden)
             .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+            // Flat, macOS-conventional editable-text surface (no frosted-material blur).
+            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline))
             .frame(maxWidth: .infinity, minHeight: minHeight, maxHeight: fill ? .infinity : nil)
     }

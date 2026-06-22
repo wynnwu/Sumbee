@@ -3,6 +3,23 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.3] — 2026-06-22
+
+### Changed
+- **Prompt editors are flat** — the System Prompt / style / HTML-styling text areas dropped the
+  frosted-glass material (which rendered a soft drop shadow) for a plain, conventional editable-text
+  surface.
+- **Privacy & About** now shows the app **version and build number**, and leads with data ownership:
+  your summaries are plain files on your Mac that you fully own, kept wherever you like — the app
+  never uploads or sees your library; no proprietary format, no lock-in.
+
+### Added
+- "Coming soon" note (Privacy + README) for **fully on-device summarization with local models via
+  Ollama**.
+
+### Removed
+- "No analytics / no telemetry" claims (a future build may add **opt-out** usage telemetry).
+
 ## [0.2.2] — 2026-06-22
 
 ### Changed
