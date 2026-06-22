@@ -57,14 +57,14 @@ struct MainPanelView: View {
             Button {
                 state.showShare = true
             } label: {
-                Label("Share", systemImage: "square.and.arrow.up")
+                Label("Share Now", systemImage: "square.and.arrow.up")
                     .font(.uiCaption.weight(.semibold))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .foregroundStyle(.white)
                     .background(
                         RoundedRectangle(cornerRadius: Theme.smallCorner, style: .continuous)
-                            .fill(Theme.accentGradient)
+                            .fill(Theme.accentDeep)
                             .shadow(color: Theme.accentGlow(0.4), radius: 5, y: 1)
                     )
             }

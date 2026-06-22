@@ -83,8 +83,6 @@ struct ShareSheet: View {
                 .truncationMode(.middle)
                 .textSelection(.enabled)
             Spacer(minLength: 8)
-            Button("Copy") { state.copyShareLink() }
-                .buttonStyle(GhostButtonStyle())
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -96,18 +94,25 @@ struct ShareSheet: View {
     private var actions: some View {
         HStack(spacing: 10) {
             Button {
-                if let url = ShareContent.twitterShareURL { NSWorkspace.shared.open(url) }
+                state.copyShareLink()
             } label: {
-                Label("Post on X", systemImage: "bubble.left.and.text.bubble.right.fill")
+                Label("Copy link", systemImage: "doc.on.doc.fill")
             }
             .buttonStyle(AccentButtonStyle())
 
             Button {
+                if let url = ShareContent.twitterShareURL { NSWorkspace.shared.open(url) }
+            } label: {
+                Label("Post on X", systemImage: "bubble.left.and.text.bubble.right.fill")
+            }
+            .buttonStyle(AccentButtonStyle(prominent: false, compact: true))
+
+            Button {
                 if let url = ShareContent.mailtoURL { NSWorkspace.shared.open(url) }
             } label: {
-                Label("Email a friend", systemImage: "envelope.fill")
+                Label("Email", systemImage: "envelope.fill")
             }
-            .buttonStyle(AccentButtonStyle(prominent: false))
+            .buttonStyle(AccentButtonStyle(prominent: false, compact: true))
 
             Spacer()
         }

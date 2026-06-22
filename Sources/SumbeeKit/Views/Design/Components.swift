@@ -1,20 +1,25 @@
 import SwiftUI
 
-/// A filled accent (orange) button with the brand gradient and a soft glow.
+/// A filled accent (orange) button using the deep brand orange, with a soft glow. Set
+/// `prominent: false` for the secondary outline variant, or `compact: true` for a smaller size.
 public struct AccentButtonStyle: ButtonStyle {
     public var prominent: Bool
-    public init(prominent: Bool = true) { self.prominent = prominent }
+    public var compact: Bool
+    public init(prominent: Bool = true, compact: Bool = false) {
+        self.prominent = prominent
+        self.compact = compact
+    }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.uiBody.weight(.semibold))
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
+            .font((compact ? .uiCallout : .uiBody).weight(.semibold))
+            .padding(.horizontal, compact ? 14 : 18)
+            .padding(.vertical, compact ? 7 : 10)
             .foregroundStyle(prominent ? Color.white : Theme.accent)
             .background {
                 if prominent {
                     RoundedRectangle(cornerRadius: Theme.smallCorner, style: .continuous)
-                        .fill(Theme.accentGradient)
+                        .fill(configuration.isPressed ? Theme.accent : Theme.accentDeep)
                         .shadow(color: Theme.accentGlow(0.5), radius: configuration.isPressed ? 2 : 8, y: 2)
                 } else {
                     RoundedRectangle(cornerRadius: Theme.smallCorner, style: .continuous)

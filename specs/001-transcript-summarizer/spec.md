@@ -384,12 +384,12 @@ Several of these (regenerate, streaming) reuse machinery the app already has (th
   (e.g. `Youtube - 2026-06-22 - How to Build a Mac App.md`), and the summary's library title shows the
   video title. Non-YouTube assets keep the `YYYY-MM-DD HHmm - <title>` convention.
 - **FR-046 (Share Sumbee)**: The main panel header MUST show a top-right "Enjoying Sumbee?"
-  prompt stacked above a compact "Share" button (across from the brand) that opens a share modal.
-  The modal MUST let the user copy the canonical public repo link to the clipboard, provide a
-  ready-to-post message, offer one-click "Post on X" and "Email a friend" deep links, and hand off
-  to the native macOS share services (`NSSharingServicePicker`). The shared message MUST end with
-  the repo link so it survives truncation. No analytics or tracking are added; sharing only opens
-  the user's chosen app.
+  prompt stacked above a compact "Share Now" button (across from the brand) that opens a share
+  modal. In the modal, copying the canonical public repo link to the clipboard MUST be the primary
+  (solid) action, with "Post on X" and "Email" offered as smaller secondary actions; the modal also
+  provides a ready-to-post message and hands off to the native macOS share services
+  (`NSSharingServicePicker`). The shared message MUST end with the repo link so it survives
+  truncation. No analytics or tracking are added; sharing only opens the user's chosen app.
 
 ### Key Entities *(include if feature involves data)*
 
