@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 
 APP_NAME="Sumbee"
 BUNDLE_ID="com.sumbee.app"
-VERSION="0.2.7"
+VERSION="0.3.0"
 # Incremental build number = git commit count (monotonic, no state file); fallback 1.
 BUILD="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 DIST="dist"

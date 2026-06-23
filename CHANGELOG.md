@@ -3,7 +3,7 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0] - 2026-06-23
 
 ### Added
 - **In-app HTML viewer.** HTML summaries now render with their own styling inside the preview pane
