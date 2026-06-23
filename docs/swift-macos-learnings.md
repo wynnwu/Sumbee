@@ -73,6 +73,22 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
 - **Symptom**: a `TextEditor` over a material looked like a flat white/gray box.
 - **Rule**: add `.scrollContentBackground(.hidden)` so the material/background shows through.
 
+### 18. A `WKWebView` loaded off the main thread silently renders a blank page
+- **Symptom**: the *first* HTML summary opened in a session showed a blank white page; the next one
+  rendered fine, and returning to the first then worked too (100% repro).
+- **Cause**: the in-app HTML viewer gated its first `loadHTMLString` behind a one-time
+  `WKContentRuleListStore.compileContentRuleList(...)` (the remote-load privacy block). That
+  completion handler is **not guaranteed to run on the main thread**, so the first document's only
+  load (and the `WKUserContentController.add`) executed off-main. `WKWebView` is main-thread-only;
+  off-main calls are undefined behavior and here just painted nothing. Every later load came from the
+  SwiftUI `updateNSView` pass (main thread) once the rule list was cached, hence "only the first".
+- **Rule**: treat every `WKWebView`/`WKUserContentController` mutation (including `loadHTMLString`)
+  as main-thread-only. Any async completion that drives them (rule-list compile, file read, network)
+  must `DispatchQueue.main.async` before touching WebKit. If you gate the first paint on async setup
+  for a good reason (we gate on the remote-load block for privacy), keep the gate but make the
+  resumed load run on main. Verified by independent adversarial review: the naive fix (load eagerly,
+  ungated) reintroduced a privacy hole by painting before the block installed.
+
 ## Layout & typography
 
 ### 10. `.dynamicTypeSize` barely scales macOS's built-in text styles

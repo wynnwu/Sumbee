@@ -32,6 +32,14 @@ Link clicks are routed out: the `WKNavigationDelegate` cancels `.linkActivated` 
 hands the URL to `NSWorkspace.shared.open`, and cancels any other main-frame navigation after the
 initial programmatic load. So the pane only ever shows the one summary.
 
+**Main-thread loading (and the gate).** Every `WKWebView`/`WKUserContentController` mutation,
+`loadHTMLString` included, runs on the main thread. The async rule-list compile completion is **not
+guaranteed** to be on main, so it hops via `DispatchQueue.main.async` before installing the rule and
+resuming the (gated) first load. The first paint stays gated behind rule installation so a document
+is never shown before remote loads are blocked. (A first cut loaded from the off-main compile
+completion and rendered the first document blank; a naive "load eagerly, ungated" fix then
+reintroduced a remote-load privacy hole. See learnings #18.)
+
 - **Load method**: `loadHTMLString(html, baseURL: nil)`. Keeping `baseURL` nil means relative paths
   don't resolve - acceptable because model output is self-contained, and it reinforces "no remote
   fetch by surprise". (In-document `#anchor` jumps may be inert; minor, acceptable for a basic
