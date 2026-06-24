@@ -3,7 +3,7 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.4.0] - 2026-06-25
 
 ### Added
 - **YouTube access modes (for the "confirm you're not a bot" gate).** Settings ▸ YouTube now has a
