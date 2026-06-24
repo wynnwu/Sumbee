@@ -475,6 +475,78 @@ private struct YouTubeSettingsSection: View {
                 Text("Used only for fetching YouTube captions. Required only for the YouTube feature.")
                     .font(.uiCaption).foregroundStyle(.secondary)
             }
+
+            SettingsCard("YouTube access", systemImage: "person.badge.key.fill") {
+                Text("If YouTube asks you to confirm you’re not a bot, first try Download / Update yt-dlp above. If it persists, choose how Sumbee authenticates:")
+                    .font(.uiCaption).foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Text("Mode")
+                    modeMenu
+                    Spacer()
+                }
+                modeInfo
+            }
+        }
+    }
+
+    // MARK: Auth-mode picker (FR-059/060/061)
+
+    private var modeMenu: some View {
+        Menu {
+            ForEach(YouTubeAuthMode.allCases) { mode in
+                Button {
+                    if state.settings.youtubeAuthMode != mode {
+                        state.settings.youtubeAuthMode = mode
+                        state.persistSettings()
+                    }
+                } label: {
+                    if mode == state.settings.youtubeAuthMode {
+                        Label(mode.displayName, systemImage: "checkmark")
+                    } else {
+                        Text(mode.displayName)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(state.settings.youtubeAuthMode.displayName).font(.uiBody.weight(.semibold))
+                Image(systemName: "chevron.up.chevron.down").font(.caption)
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 11).padding(.vertical, 5)
+            .background(Rectangle().fill(Color.primary.opacity(0.06)))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+
+    @ViewBuilder
+    private var modeInfo: some View {
+        switch state.settings.youtubeAuthMode {
+        case .normal:
+            infoLine("lock.shield", "Standard fetch. No cookies are read; most private.")
+        case .clientTweak:
+            infoLine("wand.and.stars",
+                     "Asks yt-dlp to use a non-web player (no login), which often gets past the bot check for public videos. No cookies are read. This is a heuristic YouTube may change.")
+        case .cookiesChrome:
+            cookieInfo("macOS will ask once for Keychain access to Chrome’s Safe Storage key.")
+        case .cookiesSafari:
+            cookieInfo("Requires Full Disk Access for Sumbee (System Settings ▸ Privacy & Security ▸ Full Disk Access).")
+        }
+    }
+
+    private func infoLine(_ icon: String, _ text: String) -> some View {
+        Label(text, systemImage: icon).font(.uiCaption).foregroundStyle(.secondary)
+    }
+
+    private func cookieInfo(_ permission: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label(permission, systemImage: "exclamationmark.triangle.fill")
+                .font(.uiCaption).foregroundStyle(.orange)
+            Label("Uses your browser’s YouTube login. yt-dlp reads the browser’s cookies, but only your YouTube cookies are sent, and only to YouTube. Sumbee never stores or uploads them.",
+                  systemImage: "lock.shield.fill")
+                .font(.uiCaption).foregroundStyle(.secondary)
         }
     }
 

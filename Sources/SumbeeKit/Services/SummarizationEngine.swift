@@ -56,7 +56,8 @@ public struct SummarizationEngine {
                                progress: @escaping @Sendable (SummarizationEvent) -> Void) async throws -> PreparedInput {
         guard let ytDlp = youtube.locate(customPath: settings.ytDlpPath) else { throw YouTubeError.toolMissing }
         progress(.phase(.fetching))
-        let (transcript, meta) = try await youtube.fetchTranscript(url, language: settings.captionLanguage, ytDlp: ytDlp)
+        let (transcript, meta) = try await youtube.fetchTranscript(
+            url, language: settings.captionLanguage, ytDlp: ytDlp, authMode: settings.youtubeAuthMode)
         try Task.checkCancellation()
         _ = try archiveTranscript(transcript, title: meta.title, root: settings.libraryRootURL, originalURL: url)
         return PreparedInput(text: transcript, sourceRef: url.absoluteString,   // record the URL as the source

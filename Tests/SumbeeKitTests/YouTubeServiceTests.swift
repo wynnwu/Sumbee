@@ -27,4 +27,16 @@ final class YouTubeServiceTests: XCTestCase {
     func testClassifyNetworkFallback() {
         XCTAssertEqual(YouTubeService.classify(stderr: "ERROR: <urlopen error timed out>"), .network)
     }
+
+    // Regression: the anti-bot gate must be its own (non-retryable) case, not generic .failed.
+    func testClassifySignInBotCheck() {
+        let stderr = "ERROR: [youtube] F9P_ixAEV0M: Sign in to confirm you're not a bot. Use --cookies-from-browser or --cookies for the authentication."
+        XCTAssertEqual(YouTubeService.classify(stderr: stderr), .signInRequired)
+    }
+
+    func testClassifyUnknownStaysFailed() {
+        guard case .failed = YouTubeService.classify(stderr: "ERROR: something totally unexpected") else {
+            return XCTFail("expected .failed for an unrecognized error")
+        }
+    }
 }

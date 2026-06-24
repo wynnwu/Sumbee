@@ -41,7 +41,9 @@ uploads or sees your library. No proprietary format, no lock-in.
 - **Drag-and-drop transcripts** (`.md`, `.txt`, `.pdf`, `.docx`, `.rtf`) onto a style → a saved
   summary, with the original safely archived. Drop many at once: they queue and run one at a time,
   and one failure never aborts the batch (with automatic, backed-off retries for transient errors).
-- **YouTube → summary.** Paste a URL, pick a style, and Sumbee summarizes the video's captions.
+- **YouTube → summary.** Paste a URL, pick a style, and Sumbee summarizes the video's captions. If
+  YouTube asks you to "confirm you're not a bot," update yt-dlp in Settings, or switch the YouTube
+  access mode (Settings ▸ YouTube) to use your Chrome or Safari login.
 - **Regenerate.** Re-run any saved summary from its archived original with a different style,
   model, or format. Produces a new summary, the original is kept.
 - **Live streaming preview.** Watch the summary write itself into the preview pane as it generates.
