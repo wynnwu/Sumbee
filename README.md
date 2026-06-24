@@ -44,7 +44,9 @@ uploads or sees your library. No proprietary format, no lock-in.
 - **YouTube → summary.** Paste a URL, pick a style, and Sumbee summarizes the video's captions.
 - **Regenerate.** Re-run any saved summary from its archived original with a different style,
   model, or format. Produces a new summary, the original is kept.
-- **Live streaming preview.** Watch the summary write itself into the preview pane as it generates.
+- **Live streaming preview.** Watch the summary write itself into the preview pane as it generates,
+  and keep browsing while it runs: select any summary to read it during a generation, then click
+  **Watch** in the bottom bar to return to the live stream.
 - **Library search.** Instant title filter (⌘F); **⌘N** starts a new style.
 - **Full style CRUD** (name, channel, prompt), reflected live in the main window, with optional
   **per-style model & output-format overrides**.

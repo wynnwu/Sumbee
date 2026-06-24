@@ -117,9 +117,10 @@ struct AssetBrowserView: View {
                     set: { newID in
                         // Resolve by stable id (URL) so selection survives a rescan that
                         // rebuilds Asset values with a different `created` instant.
-                        state.selectedAsset = newID.flatMap { id in
+                        let resolved = newID.flatMap { id in
                             state.library.groups.flatMap { $0.assets }.first { $0.id == id }
                         }
+                        state.selectAsset(resolved)   // user selection leaves live-watch (FR-053)
                     }
                 )) {
                     ForEach(visibleGroups) { group in

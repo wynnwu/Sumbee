@@ -51,6 +51,11 @@ struct BottomBarView: View {
                     .font(.uiCallout)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                if state.streamingJobID != nil && !state.watchingStream {
+                    Button("Watch") { state.watchStream() }
+                        .buttonStyle(GhostButtonStyle())
+                        .help("Return to the live generation in the preview")
+                }
                 if let running = activelyRunningJob {
                     Button("Cancel") { state.cancel(running.id) }
                         .buttonStyle(GhostButtonStyle())

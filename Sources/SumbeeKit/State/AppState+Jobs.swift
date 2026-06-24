@@ -278,7 +278,7 @@ public extension AppState {
             if case .regenerate(_, let override) = job.input, let o = override {
                 effectiveStyle.modelOverride = o
             }
-            streamingText = ""; streamingJobID = job.id     // begin live preview (FR-040)
+            streamingText = ""; streamingJobID = job.id; watchingStream = true   // begin live preview (FR-040/054)
             let asset = try await engine.finish(prepared, style: effectiveStyle, settings: settings,
                                                 apiKey: apiKey, progress: progress)
             updateJob(job.id) { $0.phase = .done(asset.url); $0.nextRetryAt = nil }
@@ -327,7 +327,7 @@ public extension AppState {
 
     /// Clear the live preview buffer when this job stops streaming.
     private func clearStreaming(_ id: UUID) {
-        if streamingJobID == id { streamingText = ""; streamingJobID = nil }
+        if streamingJobID == id { streamingText = ""; streamingJobID = nil; watchingStream = false }
     }
 
     /// Schedule an automatic retry with exponential backoff (cap 5 min). After the schedule is

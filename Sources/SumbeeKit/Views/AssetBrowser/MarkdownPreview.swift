@@ -21,7 +21,7 @@ struct PreviewPane: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if state.streamingJobID != nil {
+            if state.streamingJobID != nil && state.watchingStream {
                 streamingView
             } else if let asset {
                 toolbar(asset)
@@ -52,7 +52,10 @@ struct PreviewPane: View {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             guard event.keyCode == 49 else { return event }                  // space
             if NSApp.keyWindow?.firstResponder is NSText { return event }     // typing → don't hijack
-            guard state.streamingJobID == nil, let url = state.selectedAsset?.url else { return event }
+            // Allow Quick Look of the selected item during a generation, but not while the live
+            // stream is on screen (FR-056).
+            guard !(state.streamingJobID != nil && state.watchingStream),
+                  let url = state.selectedAsset?.url else { return event }
             QuickLookCoordinator.shared.show(url)
             return nil
         }
@@ -62,12 +65,22 @@ struct PreviewPane: View {
         if let m = keyMonitor { NSEvent.removeMonitor(m); keyMonitor = nil }
     }
 
+    /// Header label for the live stream; names the item being generated when known.
+    private var streamingTitle: String {
+        if let id = state.streamingJobID,
+           let job = state.jobs.first(where: { $0.id == id }) {
+            return "Generating \(job.displayName)…"
+        }
+        return "Generating…"
+    }
+
     /// Live summary as it streams in (FR-040); auto-scrolls to the bottom.
     private var streamingView: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text("Generating…").font(.uiBody.weight(.semibold)).foregroundStyle(.secondary)
+                Text(streamingTitle).font(.uiBody.weight(.semibold)).foregroundStyle(.secondary)
+                    .lineLimit(1)
                 Spacer()
             }
             .padding(.horizontal, 14).padding(.vertical, 8)

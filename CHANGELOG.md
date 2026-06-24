@@ -3,6 +3,15 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Browse the library while a summary streams.** The live generation preview no longer takes over
+  the whole preview pane. During a generation you can select any summary to read it (space-bar Quick
+  Look works too), and a new **Watch** button in the bottom bar returns you to the live stream. The
+  stream is still the default view when a generation starts. (FR-053 to FR-057; see
+  `specs/004-streaming-preview-browse/`)
+
 ## [0.3.0] - 2026-06-23
 
 ### Added

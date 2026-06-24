@@ -40,6 +40,9 @@ public final class AppState: ObservableObject {
     // Live streaming output for the preview pane (FR-040)
     @Published public var streamingText: String = ""
     @Published public var streamingJobID: UUID?
+    /// While a job streams, true = the preview shows the live stream; false = it shows the selected
+    /// item (the user navigated away). Toggled by selection and the bottom-bar Watch (FR-053..FR-055).
+    @Published public var watchingStream: Bool = false
 
     // Command / cross-view coordination (FR-039/041/044)
     @Published public var focusSearchToken = 0
@@ -51,6 +54,19 @@ public final class AppState: ObservableObject {
     public func requestSearchFocus() { focusSearchToken &+= 1 }
     /// Open Settings ▸ Styles and start a new style (⌘N).
     public func requestNewStyle() { showSettings = true; pendingNewStyle = true }
+
+    /// User picked a library item: show it and leave live-watch (FR-053). Called from the library
+    /// list's selection binding only; the job-completion handler assigns `selectedAsset` directly so
+    /// auto-selecting a finished summary does not count as the user navigating away.
+    public func selectAsset(_ asset: Asset?) {
+        selectedAsset = asset
+        watchingStream = false
+    }
+
+    /// Bottom-bar "Watch": return the preview to the live stream (FR-055). No-op if nothing streams.
+    public func watchStream() {
+        if streamingJobID != nil { watchingStream = true }
+    }
 
     // Collaborators
     public let keychain: KeychainStoring
