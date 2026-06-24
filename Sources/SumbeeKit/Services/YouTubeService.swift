@@ -25,6 +25,7 @@ public enum YouTubeError: Error, Equatable {
     case liveStream
     case network
     case rateLimited
+    case signInRequired
     case failed(String)
 
     public var userMessage: String {
@@ -39,6 +40,8 @@ public enum YouTubeError: Error, Equatable {
         case .liveStream: return "Live streams aren’t supported."
         case .network: return "Network problem reaching YouTube."
         case .rateLimited: return "YouTube is rate-limiting requests (HTTP 429). Retrying with backoff."
+        case .signInRequired:
+            return "YouTube wants to confirm you’re not a bot. Try Settings ▸ YouTube: Download / Update yt-dlp (often fixes it), turn off any VPN, or switch the YouTube access mode to browser cookies, then Run queue."
         case .failed(let m): return "Couldn’t fetch captions: \(m)"
         }
     }
@@ -46,7 +49,7 @@ public enum YouTubeError: Error, Equatable {
 
 public protocol YouTubeServicing: Sendable {
     func locate(customPath: String?) -> URL?
-    func fetchTranscript(_ url: URL, language: String, ytDlp: URL) async throws -> (transcript: String, meta: VideoMeta)
+    func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) async throws -> (transcript: String, meta: VideoMeta)
     func update(into appSupport: URL) async throws -> URL
 }
 
@@ -94,14 +97,14 @@ public struct YouTubeService: YouTubeServicing {
 
     // MARK: Fetch
 
-    public func fetchTranscript(_ url: URL, language: String, ytDlp: URL) async throws
+    public func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) async throws
         -> (transcript: String, meta: VideoMeta) {
         try await Task.detached(priority: .userInitiated) {
-            try Self.runFetch(url: url, language: language, ytDlp: ytDlp)
+            try Self.runFetch(url: url, language: language, ytDlp: ytDlp, authMode: authMode)
         }.value
     }
 
-    private static func runFetch(url: URL, language: String, ytDlp: URL) throws
+    private static func runFetch(url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) throws
         -> (transcript: String, meta: VideoMeta) {
         let fm = FileManager.default
         let tmp = fm.temporaryDirectory.appendingPathComponent("summarizer-yt-\(UUID().uuidString)", isDirectory: true)
@@ -109,7 +112,7 @@ public struct YouTubeService: YouTubeServicing {
         defer { try? fm.removeItem(at: tmp) }
 
         let printTemplate = "%(id)s|||%(title)s|||%(channel)s|||%(duration)s|||%(upload_date)s"
-        // Request only the requested language and its common variants — NOT "\(language).*", which
+        // Request only the requested language and its common variants, NOT "\(language).*", which
         // also matches every auto-translated track (en-ar, en-fr, …) and makes yt-dlp download
         // dozens of subtitle files per video, hammering YouTube into HTTP 429.
         let subLangs = "\(language),\(language)-orig,\(language)-US,\(language)-GB"
@@ -126,8 +129,10 @@ public struct YouTubeService: YouTubeServicing {
             "--no-simulate",                 // required so --print still writes the subs
             "--print", printTemplate,
             "-o", tmp.appendingPathComponent("%(id)s.%(ext)s").path,
-            url.absoluteString,
         ]
+        // Auth mode (FR-060): Normal adds nothing; client tweak / cookies append their flags.
+        + authMode.ytDlpArgs
+        + [url.absoluteString]
 
         let result: ProcessRunner.Result
         do {
@@ -202,6 +207,8 @@ public struct YouTubeService: YouTubeServicing {
         if s.contains("unavailable") || s.contains("removed") || s.contains("does not exist") { return .unavailable }
         if s.contains("no subtitles") || s.contains("there are no subtitles") { return .noCaptions }
         if s.contains("429") || s.contains("too many requests") { return .rateLimited }
+        // Anti-bot gate (distinct from 429): needs user action, so it must not auto-retry. (FR-058)
+        if s.contains("not a bot") || s.contains("sign in to confirm") { return .signInRequired }
         if s.contains("urlopen error") || s.contains("network") || s.contains("timed out") || s.contains("resolve") {
             return .network
         }

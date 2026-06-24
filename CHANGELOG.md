@@ -5,12 +5,22 @@ All notable changes to Sumbee are documented here. This project adheres to
 
 ## [Unreleased]
 
+### Added
+- **YouTube access modes (for the "confirm you're not a bot" gate).** Settings ▸ YouTube now has a
+  mode picker: Normal (default, unchanged), Client tweak (a no-login player override), and Browser
+  cookies via Chrome or Safari (yt-dlp's `--cookies-from-browser`). The cookie modes spell out the
+  macOS permission they need (Chrome: a Keychain prompt; Safari: Full Disk Access) and that only your
+  YouTube cookies are used, only to YouTube. (FR-059 to FR-062)
+
 ### Changed
 - **Browse the library while a summary streams.** The live generation preview no longer takes over
   the whole preview pane. During a generation you can select any summary to read it (space-bar Quick
   Look works too), and a new **Watch** button in the bottom bar returns you to the live stream. The
   stream is still the default view when a generation starts. (FR-053 to FR-057; see
   `specs/004-streaming-preview-browse/`)
+- The "Sign in to confirm you're not a bot" failure now shows a clear, actionable message (update
+  yt-dlp, drop your VPN, or enable browser cookies) instead of a raw error dump, and is not
+  auto-retried because it needs a user action. (FR-058; see `specs/005-youtube-auth-modes/`)
 
 ## [0.3.0] - 2026-06-23
 

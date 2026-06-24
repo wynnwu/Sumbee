@@ -23,6 +23,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var geekMode: Bool
     /// User-set absolute path to a yt-dlp binary; nil = auto-discover.
     public var ytDlpPath: String?
+    /// How yt-dlp authenticates against YouTube's anti-bot gate (FR-059). Default `.normal`.
+    public var youtubeAuthMode: YouTubeAuthMode
 
     public init(schemaVersion: Int = AppSettings.currentSchemaVersion,
                 libraryRootPath: String = AppSettings.defaultLibraryRootPath,
@@ -37,7 +39,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
                 systemPrompt: String = "",
                 previewFontSize: Double = 16,
                 geekMode: Bool = false,
-                ytDlpPath: String? = nil) {
+                ytDlpPath: String? = nil,
+                youtubeAuthMode: YouTubeAuthMode = .normal) {
         self.schemaVersion = schemaVersion
         self.libraryRootPath = libraryRootPath
         self.model = model
@@ -52,12 +55,13 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.previewFontSize = previewFontSize
         self.geekMode = geekMode
         self.ytDlpPath = ytDlpPath
+        self.youtubeAuthMode = youtubeAuthMode
     }
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, libraryRootPath, model, maxOutputTokens, temperature, effort,
              extendedThinking, captionLanguage, outputFormat, htmlStylingPrompt, systemPrompt,
-             previewFontSize, geekMode, ytDlpPath
+             previewFontSize, geekMode, ytDlpPath, youtubeAuthMode
     }
 
     /// Field-tolerant decoding: every key falls back to its default, so adding a new setting
@@ -79,6 +83,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         previewFontSize = try c.decodeIfPresent(Double.self, forKey: .previewFontSize) ?? d.previewFontSize
         geekMode = try c.decodeIfPresent(Bool.self, forKey: .geekMode) ?? d.geekMode
         ytDlpPath = try c.decodeIfPresent(String.self, forKey: .ytDlpPath) ?? d.ytDlpPath
+        youtubeAuthMode = try c.decodeIfPresent(YouTubeAuthMode.self, forKey: .youtubeAuthMode) ?? d.youtubeAuthMode
     }
 
     public static let currentSchemaVersion = 2

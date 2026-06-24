@@ -157,6 +157,20 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
   `429` / "too many requests" as a **transient/retryable** error so the job queue backs off (we use
   `YouTubeError.rateLimited`) instead of hard-failing the batch.
 
+### 19. YouTube "Sign in to confirm you're not a bot" (anti-bot gate, not 429)
+- **Symptom**: caption fetch fails with `Sign in to confirm you're not a bot. Use
+  --cookies-from-browser or --cookies...`. Distinct from HTTP 429; retrying the same way doesn't help.
+- **Cause**: YouTube's anti-bot gate, keyed on IP reputation (VPN / datacenter IPs, sometimes plain
+  residential bad luck) and, very often, an out-of-date yt-dlp (stale signature/JS extraction).
+- **Rule**: classify it distinctly (`YouTubeError.signInRequired`) with an actionable message and do
+  NOT auto-retry (it needs user action). Mitigations, in order: (1) update yt-dlp; (2) drop the
+  VPN/datacenter IP; (3) `--cookies-from-browser <browser>` to send a logged-in session; (4) the
+  no-login `--extractor-args "youtube:player_client=..."` heuristic (a moving target). macOS cookie
+  permissions: **Chrome** decrypts its cookie DB with the Keychain "Chrome Safe Storage" key (a
+  one-time Keychain prompt); **Safari** cookies are TCC-protected, so the app needs **Full Disk
+  Access** (and ad-hoc FDA grants reset on rebuild, learnings #3). `--cookies-from-browser` reads the
+  whole browser cookie jar but only sends YouTube cookies to YouTube; say that truthfully in UI copy.
+
 ## Meta-rule
 When a fix doesn't work after **two** attempts, stop guessing: add a diagnostic that reports the
 actual state/return values, or reproduce the primitive in isolation (a tiny script / standalone
