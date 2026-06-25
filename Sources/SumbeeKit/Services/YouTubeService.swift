@@ -49,7 +49,7 @@ public enum YouTubeError: Error, Equatable {
 
 public protocol YouTubeServicing: Sendable {
     func locate(customPath: String?) -> URL?
-    func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) async throws -> (transcript: String, meta: VideoMeta)
+    func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode, playerClient: YouTubePlayerClient) async throws -> (transcript: String, meta: VideoMeta)
     func update(into appSupport: URL) async throws -> URL
 }
 
@@ -97,14 +97,17 @@ public struct YouTubeService: YouTubeServicing {
 
     // MARK: Fetch
 
-    public func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) async throws
+    public func fetchTranscript(_ url: URL, language: String, ytDlp: URL,
+                                authMode: YouTubeAuthMode, playerClient: YouTubePlayerClient) async throws
         -> (transcript: String, meta: VideoMeta) {
         try await Task.detached(priority: .userInitiated) {
-            try Self.runFetch(url: url, language: language, ytDlp: ytDlp, authMode: authMode)
+            try Self.runFetch(url: url, language: language, ytDlp: ytDlp,
+                              authMode: authMode, playerClient: playerClient)
         }.value
     }
 
-    private static func runFetch(url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) throws
+    private static func runFetch(url: URL, language: String, ytDlp: URL,
+                                 authMode: YouTubeAuthMode, playerClient: YouTubePlayerClient) throws
         -> (transcript: String, meta: VideoMeta) {
         let fm = FileManager.default
         let tmp = fm.temporaryDirectory.appendingPathComponent("summarizer-yt-\(UUID().uuidString)", isDirectory: true)
@@ -130,8 +133,8 @@ public struct YouTubeService: YouTubeServicing {
             "--print", printTemplate,
             "-o", tmp.appendingPathComponent("%(id)s.%(ext)s").path,
         ]
-        // Auth mode (FR-060): Normal adds nothing; client tweak / cookies append their flags.
-        + authMode.ytDlpArgs
+        // Auth mode (FR-060/063): Normal adds nothing; client tweak / cookies append their flags.
+        + authMode.ytDlpArgs(playerClient: playerClient)
         + [url.absoluteString]
 
         let result: ProcessRunner.Result

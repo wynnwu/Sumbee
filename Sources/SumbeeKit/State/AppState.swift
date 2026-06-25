@@ -80,6 +80,9 @@ public final class AppState: ObservableObject {
     var queueTask: Task<Void, Never>?
     var currentJobTask: Task<Void, Never>?
     var currentJobID: UUID?
+    /// Bumped at the start of every job run; progress events tag their run so events from a
+    /// superseded run (e.g. after a bot-gate auto-escalation re-queues the job) are ignored.
+    var jobRunGeneration = 0
     var retryTicker: Task<Void, Never>?
     func setClock(_ d: Date) { clock = d }
     private var saveTask: Task<Void, Never>?

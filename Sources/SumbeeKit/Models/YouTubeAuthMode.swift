@@ -25,16 +25,14 @@ public enum YouTubeAuthMode: String, Codable, CaseIterable, Sendable, Identifiab
         }
     }
 
-    /// Extra arguments this mode contributes to a yt-dlp caption fetch.
-    public var ytDlpArgs: [String] {
+    /// Extra arguments this mode contributes to a yt-dlp caption fetch. `playerClient` is used only
+    /// by `.clientTweak` (FR-060/063); other modes ignore it.
+    public func ytDlpArgs(playerClient: YouTubePlayerClient) -> [String] {
         switch self {
         case .normal:
             return []
         case .clientTweak:
-            // `android` is the most widely cited no-login client for slipping past the bot gate.
-            // Kept a single, documented constant (not a long client list) so one renamed client
-            // can't fail the whole fetch. Heuristic; see docs/swift-macos-learnings.md #19.
-            return ["--extractor-args", "youtube:player_client=android"]
+            return ["--extractor-args", "youtube:player_client=\(playerClient.rawValue)"]
         case .cookiesChrome:
             return ["--cookies-from-browser", "chrome"]
         case .cookiesSafari:
@@ -45,5 +43,24 @@ public enum YouTubeAuthMode: String, Codable, CaseIterable, Sendable, Identifiab
     /// True for the modes that read the user's browser cookies (drives the permission/privacy note).
     public var usesBrowserCookies: Bool {
         self == .cookiesChrome || self == .cookiesSafari
+    }
+
+    /// What to do when a fetch in THIS mode still hits the bot gate (FR-064/065/066). Pure so the
+    /// escalation decision is unit-testable without the async job queue.
+    public enum GateOutcome: Equatable {
+        /// Normal: auto-retry the job once with Client tweak.
+        case escalateToClientTweak
+        /// Client tweak already tried (or explicitly chosen) and still gated: advise cookies.
+        case adviseCookies
+        /// A cookie mode is set and still gated: guide the user (sign-in / permission / update).
+        case adviseCookieTrouble
+    }
+
+    public var gateOutcome: GateOutcome {
+        switch self {
+        case .normal: return .escalateToClientTweak
+        case .clientTweak: return .adviseCookies
+        case .cookiesChrome, .cookiesSafari: return .adviseCookieTrouble
+        }
     }
 }

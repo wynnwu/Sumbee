@@ -25,6 +25,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var ytDlpPath: String?
     /// How yt-dlp authenticates against YouTube's anti-bot gate (FR-059). Default `.normal`.
     public var youtubeAuthMode: YouTubeAuthMode
+    /// The yt-dlp player client used by Client tweak mode (FR-063). Default `.android`.
+    public var youtubePlayerClient: YouTubePlayerClient
 
     public init(schemaVersion: Int = AppSettings.currentSchemaVersion,
                 libraryRootPath: String = AppSettings.defaultLibraryRootPath,
@@ -40,7 +42,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
                 previewFontSize: Double = 16,
                 geekMode: Bool = false,
                 ytDlpPath: String? = nil,
-                youtubeAuthMode: YouTubeAuthMode = .normal) {
+                youtubeAuthMode: YouTubeAuthMode = .normal,
+                youtubePlayerClient: YouTubePlayerClient = .android) {
         self.schemaVersion = schemaVersion
         self.libraryRootPath = libraryRootPath
         self.model = model
@@ -56,12 +59,13 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.geekMode = geekMode
         self.ytDlpPath = ytDlpPath
         self.youtubeAuthMode = youtubeAuthMode
+        self.youtubePlayerClient = youtubePlayerClient
     }
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, libraryRootPath, model, maxOutputTokens, temperature, effort,
              extendedThinking, captionLanguage, outputFormat, htmlStylingPrompt, systemPrompt,
-             previewFontSize, geekMode, ytDlpPath, youtubeAuthMode
+             previewFontSize, geekMode, ytDlpPath, youtubeAuthMode, youtubePlayerClient
     }
 
     /// Field-tolerant decoding: every key falls back to its default, so adding a new setting
@@ -84,6 +88,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         geekMode = try c.decodeIfPresent(Bool.self, forKey: .geekMode) ?? d.geekMode
         ytDlpPath = try c.decodeIfPresent(String.self, forKey: .ytDlpPath) ?? d.ytDlpPath
         youtubeAuthMode = try c.decodeIfPresent(YouTubeAuthMode.self, forKey: .youtubeAuthMode) ?? d.youtubeAuthMode
+        youtubePlayerClient = try c.decodeIfPresent(YouTubePlayerClient.self, forKey: .youtubePlayerClient) ?? d.youtubePlayerClient
     }
 
     public static let currentSchemaVersion = 2
