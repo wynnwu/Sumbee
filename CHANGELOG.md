@@ -12,11 +12,13 @@ All notable changes to Sumbee are documented here. This project adheres to
   videos excluded by default) and summarizes the videos you pick, one at a time, through a chosen
   YouTube style via the existing queue. Enumeration uses `yt-dlp --flat-playlist` (no new dependency);
   unlisted playlists need no sign-in, private ones use the YouTube cookie modes.
-- **Playlists are kept.** Fetched playlists are saved under "Your playlists" and reopen instantly
-  without re-fetching, so you can summarize a few, come back later, and summarize more; a **Refresh**
-  picks up newly-added videos. Done status is derived from your library, and videos already
-  summarized or currently in the queue are skipped automatically. (FR-068 to FR-079; see
-  `specs/007-playlist-summarize/`)
+- **Playlists are kept.** Fetched playlists are saved under "Your Playlists" (a section of its own,
+  separate from the URL box) and reopen instantly without re-fetching, so you can summarize a few,
+  come back later, and summarize more; a **Refresh** picks up newly-added videos. Done status is
+  derived from your library, and videos already summarized or currently in the queue are skipped
+  automatically. Each video row reveals a **Watch on YouTube** link on hover.
+- YouTube summaries now record the original **video length** in their Markdown frontmatter / HTML
+  metadata. (FR-068 to FR-079; see `specs/007-playlist-summarize/`)
 
 ## [0.4.0] - 2026-06-25
 

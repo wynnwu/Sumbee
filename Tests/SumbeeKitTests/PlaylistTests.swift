@@ -123,4 +123,20 @@ final class PlaylistTests: XCTestCase {
         XCTAssertTrue(state.isVideoSummarized(id: "XYabc123XYZ", inStyle: style))  // exact canonical id
         XCTAssertFalse(state.isVideoSummarized(id: "abc123", inStyle: style))      // substring must not match
     }
+
+    // MARK: frontmatter
+
+    func testYouTubeSummaryFrontmatterRecordsLength() throws {
+        let engine = SummarizationEngine(extractor: TextExtractor(), anthropic: AnthropicClient(), youtube: YouTubeService())
+        let tmp = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("sumbee-test-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        let style = SummaryStyle(name: "YT", channel: .youtube, prompt: "", order: 0)
+        let asset = try engine.saveAsset(
+            output: "# Title\n\nbody", style: style, format: .markdown, root: tmp,
+            sourceRef: "https://www.youtube.com/watch?v=abc", model: "m",
+            fallbackTitle: "T", videoTitle: "Vid", videoLength: "12:34")
+        let content = try String(contentsOf: asset.url, encoding: .utf8)
+        XCTAssertEqual(FrontmatterCodec.parse(content).frontmatter["length"], "12:34",
+                       "YouTube frontmatter should record the original length")
+    }
 }

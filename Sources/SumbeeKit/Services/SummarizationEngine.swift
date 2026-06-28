@@ -133,7 +133,8 @@ public struct SummarizationEngine {
         return try saveAsset(output: output, style: style, format: format, root: root,
                              sourceRef: prepared.sourceRef, model: request.model,
                              fallbackTitle: prepared.fallbackTitle, originalLink: originalLink,
-                             videoTitle: prepared.videoMeta?.title)
+                             videoTitle: prepared.videoMeta?.title,
+                             videoLength: prepared.videoMeta?.durationString)
     }
 
     /// Resolve the request, sending only parameters the chosen model accepts (capability-gated).
@@ -156,7 +157,8 @@ public struct SummarizationEngine {
 
     func saveAsset(output: String, style: SummaryStyle, format: OutputFormat, root: URL,
                    sourceRef: String?, model: String, fallbackTitle: String,
-                   originalLink: String? = nil, videoTitle: String? = nil) throws -> Asset {
+                   originalLink: String? = nil, videoTitle: String? = nil,
+                   videoLength: String? = nil) throws -> Asset {
         let styleFolder = root.appendingPathComponent(style.name, isDirectory: true)
         try fm.createDirectory(at: styleFolder, withIntermediateDirectories: true)
 
@@ -184,16 +186,19 @@ public struct SummarizationEngine {
             fmatter["style"] = style.name
             fmatter["created"] = createdISO
             if let s = sourceRef { fmatter["source"] = s }
+            if let len = videoLength, !len.isEmpty { fmatter["length"] = len }   // original video length
             fmatter["model"] = model
             content = FrontmatterCodec.serialize(.init(frontmatter: fmatter, body: output))
         case .html:
-            var html = HTMLMetaCodec.embed([
+            var pairs: [(key: String, value: String)] = [
                 ("title", displayTitle),
                 ("style", style.name),
                 ("created", createdISO),
                 ("source", sourceRef ?? ""),
                 ("model", model),
-            ], into: output)
+            ]
+            if let len = videoLength, !len.isEmpty { pairs.append(("length", len)) }   // original video length
+            var html = HTMLMetaCodec.embed(pairs, into: output)
             if let link = originalLink {
                 html = HTMLMetaCodec.insertSourceLink(link, into: html)   // visible centered grey link
             }

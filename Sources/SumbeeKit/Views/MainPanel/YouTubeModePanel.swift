@@ -14,6 +14,8 @@ struct YouTubeModePanel: View {
     /// The loaded playlist URL whose default selection we've populated, so style/library changes
     /// prune rather than clobber the user's manual edits.
     @State private var populatedURL: URL?
+    @State private var hoveredVideoID: String?
+    @Environment(\.openURL) private var openURL
 
     private var videoURL: URL? { YouTubeService.validate(urlString: urlText) }
     private var playlistURL: URL? { YouTubeService.validatePlaylist(urlString: urlText) }
@@ -21,14 +23,24 @@ struct YouTubeModePanel: View {
     private var chosenStyle: SummaryStyle? { youtubeStyles.first { $0.id == chosenStyleID } ?? youtubeStyles.first }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Theme.sectionLabel("YouTube - Summarize a Video or Playlist").foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 12) {
-                urlField
-                content
+        VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+            // Input card: paste a video or playlist URL + its result (single buttons / picker).
+            VStack(alignment: .leading, spacing: 10) {
+                Theme.sectionLabel("YouTube - Summarize a Video or Playlist").foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 12) {
+                    urlField
+                    content
+                }
+                .padding(16)
+                .glassCard()
             }
-            .padding(16)
-            .glassCard()
+            // Kept playlists: a separate section, not crammed into the input box.
+            if showSavedList {
+                VStack(alignment: .leading, spacing: 10) {
+                    Theme.sectionLabel("Your Playlists").foregroundStyle(.secondary)
+                    savedPlaylistsCard
+                }
+            }
         }
         .onAppear { refreshTool(); if chosenStyleID == nil { chosenStyleID = youtubeStyles.first?.id } }
         .onChange(of: state.settings.ytDlpPath) { refreshTool() }
@@ -63,7 +75,8 @@ struct YouTubeModePanel: View {
             Label("Paste a YouTube video or playlist URL.", systemImage: "exclamationmark.triangle")
                 .font(.uiCaption).foregroundStyle(.orange)
         } else {
-            savedPlaylistsList
+            Text("Paste a video URL to summarize one, or a playlist URL (youtube.com/playlist?list=…) to summarize many.")
+                .font(.uiCaption).foregroundStyle(.secondary)
         }
     }
 
@@ -83,18 +96,20 @@ struct YouTubeModePanel: View {
             .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1))
     }
 
-    // MARK: Saved playlists (FR-076/077)
+    // MARK: Saved playlists (FR-076/077) - a separate section below the input card
 
-    @ViewBuilder private var savedPlaylistsList: some View {
-        if state.savedPlaylists.isEmpty {
-            Text("Paste a video URL to summarize one, or a playlist URL (youtube.com/playlist?list=…) to summarize many. Fetched playlists are kept here so you can come back and summarize more.")
-                .font(.uiCaption).foregroundStyle(.secondary)
-        } else {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Your playlists").font(.uiCaption.weight(.semibold)).foregroundStyle(.secondary)
-                ForEach(state.savedPlaylists) { saved in savedRow(saved) }
-            }
+    /// Show the kept-playlists section only when idle (not fetching, and not inside a picker).
+    private var showSavedList: Bool {
+        if case .idle = state.playlistFetch { return !state.savedPlaylists.isEmpty }
+        return false
+    }
+
+    private var savedPlaylistsCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(state.savedPlaylists) { saved in savedRow(saved) }
         }
+        .padding(16)
+        .glassCard()
     }
 
     private func savedRow(_ saved: SavedPlaylist) -> some View {
@@ -207,11 +222,20 @@ struct YouTubeModePanel: View {
                 .font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary)
             Text(entry.title).lineLimit(1).foregroundStyle((done || queued) ? .secondary : .primary)
             Spacer(minLength: 8)
+            // Hover-revealed link to watch the video on YouTube.
+            Button { openURL(entry.url) } label: { Image(systemName: "play.rectangle") }
+                .buttonStyle(.plain).foregroundStyle(.secondary)
+                .help("Watch on YouTube")
+                .opacity(hoveredVideoID == entry.videoID ? 1 : 0)
+                .allowsHitTesting(hoveredVideoID == entry.videoID)
             if done { Text("done").font(.caption).foregroundStyle(.green) }
             else if queued { Text("queued").font(.caption).foregroundStyle(Theme.accent) }
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
         .contentShape(Rectangle())
+        .onHover { hovering in
+            hoveredVideoID = hovering ? entry.videoID : (hoveredVideoID == entry.videoID ? nil : hoveredVideoID)
+        }
         .onTapGesture {
             guard !done, !queued else { return }
             if on { selected.remove(entry.videoID) } else { selected.insert(entry.videoID) }
