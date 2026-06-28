@@ -3,7 +3,7 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.5.0] - 2026-06-29
 
 ### Added
 - **Summarize a whole YouTube playlist.** A thin **mode rail** now switches the main panel between
