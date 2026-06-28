@@ -50,7 +50,7 @@ public enum YouTubeError: Error, Equatable {
 public protocol YouTubeServicing: Sendable {
     func locate(customPath: String?) -> URL?
     func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) async throws -> (transcript: String, meta: VideoMeta)
-    func fetchPlaylist(_ url: URL, authMode: YouTubeAuthMode, ytDlp: URL) async throws -> [PlaylistEntry]
+    func fetchPlaylist(_ url: URL, authMode: YouTubeAuthMode, ytDlp: URL) async throws -> (title: String?, entries: [PlaylistEntry], complete: Bool)
     func update(into appSupport: URL) async throws -> URL
 }
 
@@ -118,15 +118,17 @@ public struct YouTubeService: YouTubeServicing {
 
     // MARK: Playlist enumeration (FR-071)
 
-    public func fetchPlaylist(_ url: URL, authMode: YouTubeAuthMode, ytDlp: URL) async throws -> [PlaylistEntry] {
+    public func fetchPlaylist(_ url: URL, authMode: YouTubeAuthMode, ytDlp: URL) async throws
+        -> (title: String?, entries: [PlaylistEntry], complete: Bool) {
         try await Task.detached(priority: .userInitiated) {
             try Self.runFlatPlaylist(url: url, ytDlp: ytDlp, authMode: authMode)
         }.value
     }
 
-    private static let playlistTemplate = "%(playlist_index)s|||%(id)s|||%(title)s|||%(url)s"
+    private static let playlistTemplate = "%(playlist_index)s|||%(id)s|||%(title)s|||%(url)s|||%(playlist_title)s"
 
-    private static func runFlatPlaylist(url: URL, ytDlp: URL, authMode: YouTubeAuthMode) throws -> [PlaylistEntry] {
+    private static func runFlatPlaylist(url: URL, ytDlp: URL, authMode: YouTubeAuthMode) throws
+        -> (title: String?, entries: [PlaylistEntry], complete: Bool) {
         // One request, no download; honors the auth mode (cookies) for private playlists.
         let args = ["--flat-playlist", "--no-warnings", "--ignore-errors", "--print", playlistTemplate]
             + authMode.ytDlpArgs
@@ -140,7 +142,21 @@ public struct YouTubeService: YouTubeServicing {
             if result.status != 0 { throw classify(stderr: result.stderrString) }
             throw YouTubeError.failed("No videos found in that playlist.")
         }
-        return entries
+        // `--ignore-errors` makes yt-dlp exit non-zero when it skipped unavailable videos, so a
+        // non-zero status means this enumeration is PARTIAL. The caller merges partial results
+        // rather than replacing, so a transient failure can't drop kept videos (FR-077).
+        return (parsePlaylistTitle(result.stdoutString), entries, result.status == 0)
+    }
+
+    /// The parent playlist title from `%(playlist_title)s` (the 5th `|||` field), if present.
+    static func parsePlaylistTitle(_ stdout: String) -> String? {
+        for raw in stdout.split(separator: "\n", omittingEmptySubsequences: true) {
+            let f = raw.components(separatedBy: "|||")
+            guard f.count >= 5 else { continue }
+            let t = f[4].trimmingCharacters(in: .whitespaces)
+            if !t.isEmpty, t != "NA" { return t }
+        }
+        return nil
     }
 
     /// Parse `--flat-playlist --print "%(playlist_index)s|||%(id)s|||%(title)s|||%(url)s"` output.
@@ -152,13 +168,12 @@ public struct YouTubeService: YouTubeServicing {
             guard f.count >= 4 else { continue }
             let id = f[1].trimmingCharacters(in: .whitespaces)
             guard !id.isEmpty, id != "NA" else { continue }
+            // Always use the canonical watch URL derived from the id. yt-dlp's url field (f[3]) can
+            // carry &list=/&index= params that would defeat exact-URL matching downstream, so we
+            // don't trust it (it also accepts "NA"/relative strings as a non-nil URL).
+            guard let url = URL(string: "https://www.youtube.com/watch?v=\(id)") else { continue }
             let index = Int(f[0].trimmingCharacters(in: .whitespaces)) ?? (out.count + 1)
             let title = f[2].trimmingCharacters(in: .whitespaces)
-            let urlStr = f[3].trimmingCharacters(in: .whitespaces)
-            // `URL(string:)` accepts "NA"/relative strings, so only trust an http(s) value; else derive
-            // the canonical watch URL from the id.
-            let candidate = urlStr.hasPrefix("http") ? urlStr : "https://www.youtube.com/watch?v=\(id)"
-            guard let url = URL(string: candidate) else { continue }
             out.append(PlaylistEntry(index: index, videoID: id,
                                      title: (title.isEmpty || title == "NA") ? id : title, url: url))
         }

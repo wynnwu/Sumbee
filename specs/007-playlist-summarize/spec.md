@@ -85,9 +85,19 @@ cookie modes (005). The summarize-each-one part is just the existing queue.
 - **FR-075**: No new third-party dependency; Transcripts mode and all existing behavior unchanged;
   build clean and tests green, including new enumeration-parse, playlist-URL-validation, and dedup
   tests.
+- **FR-076**: Fetched playlists MUST persist (to `playlists.json`) and reopen without re-fetching,
+  listed under "Your playlists" with Open / Refresh / Remove. They survive relaunch.
+- **FR-077**: A per-playlist Refresh MUST re-enumerate to pick up newly-added videos (upserting by a
+  stable playlist id), and re-default the selection to include them.
+- **FR-078**: Per-video "done" status MUST be derived live from the library (not stored), so it stays
+  correct as the user summarizes more over time.
+- **FR-079**: Summarizing MUST skip videos already summarized OR already in-flight (queued/running)
+  for the style; the picker MUST collapse after enqueue (no accidental re-enqueue); and the selection
+  MUST survive style/library changes (manual edits preserved, finished/queued videos pruned).
 
 ### Out of scope (this feature)
-- A persistent per-video status / resume panel (Direction C) - future.
+- A dedicated Playlists panel in the rail (Direction C). This feature keeps the saved list inside
+  YouTube mode; a rail panel is a later upgrade.
 - An origin filter in the library, and `watch?v=…&list=` "summarize whole list" disambiguation.
 - Watch Later / the YouTube Data API.
 

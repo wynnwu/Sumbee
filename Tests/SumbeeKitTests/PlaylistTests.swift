@@ -40,6 +40,21 @@ final class PlaylistTests: XCTestCase {
         XCTAssertEqual(e[0].url.absoluteString, "https://www.youtube.com/watch?v=abc")
     }
 
+    func testParseIgnoresFifthPlaylistTitleField() {
+        let e = YouTubeService.parseFlatPlaylist("1|||abc|||Vid|||https://www.youtube.com/watch?v=abc|||My Playlist")
+        XCTAssertEqual(e.count, 1)
+        XCTAssertEqual(e[0].videoID, "abc")
+        XCTAssertEqual(e[0].title, "Vid")
+    }
+
+    func testParsePlaylistTitle() {
+        XCTAssertEqual(
+            YouTubeService.parsePlaylistTitle("1|||abc|||Vid|||https://www.youtube.com/watch?v=abc|||My Playlist"),
+            "My Playlist")
+        XCTAssertNil(YouTubeService.parsePlaylistTitle("1|||abc|||Vid|||https://www.youtube.com/watch?v=abc")) // 4 fields
+        XCTAssertNil(YouTubeService.parsePlaylistTitle("1|||abc|||Vid|||url|||NA"))
+    }
+
     // MARK: validatePlaylist
 
     func testValidatePlaylistAcceptsPlaylistURLs() {
@@ -60,6 +75,23 @@ final class PlaylistTests: XCTestCase {
         XCTAssertEqual(InputMode.allCases.count, 2)
         XCTAssertEqual(InputMode.transcripts.rawValue, "transcripts")
         XCTAssertEqual(InputMode.youtube.rawValue, "youtube")
+    }
+
+    // MARK: persistence
+
+    func testSavedPlaylistListID() {
+        XCTAssertEqual(SavedPlaylist.listID(for: URL(string: "https://youtube.com/playlist?list=PLxyz")!), "PLxyz")
+        XCTAssertEqual(SavedPlaylist.listID(for: URL(string: "https://example.com/x")!), "https://example.com/x")
+    }
+
+    func testSavedPlaylistCodableRoundTrip() throws {
+        let pl = SavedPlaylist(
+            id: "PL1", url: URL(string: "https://youtube.com/playlist?list=PL1")!, title: "T",
+            entries: [PlaylistEntry(index: 1, videoID: "abc", title: "V",
+                                    url: URL(string: "https://www.youtube.com/watch?v=abc")!)],
+            fetchedAt: Date(timeIntervalSince1970: 1_700_000_000))
+        let data = try JSONEncoder().encode([pl])
+        XCTAssertEqual(try JSONDecoder().decode([SavedPlaylist].self, from: data), [pl])
     }
 
     // MARK: dedup

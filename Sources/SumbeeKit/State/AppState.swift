@@ -33,6 +33,8 @@ public final class AppState: ObservableObject {
     @Published public var inputMode: InputMode = .transcripts
     /// Current playlist enumeration shown in the YouTube-mode picker (FR-071).
     @Published public var playlistFetch: PlaylistFetch = .idle
+    /// Playlists kept around so they reopen without re-fetching (FR-076).
+    @Published public var savedPlaylists: [SavedPlaylist] = []
 
     // Library & jobs (populated as services come online)
     @Published public var library: Library = .empty
@@ -88,6 +90,7 @@ public final class AppState: ObservableObject {
     let youtube: YouTubeServicing
     let anthropic: AnthropicStreaming
     private let watcher: DirectoryWatcher
+    let playlistStore = PlaylistStore()
 
     var queueTask: Task<Void, Never>?
     var currentJobTask: Task<Void, Never>?
@@ -130,6 +133,7 @@ public final class AppState: ObservableObject {
         migrateLibraryToDefaultIfNeeded()
         ensureLibrary()
         reloadLibrary()
+        savedPlaylists = playlistStore.load()      // restore kept playlists (FR-076)
         startWatching()
         // API-key gate: if no key, open Settings on launch (spec §11).
         // Skipped during screenshot runs so the main UI is captured.
@@ -358,6 +362,39 @@ public final class AppState: ObservableObject {
             if let url = URL(string: ref), let vid = YouTubeService.videoID(from: url) { return vid == id }
             return ref.contains(id)
         }
+    }
+
+    /// True if a YouTube video (by canonical id) already has a non-terminal job for `style`, so we
+    /// don't re-queue an in-flight video (FR-073/077). Compares ids, not exact URLs, so a single
+    /// video pasted as youtu.be/ID or with extra params still matches a playlist entry.
+    public func isVideoQueued(id: String, inStyle style: SummaryStyle) -> Bool {
+        jobs.contains { job in
+            guard job.styleID == style.id, !job.phase.isTerminal else { return false }
+            if case .youtube(let u) = job.input { return YouTubeService.videoID(from: u) == id }
+            return false
+        }
+    }
+
+    /// All YouTube video ids already summarized for `style` (precomputed once for the picker so each
+    /// row is an O(1) Set lookup instead of scanning the library, FR-072/078).
+    public func summarizedVideoIDs(inStyle style: SummaryStyle) -> Set<String> {
+        guard let group = library.groups.first(where: { $0.name == style.name && !$0.isSourceFolder }) else { return [] }
+        var ids = Set<String>()
+        for asset in group.assets {
+            if let ref = asset.sourceRef, let url = URL(string: ref), let vid = YouTubeService.videoID(from: url) {
+                ids.insert(vid)
+            }
+        }
+        return ids
+    }
+
+    /// All YouTube video ids with a non-terminal job for `style` (precomputed once for the picker).
+    public func queuedVideoIDs(inStyle style: SummaryStyle) -> Set<String> {
+        var ids = Set<String>()
+        for job in jobs where job.styleID == style.id && !job.phase.isTerminal {
+            if case .youtube(let u) = job.input, let vid = YouTubeService.videoID(from: u) { ids.insert(vid) }
+        }
+        return ids
     }
 
     // MARK: - Toast

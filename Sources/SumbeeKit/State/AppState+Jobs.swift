@@ -79,10 +79,10 @@ public extension AppState {
         startProcessing()
     }
 
-    // MARK: Playlist (FR-071/073)
+    // MARK: Playlist (FR-071/073/076/077)
 
-    /// Enumerate a playlist into `playlistFetch` for the YouTube-mode picker. Honors the auth mode.
-    /// Cancels any prior fetch so a stale result can't overwrite a newer one.
+    /// Enumerate a playlist into `playlistFetch` for the YouTube-mode picker and keep it around so it
+    /// reopens without re-fetching (FR-076). Cancels any prior fetch so a stale result can't win.
     func fetchPlaylist(_ url: URL) {
         guard let ytDlp = youtube.locate(customPath: settings.ytDlpPath) else {
             playlistFetch = .failed(YouTubeError.toolMissing.userMessage); return
@@ -93,9 +93,13 @@ public extension AppState {
         let mode = settings.youtubeAuthMode
         playlistTask = Task { [weak self] in
             do {
-                let entries = try await svc.fetchPlaylist(url, authMode: mode, ytDlp: ytDlp)
+                let result = try await svc.fetchPlaylist(url, authMode: mode, ytDlp: ytDlp)
                 if Task.isCancelled { return }
-                self?.playlistFetch = .loaded(url: url, entries: entries)
+                guard let self else { return }
+                let id = SavedPlaylist.listID(for: url)
+                let merged = self.mergedPlaylistEntries(listID: id, new: result.entries, complete: result.complete)
+                self.upsertSavedPlaylist(url: url, title: result.title, entries: merged)
+                self.playlistFetch = .loaded(url: url, entries: merged)
             } catch {
                 if Task.isCancelled { return }
                 self?.playlistFetch = .failed((error as? YouTubeError)?.userMessage ?? error.localizedDescription)
@@ -103,21 +107,63 @@ public extension AppState {
         }
     }
 
-    /// Cancel an in-flight playlist fetch and collapse the picker.
+    /// Merge a (possibly partial) refresh with what we already have: a complete enumeration is
+    /// authoritative, but a partial one (yt-dlp skipped unavailable videos via --ignore-errors) keeps
+    /// previously-known videos that didn't come back, so a transient failure can't drop them (FR-077).
+    private func mergedPlaylistEntries(listID: String, new: [PlaylistEntry], complete: Bool) -> [PlaylistEntry] {
+        guard !complete,
+              let existing = savedPlaylists.first(where: { $0.id == listID })?.entries, !existing.isEmpty
+        else { return new }
+        let newIDs = Set(new.map(\.videoID))
+        return new + existing.filter { !newIDs.contains($0.videoID) }
+    }
+
+    /// Cancel an in-flight playlist fetch and collapse the picker (the saved list stays).
     func clearPlaylist() {
         playlistTask?.cancel()
         playlistFetch = .idle
     }
 
+    /// Reopen a saved playlist's picker instantly, no re-fetch (FR-076).
+    func openSavedPlaylist(_ saved: SavedPlaylist) {
+        playlistTask?.cancel()
+        playlistFetch = .loaded(url: saved.url, entries: saved.entries)
+    }
+
+    /// Re-enumerate a saved playlist to pick up newly-added videos (FR-077); upserts the result.
+    func refreshSavedPlaylist(_ saved: SavedPlaylist) {
+        guard requireKey() else { return }
+        fetchPlaylist(saved.url)
+    }
+
+    func removeSavedPlaylist(_ saved: SavedPlaylist) {
+        savedPlaylists.removeAll { $0.id == saved.id }
+        playlistStore.save(savedPlaylists)
+    }
+
+    /// Insert or replace a saved playlist by its stable list id, refreshing entries + timestamp.
+    private func upsertSavedPlaylist(url: URL, title: String?, entries: [PlaylistEntry]) {
+        let id = SavedPlaylist.listID(for: url)
+        let name = (title.flatMap { $0.isEmpty ? nil : $0 })
+            ?? savedPlaylists.first(where: { $0.id == id })?.title
+            ?? "Playlist (\(entries.count))"
+        let saved = SavedPlaylist(id: id, url: url, title: name, entries: entries, fetchedAt: Date())
+        if let i = savedPlaylists.firstIndex(where: { $0.id == id }) { savedPlaylists[i] = saved }
+        else { savedPlaylists.insert(saved, at: 0) }
+        playlistStore.save(savedPlaylists)
+    }
+
     /// Expand selected playlist videos into the queue as YouTube jobs on `style` (FR-073). A batch,
-    /// so it bypasses the geek-mode single preview (like multi-file drops); failures stay isolated.
-    /// Already-summarized videos are skipped defensively, and the picker is collapsed afterward so a
-    /// second click cannot re-enqueue the same set.
+    /// so it bypasses the geek-mode single preview; failures stay isolated. Skips videos already
+    /// summarized OR already queued for the style, then collapses the picker so a second click can't
+    /// re-enqueue the same set.
     func summarizePlaylist(_ entries: [PlaylistEntry], style: SummaryStyle) {
         guard requireKey() else { return }
-        let fresh = entries.filter { !isVideoSummarized(id: $0.videoID, inStyle: style) }
+        let fresh = entries.filter {
+            !isVideoSummarized(id: $0.videoID, inStyle: style) && !isVideoQueued(id: $0.videoID, inStyle: style)
+        }
         guard !fresh.isEmpty else {
-            present(.info, "Those videos are already summarized for \(style.name).")
+            present(.info, "Those videos are already summarized or queued for \(style.name).")
             clearPlaylist(); return
         }
         for entry in fresh {

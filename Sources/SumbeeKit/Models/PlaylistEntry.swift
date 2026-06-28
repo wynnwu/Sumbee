@@ -1,7 +1,8 @@
 import Foundation
 
-/// One video in a fetched YouTube playlist (FR-071), from `yt-dlp --flat-playlist`.
-public struct PlaylistEntry: Identifiable, Equatable, Sendable {
+/// One video in a fetched YouTube playlist (FR-071), from `yt-dlp --flat-playlist`. `Codable` so a
+/// fetched playlist can be persisted and reopened without re-fetching (FR-076).
+public struct PlaylistEntry: Identifiable, Codable, Equatable, Sendable {
     /// 1-based position in the playlist.
     public let index: Int
     /// YouTube video id (stable; used for dedup and as the row id).

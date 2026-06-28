@@ -11,8 +11,12 @@ All notable changes to Sumbee are documented here. This project adheres to
   **playlist** URL: a playlist fetches an inline checklist (Select all / None, with already-summarized
   videos excluded by default) and summarizes the videos you pick, one at a time, through a chosen
   YouTube style via the existing queue. Enumeration uses `yt-dlp --flat-playlist` (no new dependency);
-  unlisted playlists need no sign-in, private ones use the YouTube cookie modes. (FR-068 to FR-075;
-  see `specs/007-playlist-summarize/`)
+  unlisted playlists need no sign-in, private ones use the YouTube cookie modes.
+- **Playlists are kept.** Fetched playlists are saved under "Your playlists" and reopen instantly
+  without re-fetching, so you can summarize a few, come back later, and summarize more; a **Refresh**
+  picks up newly-added videos. Done status is derived from your library, and videos already
+  summarized or currently in the queue are skipped automatically. (FR-068 to FR-079; see
+  `specs/007-playlist-summarize/`)
 
 ## [0.4.0] - 2026-06-25
 
