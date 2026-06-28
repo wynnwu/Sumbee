@@ -3,6 +3,17 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Summarize a whole YouTube playlist.** A thin **mode rail** now switches the main panel between
+  **Transcripts** (drag-and-drop) and **YouTube**. In YouTube mode, paste a single video or a
+  **playlist** URL: a playlist fetches an inline checklist (Select all / None, with already-summarized
+  videos excluded by default) and summarizes the videos you pick, one at a time, through a chosen
+  YouTube style via the existing queue. Enumeration uses `yt-dlp --flat-playlist` (no new dependency);
+  unlisted playlists need no sign-in, private ones use the YouTube cookie modes. (FR-068 to FR-075;
+  see `specs/007-playlist-summarize/`)
+
 ## [0.4.0] - 2026-06-25
 
 ### Added

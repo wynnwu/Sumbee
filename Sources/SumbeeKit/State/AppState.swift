@@ -10,6 +10,14 @@ public struct ToastItem: Identifiable, Equatable {
     public var text: String
 }
 
+/// Result of a playlist enumeration for the YouTube-mode picker (FR-071).
+public enum PlaylistFetch: Equatable {
+    case idle
+    case loading(URL)
+    case loaded(url: URL, entries: [PlaylistEntry])
+    case failed(String)
+}
+
 /// Root observable store. `@MainActor` so all UI-facing mutation is main-thread safe.
 /// Services do their work off-actor and hop back here to publish results.
 @MainActor
@@ -21,6 +29,10 @@ public final class AppState: ObservableObject {
     @Published public private(set) var hasKey: Bool
     @Published public var showSettings: Bool = false
     @Published public var showShare: Bool = false
+    /// Left-rail input mode (FR-068): file transcripts vs YouTube. Session state, default transcripts.
+    @Published public var inputMode: InputMode = .transcripts
+    /// Current playlist enumeration shown in the YouTube-mode picker (FR-071).
+    @Published public var playlistFetch: PlaylistFetch = .idle
 
     // Library & jobs (populated as services come online)
     @Published public var library: Library = .empty
@@ -85,6 +97,7 @@ public final class AppState: ObservableObject {
     private var saveTask: Task<Void, Never>?
     private var modelsTask: Task<Void, Never>?
     var previewTask: Task<Void, Never>?
+    var playlistTask: Task<Void, Never>?
 
     public init(keychain: KeychainStoring = KeychainStore(),
                 styleStore: StyleStoring = StyleStore(),
@@ -332,6 +345,19 @@ public final class AppState: ObservableObject {
     }
     public var youtubeStyles: [SummaryStyle] {
         library.styles.filter { $0.channel == .youtube && $0.enabled }.sorted { $0.order < $1.order }
+    }
+
+    /// True if a YouTube video (by id) was already summarized for `style` (dedup, FR-072): any asset
+    /// in the style's folder whose recorded source resolves to the same video id. Compares the
+    /// canonical id parsed from the source URL (falling back to a substring match) so two distinct
+    /// ids can't false-match.
+    public func isVideoSummarized(id: String, inStyle style: SummaryStyle) -> Bool {
+        guard let group = library.groups.first(where: { $0.name == style.name && !$0.isSourceFolder }) else { return false }
+        return group.assets.contains { asset in
+            guard let ref = asset.sourceRef, !ref.isEmpty else { return false }
+            if let url = URL(string: ref), let vid = YouTubeService.videoID(from: url) { return vid == id }
+            return ref.contains(id)
+        }
     }
 
     // MARK: - Toast

@@ -79,6 +79,57 @@ public extension AppState {
         startProcessing()
     }
 
+    // MARK: Playlist (FR-071/073)
+
+    /// Enumerate a playlist into `playlistFetch` for the YouTube-mode picker. Honors the auth mode.
+    /// Cancels any prior fetch so a stale result can't overwrite a newer one.
+    func fetchPlaylist(_ url: URL) {
+        guard let ytDlp = youtube.locate(customPath: settings.ytDlpPath) else {
+            playlistFetch = .failed(YouTubeError.toolMissing.userMessage); return
+        }
+        playlistTask?.cancel()
+        playlistFetch = .loading(url)
+        let svc = youtube
+        let mode = settings.youtubeAuthMode
+        playlistTask = Task { [weak self] in
+            do {
+                let entries = try await svc.fetchPlaylist(url, authMode: mode, ytDlp: ytDlp)
+                if Task.isCancelled { return }
+                self?.playlistFetch = .loaded(url: url, entries: entries)
+            } catch {
+                if Task.isCancelled { return }
+                self?.playlistFetch = .failed((error as? YouTubeError)?.userMessage ?? error.localizedDescription)
+            }
+        }
+    }
+
+    /// Cancel an in-flight playlist fetch and collapse the picker.
+    func clearPlaylist() {
+        playlistTask?.cancel()
+        playlistFetch = .idle
+    }
+
+    /// Expand selected playlist videos into the queue as YouTube jobs on `style` (FR-073). A batch,
+    /// so it bypasses the geek-mode single preview (like multi-file drops); failures stay isolated.
+    /// Already-summarized videos are skipped defensively, and the picker is collapsed afterward so a
+    /// second click cannot re-enqueue the same set.
+    func summarizePlaylist(_ entries: [PlaylistEntry], style: SummaryStyle) {
+        guard requireKey() else { return }
+        let fresh = entries.filter { !isVideoSummarized(id: $0.videoID, inStyle: style) }
+        guard !fresh.isEmpty else {
+            present(.info, "Those videos are already summarized for \(style.name).")
+            clearPlaylist(); return
+        }
+        for entry in fresh {
+            jobs.append(Job(input: .youtube(entry.url),
+                            displayName: "YouTube · \(entry.title)",
+                            styleID: style.id, styleName: style.name))
+        }
+        present(.info, "Queued \(fresh.count) video\(fresh.count == 1 ? "" : "s") on \(style.name).")
+        clearPlaylist()        // collapse the picker so an accidental second click can't re-enqueue
+        startProcessing()
+    }
+
     // MARK: Geek-mode prompt preview (FR-039)
 
     /// Prepare the input, assemble the exact prompt, and surface it for confirmation. On Send the

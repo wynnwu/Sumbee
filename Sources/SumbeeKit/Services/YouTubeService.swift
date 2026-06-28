@@ -50,6 +50,7 @@ public enum YouTubeError: Error, Equatable {
 public protocol YouTubeServicing: Sendable {
     func locate(customPath: String?) -> URL?
     func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) async throws -> (transcript: String, meta: VideoMeta)
+    func fetchPlaylist(_ url: URL, authMode: YouTubeAuthMode, ytDlp: URL) async throws -> [PlaylistEntry]
     func update(into appSupport: URL) async throws -> URL
 }
 
@@ -95,6 +96,17 @@ public struct YouTubeService: YouTubeServicing {
         return nil
     }
 
+    /// Accepts a YouTube *playlist* URL (path `/playlist` with a `list` id). A `watch?v=…&list=…`
+    /// link is treated as a single video by `validate`, not a playlist (FR-071, v1).
+    public static func validatePlaylist(urlString: String) -> URL? {
+        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let comps = URLComponents(string: trimmed), let host = comps.host?.lowercased() else { return nil }
+        let okHosts = ["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]
+        guard okHosts.contains(host), comps.path == "/playlist" else { return nil }
+        guard let list = comps.queryItems?.first(where: { $0.name == "list" })?.value, !list.isEmpty else { return nil }
+        return URL(string: trimmed)
+    }
+
     // MARK: Fetch
 
     public func fetchTranscript(_ url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) async throws
@@ -102,6 +114,55 @@ public struct YouTubeService: YouTubeServicing {
         try await Task.detached(priority: .userInitiated) {
             try Self.runFetch(url: url, language: language, ytDlp: ytDlp, authMode: authMode)
         }.value
+    }
+
+    // MARK: Playlist enumeration (FR-071)
+
+    public func fetchPlaylist(_ url: URL, authMode: YouTubeAuthMode, ytDlp: URL) async throws -> [PlaylistEntry] {
+        try await Task.detached(priority: .userInitiated) {
+            try Self.runFlatPlaylist(url: url, ytDlp: ytDlp, authMode: authMode)
+        }.value
+    }
+
+    private static let playlistTemplate = "%(playlist_index)s|||%(id)s|||%(title)s|||%(url)s"
+
+    private static func runFlatPlaylist(url: URL, ytDlp: URL, authMode: YouTubeAuthMode) throws -> [PlaylistEntry] {
+        // One request, no download; honors the auth mode (cookies) for private playlists.
+        let args = ["--flat-playlist", "--no-warnings", "--ignore-errors", "--print", playlistTemplate]
+            + authMode.ytDlpArgs
+            + [url.absoluteString]
+        let result: ProcessRunner.Result
+        do { result = try ProcessRunner.run(ytDlp.path, args) }
+        catch { throw YouTubeError.failed(error.localizedDescription) }
+
+        let entries = parseFlatPlaylist(result.stdoutString)
+        if entries.isEmpty {
+            if result.status != 0 { throw classify(stderr: result.stderrString) }
+            throw YouTubeError.failed("No videos found in that playlist.")
+        }
+        return entries
+    }
+
+    /// Parse `--flat-playlist --print "%(playlist_index)s|||%(id)s|||%(title)s|||%(url)s"` output.
+    /// Skips blank/malformed lines and `NA` ids; derives a watch URL from the id if `url` is missing.
+    static func parseFlatPlaylist(_ stdout: String) -> [PlaylistEntry] {
+        var out: [PlaylistEntry] = []
+        for raw in stdout.split(separator: "\n", omittingEmptySubsequences: true) {
+            let f = raw.components(separatedBy: "|||")
+            guard f.count >= 4 else { continue }
+            let id = f[1].trimmingCharacters(in: .whitespaces)
+            guard !id.isEmpty, id != "NA" else { continue }
+            let index = Int(f[0].trimmingCharacters(in: .whitespaces)) ?? (out.count + 1)
+            let title = f[2].trimmingCharacters(in: .whitespaces)
+            let urlStr = f[3].trimmingCharacters(in: .whitespaces)
+            // `URL(string:)` accepts "NA"/relative strings, so only trust an http(s) value; else derive
+            // the canonical watch URL from the id.
+            let candidate = urlStr.hasPrefix("http") ? urlStr : "https://www.youtube.com/watch?v=\(id)"
+            guard let url = URL(string: candidate) else { continue }
+            out.append(PlaylistEntry(index: index, videoID: id,
+                                     title: (title.isEmpty || title == "NA") ? id : title, url: url))
+        }
+        return out
     }
 
     private static func runFetch(url: URL, language: String, ytDlp: URL, authMode: YouTubeAuthMode) throws

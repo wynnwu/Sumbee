@@ -1,7 +1,8 @@
 # Swift / macOS learnings (hard-won)
 
-Real bugs we hit building Sumbee and the rules that prevent them. Read before touching persistence,
-permissions, the library list, fonts, icons, or shell scripts. Each entry: **Symptom → Cause → Rule.**
+Real bugs we hit building Sumbee (and a sibling SwiftPM menu-bar app) and the rules that prevent them.
+Read before touching persistence, permissions, the library list, fonts, icons, shell scripts, or any
+AppKit/menu-bar/animation/vibrancy work. Each entry: **Symptom → Cause → Rule.**
 
 ## Persistence
 
@@ -170,6 +171,132 @@ permissions, the library list, fonts, icons, or shell scripts. Each entry: **Sym
   one-time Keychain prompt); **Safari** cookies are TCC-protected, so the app needs **Full Disk
   Access** (and ad-hoc FDA grants reset on rebuild, learnings #3). `--cookies-from-browser` reads the
   whole browser cookie jar but only sends YouTube cookies to YouTube; say that truthfully in UI copy.
+
+## Menu bar & custom panels
+
+### 20. `MenuBarExtra` can't be opened or positioned programmatically
+- **Symptom**: needed a global hotkey to reveal the menu-bar UI and to center the dropdown at the top
+  of the screen — neither is possible with `MenuBarExtra`.
+- **Cause**: SwiftUI's `MenuBarExtra` exposes no API to open its popover in code, and it always hangs
+  (with an arrow) directly off the status item.
+- **Rule**: when you need to *open from a hotkey*, *center/position*, or *animate* it, hand-roll the
+  surface — an `NSStatusItem` whose button toggles a borderless `NSPanel` hosting your SwiftUI via
+  `NSHostingView`. You lose the free dismissal, so wire it yourself (#21–22). If you *don't* need
+  those, `NSPopover(.transient)` gives click-outside + Esc dismissal for free.
+
+### 21. A borderless `NSPanel` can't become key → Esc/keys don't reach it
+- **Symptom**: the custom panel showed, but Esc-to-close (a local key monitor) never fired.
+- **Cause**: borderless `NSWindow`/`NSPanel` returns `canBecomeKey == false` by default, so it never
+  becomes key or receives key events.
+- **Rule**: subclass and override `var canBecomeKey: Bool { true }`, then `makeKeyAndOrderFront` +
+  `NSApp.activate(ignoringOtherApps:)` so a local `keyDown` monitor sees Esc.
+
+### 22. A *global* mouse monitor doesn't see your own app's clicks (use it for click-outside)
+- **Symptom**: wanted "click anywhere outside to dismiss" without the status-item click instantly
+  re-opening it (a toggle race).
+- **Cause/insight**: `NSEvent.addGlobalMonitorForEvents` observes events destined for **other** apps
+  only — your own status-item/panel clicks aren't delivered to it. (`addLocalMonitorForEvents` sees
+  your app's events; return `nil` to swallow.)
+- **Rule**: dismiss a custom panel with a **global** mouse-down monitor (catches clicks in any other
+  app, incl. Finder/desktop) + a **local** key monitor for Esc + the status button for toggle. Because
+  the global monitor ignores your own clicks, the icon toggle and click-outside don't fight. Install
+  on show, remove on close.
+
+## Animation: prefer explicit Core Animation
+
+### 23. Window-frame animation is silently disabled by "Reduce Motion"
+- **Symptom**: a slide built with `window.setFrame(_:display:animate: true)` *and* with
+  `window.animator().setFrame(…)` just snapped — "the slide still doesn't work" over several attempts.
+- **Cause**: AppKit window-frame animation honors the system **Reduce Motion** accessibility setting
+  (it no-ops when on), and is additionally flaky for borderless/non-activating panels.
+- **Rule**: don't animate the window frame for these effects. Keep the window fixed and animate the
+  **content layer** with an explicit **`CABasicAnimation`** (e.g. `transform.translation.y`). Explicit
+  Core Animation runs regardless of Reduce Motion; the window clips anything translated past its frame,
+  so "slide down from behind the menu bar" falls out naturally.
+
+### 24. A window shadow lingers at the frame while you animate the content layer
+- **Symptom**: during a content-layer slide, a thin **~1px outline** appeared instantly at the panel's
+  final position and stayed put while the content moved; also a faint border alongside the shadow.
+- **Cause**: `NSWindow.hasShadow` is computed from the **window frame / model state**, not the
+  animating presentation layer, so it sits at the final rectangle the whole time. A translucent
+  borderless window's `hasShadow` also draws a subtle 1px chrome border.
+- **Rule**: set `hasShadow = false` and draw your **own layer shadow** on a non-masked "shadowHost"
+  view that contains the (masked, rounded) content. A layer shadow can be **faded** (animate
+  `shadowOpacity`) and **slides with** the content. Make the **window slightly larger than the content**
+  (a margin) so the soft layer shadow isn't clipped by the window frame (a layer shadow can't bleed
+  outside the window the way a window shadow can).
+
+## Vibrancy ("glass") & rounded corners
+
+### 25. `NSVisualEffectView` ignores layer `cornerRadius` — round it with a `maskImage`
+- **Symptom**: setting `blur.layer?.cornerRadius` + `masksToBounds` did nothing; corners stayed square.
+- **Cause**: the vibrancy blur is rendered by the window server, not the view's layer, so it ignores
+  layer corner masking.
+- **Rule**: shape it with `maskImage` — a 9-slice `NSImage` (`capInsets`, `resizingMode = .stretch`).
+  For **bottom-only** rounding, draw a rounded rect that extends *above* the image canvas so only the
+  bottom corners curve within view: `NSBezierPath(roundedRect: NSRect(x:0,y:0,width:d,height:d+r),
+  xRadius:r, yRadius:r)` into a `d×d` image. Put translucent SwiftUI content on top (e.g.
+  `.background(Color.black.opacity(0.12))`) so the blur shows through; a SwiftUI `.clipShape` on the
+  content is a cheap belt-and-suspenders. (Related to #16: don't fight materials behind hosted scroll
+  views.)
+
+## Swift 6 strict concurrency
+
+### 26. Concurrency snags that bite when adding AppKit/Carbon
+- **Shared non-`Sendable` global** (e.g. a `static let ISO8601DateFormatter`) is flagged as unsafe. If
+  the use is read-only/thread-safe, mark it `nonisolated(unsafe) static let`.
+- **`deinit` of a `@MainActor` class can't touch non-`Sendable` stored properties** (e.g. a Carbon
+  `EventHotKeyRef`/`OpaquePointer`). Provide an explicit `func invalidate()` for the cleanup; don't
+  reference those in `deinit`.
+- **AppKit/Core Animation completion handlers** (`NSAnimationContext`, `CATransaction.setCompletionBlock`)
+  run on main but aren't typed main-actor-isolated → wrap the body in `MainActor.assumeIsolated { … }`.
+- **A C function-pointer callback** (Carbon `InstallEventHandler`) must be **non-capturing**; share
+  state via `nonisolated(unsafe) static` storage keyed by id.
+- **Blocking `Process`** (`run` + `waitUntilExit`) inside an `async` function stalls the caller's actor
+  — run it on `DispatchQueue.global()` inside `withCheckedThrowingContinuation`. (Relevant to spawning
+  `yt-dlp`/helpers without freezing the UI.)
+
+## Global hotkeys
+
+### 27. Carbon `RegisterEventHotKey` is a system hotkey that needs *no* Accessibility permission
+- **Insight**: unlike `CGEvent` taps / consuming global monitors (which require Accessibility), Carbon
+  `RegisterEventHotKey` registers a true global hotkey with no permission prompt.
+- **Rule**: install one shared `InstallEventHandler` (non-capturing C callback, #26) and dispatch by
+  `EventHotKeyID.id`. To **record** a shortcut, read the **virtual key code** (`event.keyCode`) +
+  `event.modifierFlags` from an AppKit view's `keyDown(with:)` — the keyCode is what `RegisterEventHotKey`
+  needs (the typed character isn't enough). Carbon masks: `cmdKey` 256, `shiftKey` 512, `optionKey`
+  2048, `controlKey` 4096.
+
+## Packaging, distribution & headless verification
+
+### 28. `.dmg` for distribution (complements #12's `.icns`)
+- **Rule**: stage a folder with `<App>.app` + a symlink `ln -s /Applications`, then `hdiutil create
+  -volname "<Name>" -srcfolder <stage> -ov -format UDZO out.dmg` → a drag-to-Applications window.
+  Unsigned/ad-hoc apps are **quarantined on download**, so the first launch needs **right-click → Open**
+  (or `xattr -dr com.apple.quarantine /Applications/<App>.app`). (Re #3: ad-hoc has no stable identity.)
+
+### 29. Build a menu-bar/agent app with SwiftPM (no Xcode project)
+- **Rule**: a SwiftUI app builds as a SwiftPM `executableTarget` (`@main App` + a no-op `Settings { }`
+  scene); set `NSApp.setActivationPolicy(.accessory)` and `LSUIElement = true` for a status-bar-only,
+  no-Dock app. Own `NSStatusItem`/windows from an `AppDelegate` via `@NSApplicationDelegateAdaptor`;
+  observe an `@Observable` from AppKit with `withObservationTracking { … } onChange:` (re-arm each
+  fire). Resolve spawned-tool paths explicitly — **Finder-launched `.app`s don't inherit your shell
+  `PATH`**, so `yt-dlp`/helpers won't be found by bare name.
+
+### 30. `ImageRenderer` is great for headless SwiftUI snapshots — with sharp edges
+- **Rule**: `ImageRenderer` rasterizes SwiftUI to PNG with no window server (good for CI/verification),
+  but **`ScrollView` content renders blank** (no viewport — render a flat, non-scrolling variant), and
+  **AppKit-backed controls don't rasterize** (`Toggle`/`NSSwitch`, segmented `Picker`, `NSVisualEffectView`
+  show a yellow "no" placeholder — verify those in the real app; use a solid background as a vibrancy
+  stand-in). A **byte-identical** render across a change is strong evidence the change had no effect
+  (how the macOS `dynamicTypeSize` no-op, #10, got caught).
+
+### 31. `screencapture -R` and `hdiutil` parsing gotchas
+- **`screencapture -R x,y,w,h` uses PIXELS on Retina, not points** — multiply point coords by the
+  backing scale (`capturedPixelWidth / screenPointWidth`, = 2 on Retina) or the region lands in the
+  wrong place. (Capturing a live menu-bar panel reliably is hard regardless — prefer `ImageRenderer`.)
+- **Parsing `hdiutil attach` output** breaks on volume names with spaces (`awk '{print $NF}'` grabs
+  only the last word) — use `grep -o '/Volumes/.*'`.
 
 ## Meta-rule
 When a fix doesn't work after **two** attempts, stop guessing: add a diagnostic that reports the

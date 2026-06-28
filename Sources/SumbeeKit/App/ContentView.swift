@@ -8,11 +8,14 @@ struct ContentView: View {
             AppBackground()
 
             VStack(spacing: 0) {
-                HSplitView {
-                    MainPanelView()
-                        .frame(minWidth: 400, idealWidth: 480, maxWidth: .infinity)
-                    AssetBrowserView()
-                        .frame(minWidth: 340, idealWidth: 440, maxWidth: .infinity)
+                HStack(spacing: 0) {
+                    ModeRailView()                          // thin left mode rail (FR-068)
+                    HSplitView {
+                        MainPanelView()
+                            .frame(minWidth: 400, idealWidth: 480, maxWidth: .infinity)
+                        AssetBrowserView()
+                            .frame(minWidth: 340, idealWidth: 440, maxWidth: .infinity)
+                    }
                 }
                 BottomBarView()
             }

@@ -13,8 +13,11 @@ struct MainPanelView: View {
                     keyGateBanner
                 }
 
-                fileStylesSection
-                youtubeSection
+                if state.inputMode == .transcripts {
+                    fileStylesSection
+                } else {
+                    YouTubeModePanel()
+                }
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -103,16 +106,6 @@ struct MainPanelView: View {
                     }
                 }
             }
-        }
-    }
-
-    // MARK: YouTube
-
-    private var youtubeSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Theme.sectionLabel("YouTube - Summarize from Captions")
-                .foregroundStyle(.secondary)
-            YouTubeSection()
         }
     }
 
