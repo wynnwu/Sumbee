@@ -3,6 +3,15 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Selectable YouTube player client + automatic bot-gate recovery.** Client tweak mode now lets you
+  pick the yt-dlp player (Android by default, plus Safari-web, TV, iOS, Mobile web). And if a YouTube
+  fetch in Normal mode hits the "confirm you're not a bot" gate, Sumbee automatically retries it once
+  with a different player, and if that still fails it tells you to switch to Browser cookies. (FR-063
+  to FR-067; see `specs/006-youtube-auth-escalation/`)
+
 ## [0.5.1] - 2026-06-29
 
 ### Fixed

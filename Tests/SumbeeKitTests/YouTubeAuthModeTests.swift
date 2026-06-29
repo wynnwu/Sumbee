@@ -5,25 +5,27 @@ import XCTest
 /// default fetch is byte-for-byte unchanged (SC-004); cookie/client modes add their flags.
 final class YouTubeAuthModeTests: XCTestCase {
     func testNormalAddsNoArgs() {
-        XCTAssertEqual(YouTubeAuthMode.normal.ytDlpArgs, [])
+        XCTAssertEqual(YouTubeAuthMode.normal.ytDlpArgs(playerClient: .android), [])
         XCTAssertFalse(YouTubeAuthMode.normal.usesBrowserCookies)
     }
 
-    func testClientTweakSetsPlayerClient() {
-        let args = YouTubeAuthMode.clientTweak.ytDlpArgs
-        XCTAssertEqual(args.first, "--extractor-args")
-        XCTAssertEqual(args.count, 2)
-        XCTAssertTrue(args.last?.hasPrefix("youtube:player_client=") == true)
+    func testClientTweakUsesSelectedPlayerClient() {
+        XCTAssertEqual(YouTubeAuthMode.clientTweak.ytDlpArgs(playerClient: .android),
+                       ["--extractor-args", "youtube:player_client=android"])
+        XCTAssertEqual(YouTubeAuthMode.clientTweak.ytDlpArgs(playerClient: .webSafari),
+                       ["--extractor-args", "youtube:player_client=web_safari"])
         XCTAssertFalse(YouTubeAuthMode.clientTweak.usesBrowserCookies)
     }
 
     func testChromeCookies() {
-        XCTAssertEqual(YouTubeAuthMode.cookiesChrome.ytDlpArgs, ["--cookies-from-browser", "chrome"])
+        XCTAssertEqual(YouTubeAuthMode.cookiesChrome.ytDlpArgs(playerClient: .android),
+                       ["--cookies-from-browser", "chrome"])
         XCTAssertTrue(YouTubeAuthMode.cookiesChrome.usesBrowserCookies)
     }
 
     func testSafariCookies() {
-        XCTAssertEqual(YouTubeAuthMode.cookiesSafari.ytDlpArgs, ["--cookies-from-browser", "safari"])
+        XCTAssertEqual(YouTubeAuthMode.cookiesSafari.ytDlpArgs(playerClient: .android),
+                       ["--cookies-from-browser", "safari"])
         XCTAssertTrue(YouTubeAuthMode.cookiesSafari.usesBrowserCookies)
     }
 

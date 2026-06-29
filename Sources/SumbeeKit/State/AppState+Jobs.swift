@@ -91,9 +91,10 @@ public extension AppState {
         playlistFetch = .loading(url)
         let svc = youtube
         let mode = settings.youtubeAuthMode
+        let player = settings.youtubePlayerClient
         playlistTask = Task { [weak self] in
             do {
-                let result = try await svc.fetchPlaylist(url, authMode: mode, ytDlp: ytDlp)
+                let result = try await svc.fetchPlaylist(url, authMode: mode, playerClient: player, ytDlp: ytDlp)
                 if Task.isCancelled { return }
                 guard let self else { return }
                 let id = SavedPlaylist.listID(for: url)
@@ -216,7 +217,9 @@ public extension AppState {
                 // user cancelled the modal mid-prepare; phase already cleared
             } catch {
                 self.previewPhase = nil
-                self.present(.error, "Couldn’t prepare preview: \(error.localizedDescription)")
+                // Surface YouTube's actionable message (e.g. the bot gate) instead of a generic string.
+                let msg = (error as? YouTubeError)?.userMessage ?? error.localizedDescription
+                self.present(.error, "Couldn’t prepare preview: \(msg)")
             }
         }
     }
@@ -346,9 +349,12 @@ public extension AppState {
             updateJob(job.id) { $0.phase = .failed("Style no longer exists.") }
             return
         }
-        let settings = self.settings
+        var settings = self.settings
+        if let override = job.youtubeAuthOverride { settings.youtubeAuthMode = override }   // gate escalation (FR-064)
+        jobRunGeneration &+= 1
+        let runGen = jobRunGeneration   // drop progress events from a superseded run (e.g. after escalation)
         let progress: @Sendable (SummarizationEvent) -> Void = { [weak self] event in
-            Task { @MainActor in self?.apply(event, to: job.id) }
+            Task { @MainActor in self?.apply(event, to: job.id, generation: runGen) }
         }
 
         do {
@@ -398,6 +404,7 @@ public extension AppState {
         } catch let e as YouTubeError {
             if Task.isCancelled { markCancelled(job.id) }
             else if e == .network || e == .rateLimited { scheduleRetry(job.id, message: e.userMessage) }
+            else if e == .signInRequired { handleSignInGate(job) }
             else { fail(job.id, e.userMessage) }
         } catch let e as ExtractionError {
             fail(job.id, "\(job.displayName): \(e.userMessage)")
@@ -420,6 +427,36 @@ public extension AppState {
         updateJob(id) { $0.phase = .failed(message); $0.nextRetryAt = nil }
         clearStreaming(id)
         present(.error, message)
+    }
+
+    /// Resolve a YouTube "confirm you're not a bot" gate (FR-064/065/066). One-shot per job: a Normal
+    /// job auto-retries once with Client tweak; a still-gated Client tweak advises cookies (and clears
+    /// the override so a later Run queue honors the current setting); a cookie mode advises sign-in /
+    /// permission / update. The fetch fails before `prepared` is cached, so re-queuing re-fetches.
+    private func handleSignInGate(_ job: Job) {
+        let mode = job.youtubeAuthOverride ?? settings.youtubeAuthMode
+        switch mode.gateOutcome {
+        case .escalateToClientTweak:
+            present(.info, "YouTube asked to confirm you’re not a bot. Trying a different player automatically…")
+            updateJob(job.id) {
+                $0.youtubeAuthOverride = .clientTweak
+                $0.prepared = nil
+                $0.attempt = 0          // a fresh auth mode deserves a full retry/backoff budget
+                $0.nextRetryAt = nil
+                $0.phase = .queued
+            }
+            startProcessing()           // defensive: the queue loop re-picks the .queued job anyway
+        case .adviseCookies:
+            // Distinguish auto-escalation (override set) from a manual Client-tweak choice.
+            let escalated = job.youtubeAuthOverride == .clientTweak
+            updateJob(job.id) { $0.youtubeAuthOverride = nil }   // later Run queue honors current setting
+            let lead = escalated
+                ? "A different player still didn’t get past YouTube’s check."
+                : "Client tweak still didn’t get past YouTube’s check."
+            fail(job.id, "\(lead) In Settings ▸ YouTube, switch the access mode to Browser cookies (Chrome or Safari) to use your login, then Run queue.")
+        case .adviseCookieTrouble:
+            fail(job.id, "Browser cookies didn’t get past YouTube’s check. Make sure you’re signed in to YouTube in that browser (and grant the permission Sumbee asks for), or update yt-dlp, then Run queue.")
+        }
     }
 
     /// Clear the live preview buffer when this job stops streaming.
@@ -474,7 +511,8 @@ public extension AppState {
         }
     }
 
-    private func apply(_ event: SummarizationEvent, to id: UUID) {
+    private func apply(_ event: SummarizationEvent, to id: UUID, generation: Int) {
+        guard generation == jobRunGeneration else { return }   // ignore events from a superseded run
         switch event {
         case .phase(let p):
             updateJob(id) { if !$0.phase.isTerminal { $0.phase = p } }

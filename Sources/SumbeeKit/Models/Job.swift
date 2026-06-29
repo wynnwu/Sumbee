@@ -42,6 +42,9 @@ public struct Job: Identifiable, Equatable {
     public var prepared: PreparedInput? = nil
     /// When an auto-retry is scheduled (mirrors `.waitingRetry`).
     public var nextRetryAt: Date? = nil
+    /// One-shot per-job override of the YouTube auth mode, set by the bot-gate auto-escalation
+    /// (FR-064): when present, the job's fetch uses this instead of the global setting.
+    public var youtubeAuthOverride: YouTubeAuthMode? = nil
 
     public init(id: UUID = UUID(),
                 input: Input,

@@ -492,12 +492,19 @@ private struct YouTubeSettingsSection: View {
                     modeMenu
                     Spacer()
                 }
+                if state.settings.youtubeAuthMode == .clientTweak {
+                    HStack(spacing: 8) {
+                        Text("Player")
+                        playerMenu
+                        Spacer()
+                    }
+                }
                 modeInfo
             }
         }
     }
 
-    // MARK: Auth-mode picker (FR-059/060/061)
+    // MARK: Auth-mode picker (FR-059/060/061/063)
 
     private var modeMenu: some View {
         Menu {
@@ -529,6 +536,37 @@ private struct YouTubeSettingsSection: View {
         .fixedSize()
     }
 
+    /// Player-client picker for Client tweak mode (FR-063).
+    private var playerMenu: some View {
+        Menu {
+            ForEach(YouTubePlayerClient.allCases) { client in
+                Button {
+                    if state.settings.youtubePlayerClient != client {
+                        state.settings.youtubePlayerClient = client
+                        state.persistSettings()
+                    }
+                } label: {
+                    if client == state.settings.youtubePlayerClient {
+                        Label(client.displayName, systemImage: "checkmark")
+                    } else {
+                        Text(client.displayName)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(state.settings.youtubePlayerClient.displayName).font(.uiBody.weight(.semibold))
+                Image(systemName: "chevron.up.chevron.down").font(.caption)
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 11).padding(.vertical, 5)
+            .background(Rectangle().fill(Color.primary.opacity(0.06)))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+
     @ViewBuilder
     private var modeInfo: some View {
         switch state.settings.youtubeAuthMode {
@@ -536,7 +574,7 @@ private struct YouTubeSettingsSection: View {
             infoLine("lock.shield", "Standard fetch. No cookies are read; most private.")
         case .clientTweak:
             infoLine("wand.and.stars",
-                     "Asks yt-dlp to use a non-web player (no login), which often gets past the bot check for public videos. No cookies are read. This is a heuristic YouTube may change.")
+                     "Asks yt-dlp to use a non-web player (currently \(state.settings.youtubePlayerClient.displayName)) with no login, which often gets past the bot check for public videos. No cookies are read. This is a heuristic YouTube may change, so try another player if one stops working.")
         case .cookiesChrome:
             cookieInfo("macOS will ask once for Keychain access to Chrome’s Safe Storage key.")
         case .cookiesSafari:

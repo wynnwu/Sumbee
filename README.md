@@ -46,8 +46,9 @@ uploads or sees your library. No proprietary format, no lock-in.
   checklist (with already-summarized videos pre-excluded) and summarizes the ones you pick, one at a
   time, through a chosen style. **Fetched playlists are kept** under "Your playlists" so you can come
   back and summarize more (with a Refresh to pick up new videos). If YouTube asks you to "confirm
-  you're not a bot," update yt-dlp in Settings, or switch the YouTube access mode (Settings ▸ YouTube)
-  to use your Chrome or Safari login.
+  you're not a bot," Sumbee auto-retries once with a different player; if that still fails, update
+  yt-dlp in Settings or switch the YouTube access mode (Settings ▸ YouTube) to use your Chrome or
+  Safari login.
 - **Regenerate.** Re-run any saved summary from its archived original with a different style,
   model, or format. Produces a new summary, the original is kept.
 - **Live streaming preview.** Watch the summary write itself into the preview pane as it generates,
