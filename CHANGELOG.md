@@ -3,6 +3,14 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-06-29
+
+### Changed
+- **Distributed as a `.dmg`.** Sumbee now ships as a standard macOS disk image with a
+  drag-to-Applications layout (a honeycomb background and the drag arrow). The `.zip` is still
+  attached for anyone who prefers it. Build it locally with `scripts/make-dmg.sh` (uses only
+  built-in macOS tools; the window styling needs a session with Finder Automation permission).
+
 ## [0.6.0] - 2026-06-29
 
 ### Added

@@ -89,8 +89,9 @@ uploads or sees your library. No proprietary format, no lock-in.
 > certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that, and you
 > only do it once.
 
-1. Download **`Sumbee-0.6.0.zip`** from the [latest release](../../releases/latest).
-2. Unzip it and drag **Sumbee.app** to your **Applications** folder.
+1. Download **`Sumbee-0.6.1.dmg`** from the [latest release](../../releases/latest) (a `.zip` is also
+   attached if you prefer).
+2. Open the disk image and drag **Sumbee** onto the **Applications** shortcut.
 3. Remove the quarantine flag (the reliable way to open an unsigned app), then launch:
    ```bash
    xattr -dr com.apple.quarantine /Applications/Sumbee.app
