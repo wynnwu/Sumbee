@@ -298,6 +298,25 @@ AppKit/menu-bar/animation/vibrancy work. Each entry: **Symptom → Cause → Rul
 - **Parsing `hdiutil attach` output** breaks on volume names with spaces (`awk '{print $NF}'` grabs
   only the last word) — use `grep -o '/Volumes/.*'`.
 
+### 32. A translucent overlay + blur shadow over the live app flickers when a section hosts an NSScrollView
+- **Symptom**: with the Settings overlay open, the dim shroud and the panel's drop-shadow halo
+  flickered, but only on sections that host an AppKit scroll view (Styles' `List`/`TextEditor`,
+  Library, …); pure-SwiftUI sections were fine.
+- **Cause**: the in-window Settings overlay stacked two translucent SwiftUI layers directly over the
+  live app: a `Color.black.opacity(0.35)` shroud over the app's `.behindWindow` vibrancy +
+  `.ultraThinMaterial` surfaces, and the panel's `.shadow(radius: 34)` (an offscreen Gaussian blur)
+  composited over that same stack. A hosted `NSScrollView` repaints on AppKit's own clock (scroll,
+  caret, relayout), marking its region dirty; CoreAnimation then re-composites that rect, re-running
+  the offscreen shadow blur AND re-blending the translucent shroud over the still-re-sampling
+  materials. Those passes aren't frame-synchronized, so for a frame or two the region shows a
+  half-updated backdrop. This is #16 generalized (translucent compositing over hosted NSScrollViews).
+- **Rule**: don't stack a translucent layer + a blur `.shadow` directly over the live, vibrancy-heavy
+  app. Back the dim with a **solid** surface (`Color(nsColor:.windowBackgroundColor).overlay(black)`)
+  so it can't re-sample the live materials, and cast the panel shadow from a **static shape**
+  (`.background(RoundedRectangle().fill(...).shadow(...))`) instead of the live content, so the blur
+  isn't re-evaluated against the repainting scroll view. (Avoid `.drawingGroup()` to flatten it: it
+  rasterizes via Metal and breaks hosted AppKit views, #30.)
+
 ## Meta-rule
 When a fix doesn't work after **two** attempts, stop guessing: add a diagnostic that reports the
 actual state/return values, or reproduce the primitive in isolation (a tiny script / standalone

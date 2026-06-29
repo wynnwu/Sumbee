@@ -3,6 +3,14 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Settings backdrop flicker.** With Settings open, the dim backdrop and the panel's drop shadow could
+  flicker on sections that host a scrolling list or text editor (Styles, Library, System Prompt). The
+  dim is now backed by a solid surface and the panel shadow is cast from a static shape, so neither
+  re-samples the live, vibrancy-heavy app behind it. (See `docs/swift-macos-learnings.md` #32.)
+
 ## [0.5.0] - 2026-06-29
 
 ### Added

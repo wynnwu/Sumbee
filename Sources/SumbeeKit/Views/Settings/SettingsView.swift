@@ -34,7 +34,14 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.35).ignoresSafeArea()
+            // Opaque-backed dim. A translucent shroud over the LIVE app re-samples its vibrancy /
+            // `.ultraThinMaterial` surfaces every time a hosted NSScrollView in a section (Styles
+            // list+editor, Library, …) repaints; together with the panel's blur shadow that
+            // re-composite flickers (learnings #32, generalizing #16). Backing the dim with a solid
+            // surface removes the live re-sample, so the dim is a stable flat blend.
+            Color(nsColor: .windowBackgroundColor)
+                .overlay(Color.black.opacity(0.35))
+                .ignoresSafeArea()
                 .onTapGesture { close() }
 
             HStack(spacing: 0) {
@@ -43,15 +50,18 @@ struct SettingsView: View {
                 detail
             }
             .frame(width: 900, height: 680)
-            // Solid, opaque surface. A SwiftUI material here flickers/blurs behind the prompt
-            // editor's hosted NSScrollView (learnings #16); the window background is bright, flat,
-            // glitch-free, and the conventional macOS settings surface.
-            .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            // Cast the shadow from a STATIC rounded-rect shape (a plain fill), not from the live
+            // panel content, so the offscreen blur isn't re-evaluated against a repainting hosted
+            // scroll view. The fill is also the panel's solid surface (learnings #16).
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color(nsColor: .windowBackgroundColor))
+                    .shadow(color: .black.opacity(0.4), radius: 34, y: 12)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .strokeBorder(Theme.hairline, lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.4), radius: 34, y: 12)
         }
         .onChange(of: state.settings) { state.scheduleSave() }
         .onChange(of: state.pendingNewStyle) { if state.pendingNewStyle { section = .styles } }
