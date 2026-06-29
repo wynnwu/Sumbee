@@ -310,12 +310,15 @@ AppKit/menu-bar/animation/vibrancy work. Each entry: **Symptom → Cause → Rul
   the offscreen shadow blur AND re-blending the translucent shroud over the still-re-sampling
   materials. Those passes aren't frame-synchronized, so for a frame or two the region shows a
   half-updated backdrop. This is #16 generalized (translucent compositing over hosted NSScrollViews).
-- **Rule**: don't stack a translucent layer + a blur `.shadow` directly over the live, vibrancy-heavy
-  app. Back the dim with a **solid** surface (`Color(nsColor:.windowBackgroundColor).overlay(black)`)
-  so it can't re-sample the live materials, and cast the panel shadow from a **static shape**
-  (`.background(RoundedRectangle().fill(...).shadow(...))`) instead of the live content, so the blur
-  isn't re-evaluated against the repainting scroll view. (Avoid `.drawingGroup()` to flatten it: it
-  rasterizes via Metal and breaks hosted AppKit views, #30.)
+- **Rule**: don't stack a translucent SwiftUI layer + a blur `.shadow` directly over the live,
+  vibrancy-heavy app. Make the backdrop a real **`NSVisualEffectView`** glass pane
+  (`blendingMode: .withinWindow`) so the blur is the window server's own hosted layer (it frosts the
+  static app behind it rather than a SwiftUI re-blend), and **drop the panel's `.shadow`** (the
+  offscreen blur was the other half of the flicker); an opaque panel over frosted glass reads as
+  elevated on its own, and the app stays visible/frosted behind the modal. A hosted NSView doesn't
+  forward SwiftUI tap gestures well, so put tap-to-close on a `Color.clear` layer above the glass.
+  (Don't `.drawingGroup()` to flatten it instead: Metal rasterization breaks hosted AppKit views,
+  #30. A solid opaque dim also kills the flicker but hides the app, which looks bland.)
 
 ## Meta-rule
 When a fix doesn't work after **two** attempts, stop guessing: add a diagnostic that reports the

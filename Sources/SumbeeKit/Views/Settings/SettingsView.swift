@@ -34,14 +34,17 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            // Opaque-backed dim. A translucent shroud over the LIVE app re-samples its vibrancy /
-            // `.ultraThinMaterial` surfaces every time a hosted NSScrollView in a section (Styles
-            // list+editor, Library, …) repaints; together with the panel's blur shadow that
-            // re-composite flickers (learnings #32, generalizing #16). Backing the dim with a solid
-            // surface removes the live re-sample, so the dim is a stable flat blend.
-            Color(nsColor: .windowBackgroundColor)
-                .overlay(Color.black.opacity(0.35))
+            // A pane of standard macOS glass over the app: NSVisualEffectView blurs the (static) app
+            // content behind it (withinWindow). The blur is the window server's own hosted layer, not
+            // a SwiftUI translucent re-blend, and the panel below carries NO offscreen `.shadow`, so a
+            // hosted scroll view repainting inside a section no longer flickers the backdrop or a
+            // shadow halo (learnings #32). The app stays visible, frosted, behind Settings.
+            VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
                 .ignoresSafeArea()
+            // Reliable tap-to-close layer (a hosted NSView doesn't forward SwiftUI tap gestures well).
+            Color.clear
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
                 .onTapGesture { close() }
 
             HStack(spacing: 0) {
@@ -50,14 +53,9 @@ struct SettingsView: View {
                 detail
             }
             .frame(width: 900, height: 680)
-            // Cast the shadow from a STATIC rounded-rect shape (a plain fill), not from the live
-            // panel content, so the offscreen blur isn't re-evaluated against a repainting hosted
-            // scroll view. The fill is also the panel's solid surface (learnings #16).
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color(nsColor: .windowBackgroundColor))
-                    .shadow(color: .black.opacity(0.4), radius: 34, y: 12)
-            )
+            // Solid panel, no drop shadow (the offscreen blur was the flicker source). The opaque
+            // surface reads as elevated against the frosted backdrop on its own.
+            .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .strokeBorder(Theme.hairline, lineWidth: 1)
