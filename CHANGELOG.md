@@ -3,7 +3,7 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.6.0] - 2026-06-29
 
 ### Added
 - **Selectable YouTube player client + automatic bot-gate recovery.** Client tweak mode now lets you

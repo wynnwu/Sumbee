@@ -89,7 +89,7 @@ uploads or sees your library. No proprietary format, no lock-in.
 > certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that, and you
 > only do it once.
 
-1. Download **`Sumbee-0.5.1.zip`** from the [latest release](../../releases/latest).
+1. Download **`Sumbee-0.6.0.zip`** from the [latest release](../../releases/latest).
 2. Unzip it and drag **Sumbee.app** to your **Applications** folder.
 3. Remove the quarantine flag (the reliable way to open an unsigned app), then launch:
    ```bash
@@ -113,7 +113,7 @@ git clone https://github.com/wynnwu/Sumbee.git
 cd Sumbee
 
 swift run Sumbee        # run a debug build
-swift test              # run the unit tests (91)
+swift test              # run the unit tests (95)
 ./scripts/bundle.sh     # produce dist/Sumbee.app (release, ad-hoc signed)
 open dist/Sumbee.app
 ```
