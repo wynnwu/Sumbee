@@ -175,8 +175,9 @@ yt-dlp via `Process`, live refresh via FSEvents. No SPM dependencies, no build-t
 
 - **Local models via [Ollama](https://ollama.com)**: fully on-device, fully-private summarization
   (nothing leaves your Mac). *Coming soon.*
-- On-device recording, real-time transcription & speaker diarization (see `specs/002`)
-- Audio/video transcription (Whisper) for inputs without captions
+- On-device audio-file transcription with FluidAudio, speaker review, and a reusable participant
+  catalog (see [feature 008 plan](specs/008-meeting-transcription/plan.md))
+- Live microphone/system recording and video-file transcription follow audio-file import
 - Chunked map-reduce for transcripts exceeding the context window
 - Per-style model overrides UI, library search/tags
 - Signed + notarized universal build; auto-update

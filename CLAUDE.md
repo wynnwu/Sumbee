@@ -17,16 +17,17 @@ defaults to `~/Sumbee Summaries` (deliberately NOT `~/Documents`; see learnings 
 
 ## Design process (Spec Kit)
 Design lives in `specs/`. `001-transcript-summarizer/` is the shipped app (FRs, research decisions
-D1–D16, contracts, tasks). `002-recording-transcription/` is the planned on-device recording /
-transcription / diarization feature (spec + plan + research + contracts + tasks, not yet built).
+D1–D16, contracts, tasks). For audio import, diarization, or participant recognition, read
+[`008-meeting-transcription/spec.md`](specs/008-meeting-transcription/spec.md) and its plan/tasks.
+Feature 008 supersedes module 002; 002 is a historical redirect.
 **Update the relevant spec when you change behavior** (this project keeps specs current so a
 greenfield rebuild inherits every decision). For new features, follow the existing doc structure.
 
 ## Architecture (quick map)
 SwiftPM package: `SumbeeKit` (library: all logic + SwiftUI views, unit-tested) + `Sumbee` (thin
 executable). `Sources/SumbeeKit/{Models,Services,State,Views}`. `AppState` is the `@MainActor`
-root store; services run off-actor. Recording is a transcript *producer* that feeds the existing
-summarize pipeline; keep new input sources behind that seam (see 002 FR-018).
+root store; services run off-actor. Audio transcription produces a saved transcript for the existing
+summarize pipeline; keep new input sources behind that boundary (see the feature 008 plan).
 
 ## Build / verify
 ```bash
@@ -40,8 +41,8 @@ Headless smoke + screenshot hooks exist for verification (`SUMBEE_SMOKE/SHOT/LIB
 Verify each change group builds before moving on (learnings #14).
 
 ## Conventions
-- Settings: field-tolerant `Codable` (learnings #1). Zero third-party runtime deps today; any
-  exception (e.g. the planned bundled whisper.cpp) must be documented in research.
+- Settings: field-tolerant `Codable` (learnings #1). Zero third-party runtime deps today;
+  the planned FluidAudio exception is recorded in the feature 008 plan and constitution.
 - Fonts via the shared `Font.ui*` tokens, sized generously (learnings #10).
 - Commit messages end with the project's Co-Authored-By trailer; releases are cut via `gh` with the
   built zip attached (see CHANGELOG / prior releases). Commit/push/release only when asked.
