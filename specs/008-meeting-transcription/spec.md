@@ -15,8 +15,8 @@ in a local catalog for future meetings, then summarize the reviewed transcript.
 This feature supersedes `002-recording-transcription`. Its [approved brief](brief.md)
 provides context; this specification governs behavior. File import is the first release.
 Live microphone/system recording, live captions, meeting bots, calendar integration,
-video import, translation, and licensing are outside this feature. English is the quality
-target; Chinese/Cantonese passages are best-effort and do not block release.
+video import, translation, dedicated reprocessing, and licensing are outside this feature.
+English is the quality target; Chinese/Cantonese passages are best-effort and do not block release.
 
 ## User Scenarios & Testing
 
@@ -41,8 +41,10 @@ setup, import a two-speaker recording, review it, restart the app, and reopen th
    **then** the corresponding original audio plays locally.
 4. **Given** incorrect words, a mislabeled turn, or duplicate speaker labels, **when**
    corrected, **then** the saved transcript reflects the edit without losing other text.
-5. **Given** a failed or interrupted import, **when** the app reopens, **then** its status
-   is recoverable and retry is offered; incomplete output is never presented as complete.
+5. **Given** successfully retained audio whose processing failed or was interrupted,
+   **when** the app reopens, **then** retry is offered; incomplete output is never ready.
+   If copying fails, is cancelled, or is interrupted before the meeting is saved, no job
+   is kept; show a plain-language error while open and let the user import the file again.
 6. **Given** several audio files, **when** dropped together, **then** they queue in order;
    cancelling or failing one does not cancel the others.
 
@@ -62,6 +64,8 @@ rename them, restart, and verify the assignment; exercise merge and deletion sep
    creates one, **then** that meeting speaker is linked to the selected person.
 2. **Given** the Participants screen, **when** searching, adding, or renaming a person,
    **then** changes persist across restarts; people with identical names remain distinct.
+   Each new export uses the latest name of the confirmed participant. Already exported
+   files stay unchanged; no manual name refresh or name-history interface is needed.
 3. **Given** duplicate catalog entries, **when** merged, **then** references and compatible
    voice profiles resolve to the chosen surviving person, without duplicate identities.
 4. **Given** a deleted participant or removed voice profile, **when** another meeting is
@@ -92,7 +96,8 @@ separate meeting B with that person and an unfamiliar voice; confirm and reject 
    an unconfirmed guess never trains or updates a participant profile.
 5. **Given** incompatible voice-profile versions, too little clear speech, or overlapping
    speech, **when** reuse is attempted, **then** uncertain recognition is withheld and
-   the user can still name the speaker manually or enroll a fresh usable speaker cluster.
+   the user can still name the speaker manually. Voice enrollment can wait for a clean
+   cluster from another import; no dedicated reprocessing action is required.
 
 ### User Story 4 — Generate notes and traceable action items (Priority: P2)
 
@@ -130,7 +135,8 @@ and one unassigned task; compare notes with the transcript and revisit the cited
 - One person split into multiple speakers, or multiple people merged: allow relabeling
   individual turns as well as merging detected speaker labels.
 - Insufficient disk space, cancelled downloads, app termination, or library relocation:
-  preserve completed records and expose retryable failures without deleting user audio.
+  preserve completed records and original audio. Pre-save copy failures leave no job;
+  failures after audio is retained offer retry.
 - Duplicate participant names: selection uses stable identities, with sample playback
   or meeting context to distinguish them.
 - A catalog or meeting file with an unsupported version/corrupt content: report the
@@ -146,8 +152,10 @@ and one unassigned task; compare notes with the transcript and revisit the cited
   model setup may download assets. Audio and voice profiles must never be uploaded.
 - **FR-003**: Keep import, playback, editing, catalog management, and recognition usable
   without a summarization API key or network after model installation.
-- **FR-004**: Queue imports, show stage/progress, allow cancellation and retry, and
-  recover interrupted jobs; expose only complete saved transcripts as ready for summary.
+- **FR-004**: Queue imports in order and show progress/cancellation. Persist a job only
+  after audio copying and initial record creation succeed; failed or interrupted copies
+  leave no saved job. Retry/recovery applies to saved jobs with retained audio. Expose
+  only complete saved transcripts as ready for summary.
 - **FR-005**: Produce ordered, timestamped speaker turns, preserving recognized speech
   when attribution is uncertain and allowing unknown speaker labels.
 - **FR-006**: Support local excerpt playback, text correction, turn reassignment, and
@@ -155,10 +163,12 @@ and one unassigned task; compare notes with the transcript and revisit the cited
 - **FR-007**: Provide a searchable participant catalog with add, rename, merge, and delete;
   distinct participants may share a display name.
 - **FR-008**: Link a meeting speaker to a catalog participant through explicit confirmation;
-  preserve generic labels until confirmation and retain historical transcript wording.
+  use the latest confirmed participant name for each new export, generic labels until
+  confirmation, and the saved assignment name if the participant has been deleted.
+  Existing exported files and their summaries retain their original wording.
 - **FR-009**: Save voice profiles only through “Remember this voice” on confirmed usable
   speech; allow profile removal without deleting the participant. Profiles derived from subsequently corrected speaker attribution must
-  become ineligible for reuse until explicitly re-enrolled.
+  become ineligible for reuse; a clean cluster from another import can be explicitly enrolled.
 - **FR-010**: Suggest names from compatible saved profiles in later meetings, optionally
   restricted to expected attendees, and leave weak or ambiguous matches unknown.
 - **FR-011**: Keep suggestions separate from confirmed assignments; only explicit confirmed
@@ -172,6 +182,9 @@ and one unassigned task; compare notes with the transcript and revisit the cited
   timestamps, and unspecified owners/dates where absent; preserve existing user-edited styles.
 - **FR-015**: Support recordings of at least 60 minutes and meetings with 2–6 speakers,
   with an interactive, keyboard-accessible interface during background processing.
+  Use plain-language stages, errors with a next action, and editable speaker suggestions;
+  users never configure recognition thresholds or interpret accuracy scores. Explain that
+  audio stays on-device and only an explicit summary action sends transcript text.
 - **FR-016**: Preserve completed records through interrupted writes and library moves;
   reject incompatible/corrupt data without resetting user settings or catalog data.
 
@@ -185,7 +198,7 @@ and one unassigned task; compare notes with the transcript and revisit the cited
 - **Participant**: A persistent catalog identity with an editable display name.
 - **Voice Profile**: Confirmed local voice characteristics and version information used
   to suggest future matches, removable independently of the participant. Profiles derived from subsequently corrected speaker attribution must
-  become ineligible for reuse until explicitly re-enrolled.
+  become ineligible for reuse; a clean cluster from another import can be explicitly enrolled.
 - **Model Installation**: Locally installed processing assets and their verified versions.
 
 ## Success Criteria
@@ -193,6 +206,8 @@ and one unassigned task; compare notes with the transcript and revisit the cited
 ### Measurable Outcomes
 
 These are implementation acceptance targets, not claims about measurements already taken.
+Scoring rules and denominators are defined in the [internal validation guide](quickstart.md#internal-scoring-conventions);
+they remain outside the user workflow.
 
 - **SC-001**: After model setup, each supported format completes import, local review,
   save, restart, and reopen with no network and no summarization API key.
@@ -225,3 +240,15 @@ These are implementation acceptance targets, not claims about measurements alrea
   a separate roadmap item; cloud transcription is excluded.
 - Automated tests are required for persistence, attribution/matching decisions,
   corrections, and summary-input boundaries; actual model quality uses the evaluation recordings.
+
+## Clarifications — 2026-09-10
+
+- Export names: resolve the latest name from the confirmed participant at export time.
+  An export is a new saved file; retries of an existing summary reuse its original file.
+- Incomplete copies: no persistent job or recovery workflow; clean app-owned temporary
+  files and let the user import again. The original recording is never removed.
+- Corrected voice clusters: manual naming remains available; defer dedicated reprocessing.
+  Normal file import can create another independent meeting if the user wants to try again.
+- Friendly quality review: keep the existing technical targets as internal engineering
+  checks. Users get playable text, simple name suggestions, and clear next actions;
+  benchmark terminology and tuning controls do not belong in the meeting workflow.

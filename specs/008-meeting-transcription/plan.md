@@ -38,7 +38,7 @@ one inference job at a time; no fabricated inference percentage.
 no audio/profile upload, local workflows independent of API-key setup, existing styles retained.
 
 **Scale/Scope**: Personal per-library catalog; 2–6 speakers and >=60-minute recordings;
-no cross-device sync, live capture, video import, or automatic calendar identity lookup.
+no cross-device sync, live capture, video import, dedicated reprocessing, or calendar identity lookup.
 
 ## Constitution Check
 
@@ -103,8 +103,9 @@ before API setup. Keep file/YouTube behavior and file-channel styles compatible.
 
 ## Processing and persistence boundaries
 
-1. Copy imported audio transactionally into the selected library's hidden meeting storage.
-   Persist job status and captured library root; never use a mutable global root mid-job.
+1. Stage and validate audio plus the initial meeting record, then atomically publish them
+   into hidden meeting storage. Pre-copy jobs are transient; failures leave no saved job.
+   Capture the library root per job; never use a mutable global root mid-job.
 2. Verify local models, run ASR and offline diarization sequentially, assemble review turns,
    and save raw recognition provenance alongside editable turns. Cancellation may wait for
    the SDK's current call to return, but late results cannot overwrite user state.
@@ -113,7 +114,9 @@ before API setup. Keep file/YouTube behavior and file-channel styles compatible.
    catalog mutation. Attribution revisions prevent stale profiles from being reused.
 4. Review audio/text, merge labels, reassign turns, and explicitly enroll clean unchanged
    clusters. Ten seconds of non-overlapping attributed speech is the initial enrollment minimum.
-5. Export an immutable reviewed Markdown revision. Feed its text and library-relative
+5. Each explicit export/new summary saves a uniquely named Markdown snapshot using the
+   latest confirmed participant names; existing summary retries reuse their saved file.
+   Feed its text and library-relative
    `sourceRef` into summary preparation; require whole-input fit before sending. Reuse normal
    retry/save paths. Regeneration reads the same snapshot and meeting input policy.
 
@@ -140,3 +143,10 @@ The existing FluidAudio exception covers vendored third-party code and explicit 
 An app-owned participant matcher is necessary because offline diarization returns meeting-local
 clusters, not persistent people. Immutable transcript revisions preserve summary evidence.
 These are bounded responsibilities; no general workflow engine or custom diarization is added.
+
+## Simplicity decisions — 2026-09-10
+
+Keep catalog names current at export without name-history or refresh UI. Persist imports only
+after audio and the initial record are saved. Defer dedicated reprocessing: users can name
+speakers manually and enroll voices from another normal import. Keep quality measurement
+internal; present simple stages, editable names, and clear recovery actions in the app.

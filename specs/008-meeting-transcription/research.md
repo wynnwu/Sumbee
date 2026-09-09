@@ -63,8 +63,8 @@ compatible embedding fingerprints (model revision, preprocessing, vector dimensi
 Enrollment uses the **whole detected speaker cluster**, not just the playback excerpt:
 `speakerDatabase` does not promise a new embedding for the selected excerpt. Require
 explicit naming, confirmation that the cluster contains one voice, at least ten seconds
-of non-overlapping attributed speech, and an unchanged cluster. Corrected/mixed clusters
-require reprocessing and fresh enrollment. Any later attribution correction invalidates
+of non-overlapping attributed speech, and an unchanged cluster. Corrected/mixed clusters cannot enroll; keep manual naming available and enroll from a
+clean cluster in another import. Dedicated reprocessing is deferred (2026-09-10 simplification). Any later attribution correction invalidates
 profiles whose source attribution revision no longer matches. Naming remains available.
 
 **Why:** A short clean preview cannot remove contamination from an averaged cluster.
@@ -113,7 +113,8 @@ Evidence: `Sources/SumbeeKit/State/AppState+Jobs.swift`, `AppState.swift`,
 
 ## D6 — Immutable summary input and bounded first release
 
-**Decision:** Snapshot the reviewed transcript before enqueueing a summary. Preserve the
+**Decision:** Each explicit export/new summary saves the reviewed text with the latest
+confirmed catalog names into a new uniquely named snapshot before enqueueing. Preserve the
 snapshot for retries/regeneration and reference it from the summary. Later corrections
 create a new revision. A meeting-specific prepared-input policy rejects oversize input
 before the API call; generic text/YouTube retain existing behavior. Use the same prompt

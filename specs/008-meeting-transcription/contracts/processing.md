@@ -1,7 +1,6 @@
 # Contract — Processing, Review, and Participant Actions
 
-These are application interfaces, not new HTTP endpoints. All work is local until an explicit
-summary request. Persisted validation rules are in [data-model.md](../data-model.md).
+These are application interfaces, not new HTTP endpoints. Audio processing is local; only explicit model setup and summary requests use the network. Persisted validation rules are in [data-model.md](../data-model.md).
 
 ## Services
 
@@ -13,7 +12,7 @@ summary request. Persisted validation rules are in [data-model.md](../data-model
 | MeetingStore | Audio import and review mutations -> durable meeting/revision URLs | Transactional audio copy; atomic documents; immutable exports; root captured per job |
 | ParticipantStore | Catalog mutation and confirmed enrollment -> durable catalog | One atomic catalog write; validate source attribution version before reuse |
 | ParticipantMatcher | Meeting clusters + eligible profiles + optional attendee set -> suggestions | Compatibility filter, threshold + margin, no mutation; unknown is valid |
-| MeetingSummaryInputBuilder | Ready meeting + saved revision -> prepared summary text/sourceRef | Snapshot must exist before enqueue; exclude unconfirmed names and private metadata |
+| MeetingSummaryInputBuilder | Ready meeting + current catalog -> new saved export/text/sourceRef | Resolve latest confirmed names once; snapshot exists before enqueue; exclude unconfirmed names and private metadata |
 
 The local processing queue owns one inference task. It publishes state on the main actor;
 models, disk I/O, decoding, and inference run off it. On cancel, publish acknowledgement
@@ -29,7 +28,9 @@ rather than a made-up percentage during opaque SDK inference.
 - **Import audio:** Available in Meetings through a picker and drop area without an API key.
   Audio dropped onto existing transcript tiles routes to local Meetings; ordinary documents
   retain their current flow. Mixed batches classify each file; a missing API key blocks only
-  text summarization jobs, not audio imports.
+  text summarization jobs, not audio imports. Copying is transient; a failed copy leaves
+  no saved job. Show “Could not import this file. Please choose it again” and a useful
+  reason, preserve the original, and continue other imports.
 - **Select attendees:** Optional catalog multi-select; narrows suggestions but cannot force
   recognition or prevent adding an unfamiliar participant after processing.
 - **Play/review:** A turn seeks retained audio to its timestamp; provide text editing,
@@ -39,10 +40,11 @@ rather than a made-up percentage during opaque SDK inference.
   Display suggestions distinctly; exports use generic labels until confirmed.
 - **Remember voice:** Separate action on an eligible whole cluster. A preview excerpt helps
   confirmation but does not change the averaged embedding. Mixed/corrected/short clusters
-  show a reason enrollment is unavailable and retain manual naming.
+  show “Name this speaker manually; remember their voice from another recording.”
+  No dedicated reprocessing action or technical tuning controls are included.
 - **Manage participants:** Search, add, rename, merge, delete, and remove voice profiles.
-  Show future-recognition impact while preserving existing saved transcript wording.
-- **Summarize:** Select style/model, freeze the reviewed revision, preview the exact prompt
+  New exports use the latest confirmed catalog name; existing exported files stay unchanged.
+- **Summarize:** Select style/model, save a new export using current names, preview the exact prompt
   if geek mode is enabled, then enqueue. No automatic API call on import/review/enrollment.
 
 ## Summary contract
@@ -64,3 +66,12 @@ styles are never overwritten by default-style installation.
 
 Model output remains a draft. Automated summary fixtures evaluate supported owners/dates and
 valid evidence times; the UI never claims an unverified suggestion is a confirmed identity.
+
+## Plain-language quality and recovery
+
+Explain the local-audio/cloud-text boundary at setup and summary handoff. Use simple stages
+such as “Copying audio”, “Transcribing”, and “Identifying speakers”. Suggestions are editable
+names with confirm/change actions; internal scores, thresholds, WER, and DER are not exposed.
+Errors explain the problem and a direct next action (choose the file again, install models,
+retry saved processing, or name a speaker manually). The review flow must remain useful when
+recognition is uncertain. Technical acceptance measurements stay in developer validation.

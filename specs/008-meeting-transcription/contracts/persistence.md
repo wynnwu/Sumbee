@@ -10,7 +10,7 @@ All paths below are relative to the selected library unless marked otherwise.
       audio.<original-extension>
       meeting.json
   source/
-    YYYY-MM-DD HHmm - <title> - <meeting-uuid> - r<revision>.md
+    YYYY-MM-DD HHmm - <title> - <meeting-uuid> - <export-uuid>.md
   <summary-style>/
     <existing-summary-filename>.md or .html
 ~/Library/Application Support/Sumbee/models/
@@ -24,17 +24,22 @@ All paths below are relative to the selected library unless marked otherwise.
 
 ## Atomic ownership
 
-- Copy the input to a temporary sibling, verify its bytes/hash and decoded readability,
-  then rename into the meeting directory. Never delete or mutate the user-selected original.
+- Copy the input into an app-owned staging directory, verify its bytes/hash and decoded
+  readability, and write initial meeting.json there. Atomically publish the directory only
+  after both succeed. Before publication there is no persistent job. On failure/cancellation,
+  remove staging files and offer normal re-import; discard abandoned staging on restart.
+  Never delete or mutate the user-selected original.
 - Replace each JSON document atomically after validation. Catalog mutations (including
   profile moves/removals and redirects) commit in a single `participants.json` replacement.
 - Profile eligibility checks the source meeting attribution revision every time candidates
   are loaded. Stale cross-file state therefore abstains even after an interrupted correction.
-- Save a new Markdown revision atomically before registering its path or enqueueing a summary.
-  Repeating export of the same revision reuses the existing identical snapshot; conflicting
-  bytes are an error, not an overwrite. Metadata includes meeting ID, review revision, and
-  source type so regeneration can restore the meeting policy.
-- Snapshots contain speaker display-name snapshots, turn IDs, text, and available timestamps.
+- Each explicit export/new summary resolves the latest confirmed participant names and
+  atomically saves a new Markdown file with a unique export ID before registering its path
+  or enqueueing. No name-history tracking or revision change is needed for catalog renames.
+  Retries/regeneration of an existing summary reuse its saved file without resolving names
+  again. Metadata includes meeting ID, review revision, export ID, and source type.
+- Snapshots contain names resolved at export (saved assignment names for deleted people,
+  generic labels for unconfirmed speakers), turn IDs, text, and available timestamps.
   Embed no audio, voice vectors, filesystem paths, or profile scores in API-bound content.
 - If a write fails, keep the last committed record and report retry. Unsupported schemas
   and corrupt data are preserved for repair, never replaced with empty defaults.
@@ -56,6 +61,7 @@ A full meeting deletion/retention UI is deferred; Reveal files exposes local sto
 ## Reopening
 
 Load the selected library's catalog and meeting index off the main actor. Mark interrupted
-active jobs for retry and keep ready meetings immediately usable. Model fingerprints and
+processing jobs with retained audio for retry and keep ready meetings immediately usable.
+Discard abandoned app-owned import staging directories; they are not recoverable jobs. Model fingerprints and
 source revision checks run before suggestions; an unavailable/moved source never causes a
 stale profile to be used. Persisted JSON envelopes are schema-versioned as specified in C03.
