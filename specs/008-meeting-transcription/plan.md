@@ -127,6 +127,13 @@ Contracts define [processing and UI actions](contracts/processing.md) and
 
 - **Setup and foundation:** Audit/vendoring/model manifest; prove representative files; define
   model/store contracts and fixtures. Record baseline quality before investing in catalog UX.
+- **UI design after feasibility:** After T013, run the `frontend-design` skill as T043 before
+  implementing meeting views. Use measured processing stages, timing, cancellation limits,
+  and representative speaker output to design import/setup, the meeting list, transcript
+  review, speaker assignment, and the participant catalog. Adapt the skill to the existing
+  native SwiftUI/AppKit visual style, shared fonts, and system materials. Record layout,
+  empty/loading/error states, and keyboard/focus flow in `ui-design.md`; keep the workflow
+  simple and free of recognition scores or tuning controls.
 - **US1 MVP:** No-key local import, durable transcript, playback and corrections.
 - **US2:** Participant catalog, explicit naming, merge/delete behavior.
 - **US3:** Remember voice, calibrated suggestions, rejection and version mismatch handling.
@@ -136,6 +143,8 @@ Contracts define [processing and UI actions](contracts/processing.md) and
 
 US1 is a useful milestone; the complete requested feature includes US2–US4. Benchmark failures
 must be fixed or explicitly revisited before shipping; they are not hidden by high-confidence UI.
+The design pass does not block engine work through T013. Its output guides T016–T017 and
+the later participant views in T022–T023/T029; T035's style-creation action follows the same design.
 
 ## Complexity Tracking
 

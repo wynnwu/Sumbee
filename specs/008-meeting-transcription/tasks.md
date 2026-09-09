@@ -5,6 +5,7 @@
 **Status:** All work pending. Tests are required by the spec and constitution. Each task below is implementation work; this planning pass has not run it.
 
 Paths are repository-relative. `[P]` marks independent files after their prerequisites. `[USn]` identifies the user story. C01–C12 are quoted from the data model where implemented.
+Task IDs remain stable: newly added T043 is intentionally placed after T013, where it executes.
 
 ## Phase 1: Setup
 
@@ -33,6 +34,7 @@ Independent test: no API key/network after setup; import, play, correct, restart
 - [ ] T011 [US1] Implement `Sources/SumbeeKit/Services/Meetings/TranscriptAssembler.swift` including token aggregation, surrounding-segment/untimed fallback and unknown attribution: “Turn bounds are both null or finite seconds satisfying 0 <= start <= end <= duration; untimed turns retain their text and order.” “Transcript text is preserved through attribution edits; a no-speech result has zero turns and an explicit status.” (FR-005/006).
 - [ ] T012 [US1] Implement `Sources/SumbeeKit/Services/Meetings/MeetingStore.swift` with staged verified audio plus initial-record publication, cleanup of failed/abandoned staging, hidden sidecars, validated atomic JSON, retained-audio-only restart recovery, uniquely named Markdown exports and Reveal files: “Persisted documents use schemaVersion 1; unsupported versions or corrupt content fail without overwriting the original.” “Persisted asset paths are library-relative and cannot escape the library root; summary sourceRef points to an immutable Markdown revision.” (FR-001/004/006/012/016).
 - [ ] T013 [US1] Create opt-in model evaluation in `Tests/SumbeeKitTests/MeetingModelEvaluationTests.swift`; run baseline clean/in-room/overlap/60-minute recordings and record WER, DER, runtime and peak memory in `specs/008-meeting-transcription/validation-results.md` before UI expansion; tune/document failures (SC-002/003).
+- [ ] T043 Run the `frontend-design` skill after the T013 feasibility checkpoint; write `specs/008-meeting-transcription/ui-design.md` covering import/model setup, meeting list, transcript playback/editing, speaker assignment and participant catalog. Use actual processing stages, timing/cancellation limits and representative speaker output; specify layout, empty/loading/error states, and keyboard/focus flow using the existing SwiftUI/AppKit style, shared fonts and system materials. Keep messages plain and omit recognition scores/tuning controls. Complete before T016–T017, T022–T023, T029 and T035 UI work (FR-001/006/007/008/009/010/015).
 - [ ] T014 [US1] Implement transient copy progress, serial queue/stages and retained-audio-only interrupted-state recovery in `Sources/SumbeeKit/State/MeetingProcessingState.swift`; capture library root per job, acknowledge cancellation, reject late results, and wait for an uncancellable SDK call before the next inference (FR-004/015/016).
 - [ ] T015 [US1] Add `Sources/SumbeeKit/State/AppState+Meetings.swift`; update `AppState.swift`, `Models/InputMode.swift`, `Sources/SumbeeKit/Views/MainPanelView.swift`, and `Sources/SumbeeKit/Views/DropZoneView.swift` for Meetings, exhaustive routing, mixed-file classification and no-key local access while preserving text/YouTube behavior (FR-001/003/004).
 - [ ] T016 [US1] Build `Sources/SumbeeKit/Views/Meetings/MeetingModePanel.swift` and `MeetingModelSetupView.swift` with picker/drop, saved meeting list, setup size/action, plain-language stage progress, cancel/retry, failed-copy re-import guidance, and local-audio/cloud-text explanation (FR-001/003/004/015).
@@ -87,6 +89,8 @@ Complete the requested scope only after all four stories and measured gates pass
 
 Execute Setup -> Foundation -> US1 -> US2 -> US3 -> US4 -> cross-cutting validation. US1 is the first useful MVP; participant reuse remains required for the full requested feature. T013 is a model-feasibility checkpoint before UI expansion. Failure requires tuning or a documented design revision, not skipping the checkpoint.
 
+Within US1, run T043 (`frontend-design`) after T013 and before view implementation in T016–T017. T014–T015 state/routing work can proceed after T013 independently of the design pass. Later view tasks T022–T023, T029 and T035 use `ui-design.md`; engine work through T013 does not depend on UI design.
+
 US2 catalog services can be exercised with saved-meeting fixtures; US3 depends on US2 identities/profile storage and US1 clusters. US4 needs US1 immutable transcript output and US2 confirmed names; it can be developed alongside US3 after those dependencies are stable. Shared `AppState+Meetings.swift` edits must be integrated sequentially.
 
 Write meaningful deterministic tests before their corresponding implementation and verify they fail for the missing behavior. Run the completed story’s independent acceptance scenario before advancing; finish with the full quickstart. Commit/push only on user request.
@@ -94,7 +98,7 @@ Write meaningful deterministic tests before their corresponding implementation a
 ## Parallel examples
 
 - **US1:** T009 assembler fixtures and T010 storage fixtures can proceed together after Foundation.
-- **US2:** After T019, catalog UI design in T022 can use a fixture while T020/T021 establish persistence; integrate only after store behavior passes.
+- **US2:** After T019 and T043, catalog UI implementation in T022 can use a fixture and `ui-design.md` while T020/T021 establish persistence; integrate only after store behavior passes.
 - **US3:** T025 matching fixtures and T026 profile eligibility fixtures can proceed together after US2.
 - **US4:** Once T033 defines the prepared-input policy, T035 style work can proceed alongside T034 prompt integration; keep common view/state edits sequential.
 
@@ -102,21 +106,21 @@ Write meaningful deterministic tests before their corresponding implementation a
 
 | Requirement | Tasks |
 |---|---|
-| FR-001 | T010, T012, T015, T016, T018 |
+| FR-001 | T010, T012, T015, T016, T018, T043 |
 | FR-002 | T001, T002, T005–T008, T040 |
 | FR-003 | T005, T006, T015, T016, T018, T031, T036, T040 |
 | FR-004 | T004, T007, T008, T010, T012, T014–T016, T018 |
 | FR-005 | T004, T007–T009, T011, T017 |
-| FR-006 | T009–T012, T017, T024 |
-| FR-007 | T019–T022 |
-| FR-008 | T004, T019–T021, T023, T024, T031, T032, T037 |
-| FR-009 | T022, T024, T026, T028, T029 |
-| FR-010 | T025, T027, T029 |
+| FR-006 | T009–T012, T017, T024, T043 |
+| FR-007 | T019–T022, T043 |
+| FR-008 | T004, T019–T021, T023, T024, T031, T032, T037, T043 |
+| FR-009 | T022, T024, T026, T028, T029, T043 |
+| FR-010 | T025, T027, T029, T043 |
 | FR-011 | T025–T029 |
 | FR-012 | T004, T010, T012, T019–T022, T024, T026, T028, T038 |
 | FR-013 | T031–T034, T036, T037 |
 | FR-014 | T031, T034–T037 |
-| FR-015 | T008, T014, T016, T018, T029, T039 |
+| FR-015 | T008, T014, T016, T018, T029, T039, T043 |
 | FR-016 | T004, T010, T012, T014, T020, T021, T038 |
 | SC-001 | T018, T040, T041 |
 | SC-002 | T003, T013, T039, T041 |
