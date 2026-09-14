@@ -52,7 +52,6 @@ struct DropZoneView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .opacity(state.hasKey ? 1 : 0.55)
         .animation(Theme.spring, value: targeted)
         .onDrop(of: [UTType.fileURL], delegate: FileDropDelegate(
             highlightTypes: Self.highlightTypes,
@@ -71,7 +70,6 @@ struct DropZoneView: View {
     // MARK: Picker
 
     private func openPicker() {
-        guard state.hasKey else { state.showSettings = true; return }
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
@@ -85,6 +83,7 @@ struct DropZoneView: View {
     /// Accepted content types - used for the valid-type hover highlight and the file picker.
     static let highlightTypes: [UTType] = {
         var types: [UTType] = [.plainText, .pdf, .rtf]
+        types += ["wav", "mp3", "m4a"].compactMap { UTType(filenameExtension: $0) }
         if let md = UTType(filenameExtension: "md") { types.append(md) }
         if let markdown = UTType("net.daringfireball.markdown") { types.append(markdown) }
         if let docx = UTType(filenameExtension: "docx") { types.append(docx) }

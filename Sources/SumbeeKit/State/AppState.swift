@@ -91,6 +91,7 @@ public final class AppState: ObservableObject {
     let anthropic: AnthropicStreaming
     private let watcher: DirectoryWatcher
     let playlistStore = PlaylistStore()
+    let meetings = MeetingProcessingState()
 
     var queueTask: Task<Void, Never>?
     var currentJobTask: Task<Void, Never>?
@@ -138,11 +139,10 @@ public final class AppState: ObservableObject {
         reloadLibrary()
         savedPlaylists = playlistStore.load()      // restore kept playlists (FR-076)
         startWatching()
-        // API-key gate: if no key, open Settings on launch (spec §11).
-        // Skipped during screenshot runs so the main UI is captured.
-        if !hasKey && ProcessInfo.processInfo.environment["SUMBEE_SHOT"] == nil {
-            showSettings = true
-        }
+        // Local meetings remain usable without credentials. Gate only an explicit cloud action.
+        if !hasKey { inputMode = .meetings }
+        let root = settings.libraryRootURL
+        Task { await meetings.selectRoot(root); await meetings.checkModels() }
         if ProcessInfo.processInfo.environment["SUMBEE_OPEN_SETTINGS"] == "1" {
             showSettings = true     // verification hook: capture Settings in a headless shot
         }
@@ -324,6 +324,7 @@ public final class AppState: ObservableObject {
         ensureLibrary()
         reloadLibrary()
         startWatching()
+        Task { await meetings.selectRoot(url) }
     }
 
     // MARK: - Settings persistence

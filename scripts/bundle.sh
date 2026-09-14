@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a release .app bundle (ad-hoc signed) for local/personal use.
+# Build and verify a locally signed release .app bundle.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -10,6 +10,8 @@ VERSION="0.6.1"
 BUILD="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 DIST="dist"
 APP="${DIST}/${APP_NAME}.app"
+
+bash ./scripts/sign.sh --check
 
 echo ">> Building release..."
 swift build -c release
@@ -30,6 +32,11 @@ echo ">> Assembling ${APP}..."
 rm -rf "${APP}"
 mkdir -p "${APP}/Contents/MacOS" "${APP}/Contents/Resources"
 cp "${BIN}" "${APP}/Contents/MacOS/${APP_NAME}"
+# SwiftPM resource bundles must travel with the installed app.
+for resource_bundle in "$(dirname "${BIN}")"/*.bundle; do
+  [ -d "${resource_bundle}" ] || continue
+  cp -R "${resource_bundle}" "${APP}/Contents/Resources/"
+done
 
 ICON_ENTRY=""
 if [ -f "Resources/AppIcon.icns" ]; then
@@ -70,7 +77,7 @@ ${ICON_ENTRY}
 </plist>
 PLIST
 
-echo ">> Code signing (ad-hoc)..."
-codesign --force --deep --sign - "${APP}" >/dev/null 2>&1 || echo "   (codesign skipped)"
+echo ">> Code signing..."
+bash ./scripts/sign.sh "${APP}"
 
 echo "OK: built ${APP}"

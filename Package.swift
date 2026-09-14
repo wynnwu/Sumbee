@@ -6,10 +6,13 @@ let package = Package(
     platforms: [
         .macOS(.v15)
     ],
+    dependencies: [.package(path: "Vendor/FluidAudio")],
     targets: [
         // All application logic and SwiftUI views live here so they can be unit-tested.
         .target(
-            name: "SumbeeKit"
+            name: "SumbeeKit",
+            dependencies: [.product(name: "FluidAudio", package: "FluidAudio")],
+            resources: [.copy("Resources/meeting-models.json"), .copy("Resources/meeting-notices.txt")]
         ),
         // Thin shell: hosts the SwiftUI app lifecycle.
         .executableTarget(

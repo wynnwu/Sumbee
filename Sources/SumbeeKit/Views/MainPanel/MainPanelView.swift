@@ -9,14 +9,14 @@ struct MainPanelView: View {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header
 
-                if !state.hasKey {
+                if !state.hasKey && state.inputMode != .meetings {
                     keyGateBanner
                 }
 
-                if state.inputMode == .transcripts {
-                    fileStylesSection
-                } else {
-                    YouTubeModePanel()
+                switch state.inputMode {
+                case .transcripts: fileStylesSection
+                case .youtube: YouTubeModePanel()
+                case .meetings: MeetingModePanel(processing: state.meetings)
                 }
             }
             .padding(20)
@@ -41,7 +41,7 @@ struct MainPanelView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Sumbee")
                     .font(.uiTitle)
-                Text("Transcripts & videos → clean notes")
+                Text("Meetings, transcripts & videos → clean notes")
                     .font(.uiCallout)
                     .foregroundStyle(.secondary)
             }

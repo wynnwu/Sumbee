@@ -1,0 +1,22 @@
+[
+  {
+    "package": "FluidAudio",
+    "tag": "v0.12.4",
+    "commit": "9830ce835881c0d0d40f90aabfaae3a6da5bebfb"
+  },
+  {
+    "package": "swift-transformers",
+    "tag": "1.1.6",
+    "commit": "573e5c9036c2f136b3a8a071da8e8907322403d0"
+  },
+  {
+    "package": "swift-jinja",
+    "tag": "2.0.0",
+    "commit": "1e6f84d6fca8ee93217b5594ce2025cbb0209c3a"
+  },
+  {
+    "package": "swift-collections",
+    "tag": "1.1.4",
+    "commit": "671108c96644956dddcd89dd59c203dcdb36cec7"
+  }
+]

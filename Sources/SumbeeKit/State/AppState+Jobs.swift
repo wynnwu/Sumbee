@@ -33,12 +33,14 @@ public extension AppState {
     // MARK: Enqueue
 
     func enqueueFiles(_ urls: [URL], style: SummaryStyle) {
-        guard requireKey() else { return }
-        let supported = urls.filter { TextExtractor.isSupported($0) }
-        let unsupported = urls.filter { !TextExtractor.isSupported($0) }
-        if !unsupported.isEmpty {
-            present(.error, "Skipped \(unsupported.count) unsupported file\(unsupported.count == 1 ? "" : "s").")
+        let classified = MeetingFileRouting.classify(urls)
+        if !classified.audio.isEmpty { importMeetingAudio(classified.audio) }
+        if !classified.unsupported.isEmpty {
+            present(.error, "Skipped \(classified.unsupported.count) unsupported file(s).")
         }
+        guard !classified.documents.isEmpty else { return }
+        guard requireKey() else { return }
+        let supported = classified.documents
         guard !supported.isEmpty else { return }
         // Geek mode: preview the exact prompt before sending a single file (FR-039). Batches skip it.
         if settings.geekMode, supported.count == 1 {
@@ -201,11 +203,9 @@ public extension AppState {
                 try Task.checkCancellation()
                 var effStyle = style
                 if case .regenerate(_, let o) = input, let o { effStyle.modelOverride = o }
-                let format = effStyle.modelOverride?.outputFormat ?? settingsSnapshot.outputFormat
                 let model = effStyle.modelOverride?.model ?? settingsSnapshot.model
-                let (system, user) = PromptBuilder.assemble(
-                    style: effStyle, format: format, htmlStylingPrompt: settingsSnapshot.htmlStylingPrompt,
-                    globalPrompt: settingsSnapshot.systemPrompt, transcript: prepared.text, videoMeta: prepared.videoMeta)
+                let assembled = try SummaryInputBudget.assemble(prepared, style: effStyle, settings: settingsSnapshot)
+                let system = assembled.system, user = assembled.user
                 let preview = PendingPreview(
                     system: system, user: user,
                     estimatedTokens: TokenEstimator.estimate(system + "\n\n" + user),
@@ -232,6 +232,23 @@ public extension AppState {
         jobs.append(job)
         previewPhase = nil
         startProcessing()
+    }
+
+    internal func enqueueMeetingSnapshot(_ prepared: PreparedInput, style: SummaryStyle) throws {
+        let assembled = try SummaryInputBudget.assemble(prepared, style: style, settings: settings)
+        guard let source = prepared.sourceRef, let root = prepared.libraryRoot else { throw MeetingSummaryError.missingSnapshot }
+        let input = Job.Input.file(root.appendingPathComponent(source))
+        if settings.geekMode {
+            previewPhase = .ready(PendingPreview(system: assembled.system, user: assembled.user,
+                estimatedTokens: TokenEstimator.estimate(assembled.system + "\n\n" + assembled.user),
+                modelName: assembled.model, prepared: prepared, style: style,
+                displayName: prepared.fallbackTitle, input: input))
+        } else {
+            var job = Job(input: input, displayName: prepared.fallbackTitle, styleID: style.id, styleName: style.name)
+            job.prepared = prepared
+            jobs.append(job)
+            startProcessing()
+        }
     }
 
     func cancelPendingPreview() {
@@ -340,6 +357,11 @@ public extension AppState {
     }
 
     private func runJob(_ job: Job) async {
+        if let prepared = job.prepared, prepared.kind == .meeting,
+           prepared.libraryRoot.map({ !MeetingLibraryPath.sameRoot($0, self.settings.libraryRootURL) }) ?? true {
+            fail(job.id, MeetingSummaryError.wrongLibrary.localizedDescription)
+            return
+        }
         guard let apiKey = keychain.load(), !apiKey.isEmpty else {
             handleAuthFailure()
             updateJob(job.id) { $0.phase = .failed("No API key.") }

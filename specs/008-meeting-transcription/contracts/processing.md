@@ -44,6 +44,10 @@ rather than a made-up percentage during opaque SDK inference.
   No dedicated reprocessing action or technical tuning controls are included.
 - **Manage participants:** Search, add, rename, merge, delete, and remove voice profiles.
   New exports use the latest confirmed catalog name; existing exported files stay unchanged.
+- **Delete audio:** From the meeting list or review, confirm removal of only the retained
+  audio file. Preserve transcript, names, voice profiles, models, exports and summaries.
+  Stop playback after deletion; show audio unavailable on reopening. Require queued/active
+  processing to stop before deletion, and bind confirmation to the selected library root.
 - **Summarize:** Select style/model, save a new export using current names, preview the exact prompt
   if geek mode is enabled, then enqueue. No automatic API call on import/review/enrollment.
 

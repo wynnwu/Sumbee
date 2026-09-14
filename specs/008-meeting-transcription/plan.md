@@ -31,6 +31,15 @@ fixtures; manual model evaluation on consented local audio with recorded ground 
 
 **Project Type**: Native macOS desktop app; existing `SumbeeKit` library and `Sumbee` executable.
 
+**Local build signing**: Adopt Nora's existing Apple Development signing approach (research D7).
+T044 adapts it for `com.sumbee.app`, a checkout-local ignored `.signing-identity`, and
+`SUMBEE_SIGNING_IDENTITY` override. Select an existing certificate; keep private keys in
+Keychain. Preflight before replacing a working bundle, sign the completed app, and verify
+strictly. Missing identity or signing failure stops bundling; no silent ad-hoc fallback.
+Keep the same signer across rebuilds. Plain `swift build`/`swift test` remain certificate-free.
+Local signing is separate from distribution signing and notarization. Sumbee's current
+`scripts/bundle.sh` is still ad-hoc; this adaptation is planned, not implemented.
+
 **Performance Goals**: SC-002 latency/runtime; peak process memory target <=6 GiB;
 one inference job at a time; no fabricated inference percentage.
 
@@ -44,6 +53,7 @@ no cross-device sync, live capture, video import, dedicated reprocessing, or cal
 
 **Before research: PASS.** The scoped FluidAudio/model-download exception was already
 approved for module 002 and is carried forward to 008 in constitution 1.1.1.
+Constitution 1.1.2 additionally records the user's local signing setup, implemented by T044.
 **After design: PASS, subject to implementation verification below.**
 
 | Principle | Design response | Implementation evidence required |
@@ -55,6 +65,7 @@ approved for module 002 and is carried forward to 008 in constitution 1.1.1.
 | User-owned files | Local JSON/audio plus Markdown source revisions | Relocation/restart and corruption tests |
 | Accessible native UI | Meetings/Participants views, stage progress, cancel | Keyboard, light/dark, responsiveness checks |
 | Pragmatic tests | Deterministic logic tests and real-recording evaluation | Green suite and benchmark report |
+| Local build identity | Existing Apple Development certificate; stable Sumbee bundle ID | Verified signatures and matching designated requirements across two builds |
 
 No new principle exception is requested. Real model performance and packaging are not yet verified.
 
@@ -109,11 +120,17 @@ before API setup. Keep file/YouTube behavior and file-channel styles compatible.
 2. Verify local models, run ASR and offline diarization sequentially, assemble review turns,
    and save raw recognition provenance alongside editable turns. Cancellation may wait for
    the SDK's current call to return, but late results cannot overwrite user state.
+   Reject contradictory overlap evidence when learning speaker identities; use only eligible
+   samples for centroid fallback. Unsupported voice matches remain unassigned and reconstruction
+   never fabricates activity to fill them. Preserve their recognized words for review.
 3. Compare eligible whole-cluster embeddings with compatible catalog profiles; persist
    suggestions separately. Naming/confirmation changes the meeting; enrollment is a separate
    catalog mutation. Attribution revisions prevent stale profiles from being reused.
 4. Review audio/text, merge labels, reassign turns, and explicitly enroll clean unchanged
    clusters. Ten seconds of non-overlapping attributed speech is the initial enrollment minimum.
+   A confirmed “Delete audio…” action removes only the retained audio file after processing
+   stops. Preserve all transcript/catalog/model/export/summary data; derive playback/retry
+   availability from the file's presence when refreshing or reopening the library.
 5. Each explicit export/new summary saves a uniquely named Markdown snapshot using the
    latest confirmed participant names; existing summary retries reuse their saved file.
    Feed its text and library-relative
@@ -126,7 +143,8 @@ Contracts define [processing and UI actions](contracts/processing.md) and
 ## Delivery strategy
 
 - **Setup and foundation:** Audit/vendoring/model manifest; prove representative files; define
-  model/store contracts and fixtures. Record baseline quality before investing in catalog UX.
+  model/store contracts and fixtures. Adopt persistent local signing in T044 before bundled
+  app validation. Record measured runtime/memory and clearly separate pending quality results.
 - **UI design after feasibility:** After T013, run the `frontend-design` skill as T043 before
   implementing meeting views. Use measured processing stages, timing, cancellation limits,
   and representative speaker output to design import/setup, the meeting list, transcript
@@ -145,6 +163,10 @@ US1 is a useful milestone; the complete requested feature includes US2–US4. Be
 must be fixed or explicitly revisited before shipping; they are not hidden by high-confidence UI.
 The design pass does not block engine work through T013. Its output guides T016–T017 and
 the later participant views in T022–T023/T029; T035's style-creation action follows the same design.
+
+Implementation checkpoint refinement: the real 60-minute offline run demonstrates runtime/memory
+feasibility and permits UI integration. T013's unmeasured WER/DER and separate-fixture comparisons
+remain open release gates, as recorded in `validation-results.md`; they are not implied passes.
 
 ## Complexity Tracking
 

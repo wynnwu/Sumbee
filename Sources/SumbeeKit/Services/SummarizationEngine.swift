@@ -11,10 +11,13 @@ public enum SummarizationEvent: Sendable {
 /// The extracted/fetched + archived input for a job, cached so retries never re-extract
 /// or re-archive (FR-021).
 public struct PreparedInput: Sendable, Equatable {
+    public enum Kind: Sendable, Equatable { case document, meeting }
     public var text: String
     public var sourceRef: String?
     public var fallbackTitle: String
     public var videoMeta: VideoMeta?
+    public var kind: Kind = .document
+    public var libraryRoot: URL? = nil
 }
 
 /// Regenerate (FR-037) couldn't locate the saved summary's original source.
@@ -48,6 +51,10 @@ public struct SummarizationEngine {
         let text = try extractor.extract(from: url)            // ExtractionError → non-retryable
         try Task.checkCancellation()
         let sourceRef = try archiveFile(url, root: settings.libraryRootURL)
+        if url.pathExtension.lowercased() == "md", FrontmatterCodec.parse(text).frontmatter["sourceType"] == "meeting" {
+            return try MeetingSummaryInputBuilder.readSnapshot(sourceRef: sourceRef, root: settings.libraryRootURL,
+                                                               title: url.deletingPathExtension().lastPathComponent)
+        }
         return PreparedInput(text: text, sourceRef: sourceRef,
                              fallbackTitle: url.deletingPathExtension().lastPathComponent, videoMeta: nil)
     }
@@ -69,6 +76,10 @@ public struct SummarizationEngine {
     /// Re-extracts an archived file (no re-archiving) or re-fetches a YouTube URL.
     public func prepareFromArchive(summaryURL: URL, settings: AppSettings,
                                    progress: @escaping @Sendable (SummarizationEvent) -> Void) async throws -> PreparedInput {
+        guard summaryURL.standardizedFileURL.resolvingSymlinksInPath().path.hasPrefix(
+            settings.libraryRootURL.standardizedFileURL.resolvingSymlinksInPath().path + "/") else {
+            throw MeetingSummaryError.wrongLibrary
+        }
         let raw = (try? String(contentsOf: summaryURL, encoding: .utf8)) ?? ""
         let isHTML = summaryURL.pathExtension.lowercased() == "html"
         let doc = isHTML ? nil : FrontmatterCodec.parse(raw)
@@ -83,11 +94,18 @@ public struct SummarizationEngine {
         }
         // File source = an archived path under the library root (e.g. "source/<name>").
         let fileURL = settings.libraryRootURL.appendingPathComponent(source)
+        guard MeetingDocument.safeRelativePath(source),
+              fileURL.resolvingSymlinksInPath().path.hasPrefix(settings.libraryRootURL.resolvingSymlinksInPath().path + "/") else {
+            throw RegenerateError.sourceMissing
+        }
         guard fm.fileExists(atPath: fileURL.path) else { throw RegenerateError.sourceMissing }
         progress(.phase(.extracting))
         let text = try extractor.extract(from: fileURL)
         let title = (isHTML ? HTMLMetaCodec.readMeta(raw, name: "title") : doc?.frontmatter["title"])
             ?? fileURL.deletingPathExtension().lastPathComponent
+        if FrontmatterCodec.parse(text).frontmatter["sourceType"] == "meeting" {
+            return try MeetingSummaryInputBuilder.readSnapshot(sourceRef: source, root: settings.libraryRootURL, title: title)
+        }
         return PreparedInput(text: text, sourceRef: source, fallbackTitle: title, videoMeta: nil)
     }
 
@@ -98,29 +116,18 @@ public struct SummarizationEngine {
                        progress: @escaping @Sendable (SummarizationEvent) -> Void) async throws -> Asset {
         let root = settings.libraryRootURL
         let format = style.modelOverride?.outputFormat ?? settings.outputFormat
-        let system = PromptBuilder.systemPrompt(style: style, format: format,
-                                                htmlStylingPrompt: settings.htmlStylingPrompt,
-                                                globalPrompt: settings.systemPrompt)
-
-        let model = style.modelOverride?.model ?? settings.model
-        let caps = ModelCatalog.capabilities(for: model)
-        let maxTokens = min(max(style.modelOverride?.maxOutputTokens ?? settings.maxOutputTokens, 256),
-                            caps.maxOutputCeiling)
-
-        // Oversized-input guard (spec edge case): rough char≈token*4 estimate against the
-        // model's context window, reserving room for output. Truncate with an explicit notice.
-        let reserveChars = (maxTokens + 4000) * 4
-        let allowedChars = max(8000, caps.approxContextTokens * 4 - reserveChars - system.count)
-        var finalText = prepared.text
-        if finalText.count > allowedChars {
-            finalText = String(finalText.prefix(allowedChars))
-                + "\n\n[NOTE: transcript truncated to fit the model's context window.]"
+        let assembled = try SummaryInputBudget.assemble(prepared, style: style, settings: settings)
+        if prepared.kind == .meeting {
+            // A cached retry must still have its immutable source; never invent a replacement.
+            guard let source = prepared.sourceRef else { throw MeetingSummaryError.missingSnapshot }
+            let snapshot = try MeetingSummaryInputBuilder.readSnapshot(sourceRef: source, root: root, title: prepared.fallbackTitle)
+            guard snapshot.text == prepared.text else { throw MeetingSummaryError.missingSnapshot }
+        }
+        if assembled.truncated {
             progress(.notice("Input exceeded the model context window; truncated with a notice."))
         }
-
-        let user = PromptBuilder.userMessage(transcript: finalText, videoMeta: prepared.videoMeta)
-        let request = resolveRequest(model: model, caps: caps, maxTokens: maxTokens,
-                                     style: style, settings: settings, system: system, user: user)
+        let request = resolveRequest(model: assembled.model, caps: assembled.capabilities, maxTokens: assembled.maxTokens,
+                                     style: style, settings: settings, system: assembled.system, user: assembled.user)
 
         progress(.phase(.summarizing))
         let output = try await anthropic.stream(request, apiKey: apiKey) { delta in

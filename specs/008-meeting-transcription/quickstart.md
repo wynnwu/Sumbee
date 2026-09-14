@@ -1,7 +1,7 @@
 # Validation Guide — Meeting Transcription
 
-**Status:** Planned checks; implementation and model evaluation have not run.
-Use this guide after completing the corresponding [tasks](tasks.md).
+**Status:** Implementation and local model checks are underway. Read [validation-results.md](validation-results.md)
+for observed results and open gates; use this guide to reproduce the corresponding [tasks](tasks.md).
 
 ## Prerequisites
 
@@ -25,12 +25,90 @@ Verify zero build warnings and passing existing/new tests. For the offline-build
 use an isolated fresh checkout and empty dependency caches with network denied; do not
 reuse the working app's populated SwiftPM cache. Confirm no remote package/artifact fetch.
 
+After T044 implements local signing, select the existing Apple Development identity once
+with `bash scripts/setup-signing.sh` (or specify `SUMBEE_SIGNING_IDENTITY`). Bundle with
+`./scripts/bundle.sh`, then run `codesign --verify --strict --verbose=2 dist/Sumbee.app`.
+Repeat a bundle build and compare `codesign -d -r- dist/Sumbee.app` output: the signer and
+designated requirement should remain stable with bundle ID `com.sumbee.app`. Exercise the
+missing-identity error before bundle replacement. Launch the bundled app for UI/permission
+validation; record any one-time approval needed when switching from an older ad-hoc build.
+No private key or identity-selection file is committed. These steps validate local signing,
+not notarization; `swift build` and `swift test` need no certificate.
+
 ## 2. Local import and review (US1)
+
+The source build opens Meetings without an API key. Choose **Download meeting models** once
+(486 MB); the installer verifies all assets. Models live in Application Support/Sumbee/models;
+saved recordings and the participant catalog live in the library's hidden `.meetings` folder.
+The supplied test audio is in the sibling `summarizer-sample` folder. At the user's direction,
+six disjoint clips were created under `meeting-transcription-fixtures`; they are same-meeting
+smoke inputs, not independent recordings. Their hashes and boundaries are recorded in results.
+
+Opt-in evaluations after `swift test` builds the test executable:
+
+```sh
+# Existing downloaded model folder, original local recording, and local-only JSON output:
+# Optionally set SUMBEE_MEETING_EXPECTED_SPEAKERS=3 when the true count is known.
+# This asserts output count; it does not force clustering or prove correct attribution.
+# For the annotated marketing recording, SUMBEE_MEETING_REFERENCE=marketing also
+# checks the user's six speaker ranges (without feeding the labels to inference).
+SUMBEE_MEETING_MODELS=/path/to/verified-assets \
+SUMBEE_MEETING_AUDIO=/path/to/recording.m4a \
+SUMBEE_MEETING_RESULT=/tmp/meeting-result.json \
+swift test --skip-build --filter MeetingModelEvaluationTests/testLocalRecording
+
+# Six split WAV inputs; results stay outside the repository:
+SUMBEE_MEETING_MODELS=/path/to/verified-assets \
+SUMBEE_MEETING_SPLIT_FIXTURES=/path/to/meeting-transcription-fixtures \
+SUMBEE_MEETING_SPLIT_RESULTS=/tmp/meeting-split-results \
+swift test --skip-build --filter MeetingModelEvaluationTests/testSplitRecordings
+
+# A local folder containing sample.wav, sample.mp3, and sample.m4a with speech:
+SUMBEE_MEETING_MODELS=/path/to/verified-assets \
+SUMBEE_FORMAT_FIXTURES=/path/to/format-fixtures \
+swift test --skip-build --filter MeetingModelEvaluationTests/testSupportedFormatsImportReviewAndReopenOffline
+
+# A non-silent speech clip shorter than one second:
+SUMBEE_MEETING_MODELS=/path/to/verified-assets \
+SUMBEE_SHORT_AUDIO=/path/to/short.wav \
+swift test --skip-build --filter MeetingModelEvaluationTests/testSubsecondSpeechKeepsWordsWithoutSpeakerClaims
+
+# Cancel after a substantial recording's staged audio copy becomes visible:
+SUMBEE_IMPORT_CANCEL_AUDIO=/path/to/hour-long-recording.m4a \
+swift test --skip-build --filter MeetingModelEvaluationTests/testCancellationDuringRealImportRemovesStagingAndSavedJob
+```
+
+Use `sandbox-exec -p '(version 1) (allow default) (deny network*)'` around the commands for
+the offline check, and add `--disable-sandbox` to SwiftPM under that outer sandbox. Normal
+unit tests skip these opt-in cases. macOS codec services must remain available; a generic
+process sandbox that blocks audio codec access is not equivalent to denying network access.
+
+Replay those sparse speaker checks against an already saved marketing result without
+running the models again:
+
+```sh
+SUMBEE_MEETING_AUDIO=/path/to/annotated-marketing-recording.m4a \
+SUMBEE_DIARIZATION_REPLAY=/path/to/its-saved-result.json \
+swift test --skip-build --filter MeetingModelEvaluationTests/testAnnotatedSpeakerRangesFromSavedResult
+```
+
+The test verifies the recording's SHA-256, checks substantial detected coverage in each
+range, consistent attribution within and across each person's examples, and separation
+between the three people. Group names may change between runs. These sparse references
+do not establish full-meeting accuracy or waive the separate expected-speaker-count check.
+The same test checks the user-confirmed three-person overlap at 2022–2026 seconds:
+attribution may be unknown, but must not introduce a fourth identity. See T045 and the
+recorded before/after results for this overlap check.
 
 Start without an API key. Open Meetings; import each supported format, then a mixed batch.
 Expect stage progress and a serial queue. Try unsupported/corrupt/silent files; one failure
 must not stop the batch. Play an excerpt, edit words, reassign a turn, and merge labels.
 Restart: saved content and playback remain available, with original input files unchanged.
+Use **Delete audio…** in the list and review. Cancel first to verify nothing changes, then
+confirm on a disposable fixture. Only the retained audio disappears: review/edit/export,
+summary snapshots, participant names, remembered voice matching and models remain available.
+Reopen and verify playback/retry are disabled with an audio-unavailable message. Active,
+queued and still-cancelling work must block deletion; changing libraries dismisses confirmation.
 Cancel during import and inference; acknowledgement <=2 seconds, no late ready result, and
 no concurrent replacement inference. Fail/cancel/force-stop during audio staging: no saved
 job remains, staging is cleaned, and the original can be imported again. Interrupt processing
@@ -42,6 +120,10 @@ Create two people with the same name and verify distinct IDs. Assign one to a sp
 check that no profile exists until “Remember this voice”. Enroll an eligible confirmed
 cluster, restart, and process a different meeting. Verify suggested names require confirmation,
 unfamiliar voices abstain, and attendee selection only narrows suggestions.
+The original enrollment cluster and each new query cluster must have at least ten seconds
+of clear, non-overlapping speech. Short or fully overlapping query clusters stay unnamed;
+manual naming is always available. Participant choices show a recent confirmed meeting for
+context when names are duplicated, even if no voice was remembered.
 Reject a suggestion; confirm that its profile is not updated. Correct source attribution
 and verify all profiles sourced from that meeting become ineligible. Attempt enrollment on
 short/mixed/corrected clusters: manual naming remains available with guidance to use another
@@ -82,6 +164,12 @@ appearance, and responsive cancel/playback controls during processing. Record ac
 results and unresolved failures; documentation-only review is not a passing model benchmark.
 The user can complete import/review/naming without interpreting scores or adjusting thresholds.
 Errors identify a direct next action; setup and summary handoff explain where audio/text go.
+For isolated native appearance checks, launch the signed executable with `SUMBEE_SMOKE=1`,
+`SUMBEE_SMOKE_SECONDS=900`, an isolated `SUMBEE_LIBRARY`, and `SUMBEE_APPEARANCE=light`
+or `dark`. This changes only the verification process's appearance, not macOS settings.
+Use `SUMBEE_MODEL_ROOT` to select the isolated installed model cache. In review, Tab reaches
+the paragraph editor and Command-S saves; speaker samples have a Stop control and stop when
+the assignment sheet closes.
 
 ## Internal scoring conventions
 

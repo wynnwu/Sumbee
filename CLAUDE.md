@@ -11,8 +11,9 @@ breaking Reveal-in-Finder; `.onDrag` breaking `List` selection; ad-hoc-signing p
 
 ## What this is
 A native macOS app (SwiftUI + AppKit, macOS 15+) that turns transcripts and YouTube videos into
-Markdown/HTML summaries saved as plain files. Local-first; the only network calls are the
-Anthropic summarization request and YouTube caption fetch. Bundle id `com.sumbee.app`; library
+Markdown/HTML summaries saved as plain files, with local meeting audio transcription. Network
+access is used for explicit model installation, Anthropic summaries/model selection, and YouTube
+caption fetching. Audio and voice profiles stay local. Bundle id `com.sumbee.app`; library
 defaults to `~/Sumbee Summaries` (deliberately NOT `~/Documents`; see learnings #2).
 
 ## Design process (Spec Kit)
@@ -33,16 +34,24 @@ summarize pipeline; keep new input sources behind that boundary (see the feature
 ```bash
 swift build            # 0 warnings is the bar
 swift test             # keep green (47+ tests)
-./scripts/bundle.sh    # dist/Sumbee.app (release, ad-hoc signed; bumps Info.plist version here)
+./scripts/bundle.sh    # dist/Sumbee.app (release, locally signed; bumps Info.plist version here)
 open dist/Sumbee.app
 ```
+For bundle signing setup or repeated permission prompts, read **Build from source** in
+`README.md`. Use the same existing Apple Development identity across builds; keys stay in
+Keychain and `.signing-identity` stays untracked. Core builds/tests need no certificate.
+
 Headless smoke + screenshot hooks exist for verification (`SUMBEE_SMOKE/SHOT/LIBRARY`,
 `SUMBEE_OPEN_SETTINGS/SETTINGS_SECTION/EDIT_FIRST_STYLE`); see how existing screenshots are taken.
 Verify each change group builds before moving on (learnings #14).
 
 ## Conventions
-- Settings: field-tolerant `Codable` (learnings #1). Zero third-party runtime deps today;
-  the planned FluidAudio exception is recorded in the feature 008 plan and constitution.
+- Settings and optional meeting metadata use field-tolerant `Codable` (learnings #1); required
+  record identity/version fields remain strict. Pinned FluidAudio dependencies resolve from
+  local `Vendor` source; provenance and compatibility edits are in `Vendor/README.md`.
+- For meeting model changes, read feature 008 `validation-results.md` and the pinned manifest.
+  Run deterministic tests and the relevant opt-in local evaluation; keep recordings/results
+  outside Git. Treat unmeasured accuracy gates as open, even when model execution succeeds.
 - Fonts via the shared `Font.ui*` tokens, sized generously (learnings #10).
 - Commit messages end with the project's Co-Authored-By trailer; releases are cut via `gh` with the
   built zip attached (see CHANGELOG / prior releases). Commit/push/release only when asked.

@@ -5,6 +5,7 @@ import Foundation
 public enum InputMode: String, CaseIterable, Identifiable, Sendable {
     case transcripts
     case youtube
+    case meetings
 
     public var id: String { rawValue }
 
@@ -12,6 +13,7 @@ public enum InputMode: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .transcripts: return "Transcripts"
         case .youtube: return "YouTube"
+        case .meetings: return "Meetings"
         }
     }
 
@@ -20,6 +22,7 @@ public enum InputMode: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .transcripts: return "doc.text"
         case .youtube: return "play.rectangle.fill"
+        case .meetings: return "waveform"
         }
     }
 }

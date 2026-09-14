@@ -19,3 +19,28 @@ DerivedData/
 .claude/
 .specify/
 icon-concepts/
+
+# Local signing selection (private keys stay in Keychain)
+.signing-identity
+.signing-identity.*
+
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+*.p12
+*.pfx
+*.key
+
+# Model weights/caches and private meeting inputs (manifest JSON stays tracked)
+*.mlmodelc/
+*.mlpackage/
+*.safetensors
+*.onnx
+*.m4a
+*.mp3
+*.wav
+*.caf
+.meetings/
+.meeting-evaluation/
+*.log

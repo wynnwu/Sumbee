@@ -3,6 +3,30 @@
 All notable changes to Sumbee are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+- Local WAV/MP3/M4A meeting transcription with verified model setup, saved audio, speaker
+  diarization, timestamp playback, transcript corrections, and recovery after interrupted work.
+- A library-specific participant catalog, explicit voice enrollment, conservative name
+  suggestions, attendee filtering, and controls for removing voices, merging, or deleting people.
+- Immutable reviewed transcript exports and explicit summary handoff, an opt-in Meeting Notes
+  style, and full-input budget checks that reject oversized meetings without truncation.
+- Persistent local Apple Development signing for source builds, and bundled model/software notices.
+
+### Validation
+- Real local inference and storage checks use the supplied recording and disjoint test clips.
+  Independent transcription/speaker accuracy remains under evaluation; see feature 008 results.
+
+### Fixed
+- Added **Delete audio…** to the meeting list and review, preserving transcripts, participants,
+  remembered voices, models, exports, summaries, and original audio files.
+- Corrected speaker-mask preparation and clustering defects that could combine distinct
+  meeting voices. Existing transcripts stay unchanged; re-import audio to use the corrected
+  pipeline and explicitly remember voices again for future suggestions.
+- Reject conflicting voice evidence from overlapping speech when learning speaker groups;
+  preserve unknown attribution where no identity has support, without inventing a group.
+
 ## [0.6.1] - 2026-06-29
 
 ### Changed

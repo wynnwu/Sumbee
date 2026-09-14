@@ -72,7 +72,7 @@ final class PlaylistTests: XCTestCase {
     // MARK: InputMode
 
     func testInputModeDefaultAndCases() {
-        XCTAssertEqual(InputMode.allCases.count, 2)
+        XCTAssertEqual(InputMode.allCases.count, 3)
         XCTAssertEqual(InputMode.transcripts.rawValue, "transcripts")
         XCTAssertEqual(InputMode.youtube.rawValue, "youtube")
     }

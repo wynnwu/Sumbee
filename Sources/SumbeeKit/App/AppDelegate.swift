@@ -10,7 +10,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Headless verification: launch with SUMBEE_SMOKE=1 to confirm the app boots and
         // a window is created, then write a marker and exit. Used by scripts/verify, not users.
         if ProcessInfo.processInfo.environment["SUMBEE_SMOKE"] == "1" {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            switch ProcessInfo.processInfo.environment["SUMBEE_APPEARANCE"] {
+            case "light": NSApp.appearance = NSAppearance(named: .aqua)
+            case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+            default: break
+            }
+            let delay = Double(ProcessInfo.processInfo.environment["SUMBEE_SMOKE_SECONDS"] ?? "") ?? 1.8
+            DispatchQueue.main.asyncAfter(deadline: .now() + min(max(delay, 1.8), 3600)) {
                 let windows = NSApp.windows.filter { $0.isVisible }
 
                 // Optional self-screenshot (renders our own window, no Screen Recording perm needed).
@@ -38,13 +44,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Warn before quitting while summaries are still running; on confirm, cancel in-flight work
     /// cleanly (assets are written atomically only on completion, so nothing is left partial).
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard let state = AppState.current, state.hasRunningJobs else { return .terminateNow }
+        guard let state = AppState.current, state.hasRunningJobs || state.meetings.hasWork else { return .terminateNow }
 
         let count = state.activeJobCount
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "A summary is still running"
-        alert.informativeText = count == 1
+        alert.messageText = state.meetings.hasWork ? "Meeting work is still running" : "A summary is still running"
+        alert.informativeText = state.meetings.hasWork
+            ? "Quitting stops processing. Saved recordings can be retried when you reopen the app; incomplete imports must be imported again. Quit anyway?"
+            : count == 1
             ? "Quitting now will cancel the in-progress summary. Quit anyway?"
             : "Quitting now will cancel \(count) in-progress summaries. Quit anyway?"
         alert.addButton(withTitle: "Quit Anyway")

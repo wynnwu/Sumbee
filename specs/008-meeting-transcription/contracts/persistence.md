@@ -56,7 +56,13 @@ summary snapshots remain intact. Merge redirects keep saved identities resolvabl
 rewriting every meeting. Deleting an exported source/summary in the existing asset browser
 remains a file operation, not an implicit deletion of a meeting or participant. If a referenced
 snapshot is manually removed, regeneration reports the existing source-missing error.
-A full meeting deletion/retention UI is deferred; Reveal files exposes local storage ownership.
+“Delete audio…” removes only the retained `.meetings/<id>/audio.<ext>` file after confirmation.
+The meeting document, transcript, catalog and voice profiles, model assets, exported sources,
+summaries, and original imported source remain unchanged. Audio availability is derived from
+the filesystem when refreshing/reopening; no schema migration is required. Playback and retry
+are unavailable without audio, while review, exports, summaries and compatible voice reuse remain
+available. Reject redirected audio/storage paths; never recursively delete the meeting folder.
+Full meeting deletion and automatic retention rules remain deferred.
 
 ## Reopening
 

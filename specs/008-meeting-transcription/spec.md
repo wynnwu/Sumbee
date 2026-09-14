@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-09
 
-**Status**: Specified; implementation pending
+**Status**: Implementation in progress; empirical acceptance gates remain open
 
 **Input**: Restart the approved module 002 direction as feature 008: import meeting audio,
 transcribe and distinguish speakers on-device, name participants, remember their voices
@@ -132,6 +132,8 @@ and one unassigned task; compare notes with the transcript and revisit the cited
   invented precise citations; nearby audio playback remains available.
 - Short interjections, background voices, and simultaneous speech: preserve recognized
   words and uncertainty; automatic diarization does not guarantee recovery of all overlapping words.
+  Mixed voices alone must not establish an additional speaker identity. When attribution
+  is unreliable, retain the words for review with unknown attribution.
 - One person split into multiple speakers, or multiple people merged: allow relabeling
   individual turns as well as merging detected speaker labels.
 - Insufficient disk space, cancelled downloads, app termination, or library relocation:
@@ -173,8 +175,10 @@ and one unassigned task; compare notes with the transcript and revisit the cited
   restricted to expected attendees, and leave weak or ambiguous matches unknown.
 - **FR-011**: Keep suggestions separate from confirmed assignments; only explicit confirmed
   enrollment may update profiles, and incompatible versions require fresh enrollment.
+  Compatibility includes speaker-mask preparation and clustering behavior as well as model files.
 - **FR-012**: Persist meetings, catalog identities, and recognition data locally across
-  restarts; deletion removes usable recognition data and preserves historical transcripts.
+  restarts; participant/profile deletion removes the corresponding usable recognition data
+  and preserves historical transcripts. Audio-only deletion preserves voice profiles.
 - **FR-013**: Save a readable timestamped transcript and route it through existing summary
   styles only on user request; summarization may send transcript text and prompts to its API. Preserve the exact reviewed revision used for
   each summary and reject oversized meeting inputs before sending rather than truncating.
@@ -187,6 +191,12 @@ and one unassigned task; compare notes with the transcript and revisit the cited
   audio stays on-device and only an explicit summary action sends transcript text.
 - **FR-016**: Preserve completed records through interrupted writes and library moves;
   reject incompatible/corrupt data without resetting user settings or catalog data.
+- **FR-017**: Provide a visible “Delete audio…” action in the meeting list and review,
+  with confirmation. Remove only Sumbee's retained audio file; keep the transcript,
+  participant names, remembered voices, models, exports, summaries, and original source file.
+  After deletion and restart, retain editing/export/summary functionality and disable playback
+  and processing actions that require audio. Queued/active work must be cancelled and finish
+  before deleting; a confirmation must remain bound to its original library.
 
 ### Key Entities
 
@@ -233,7 +243,7 @@ they remain outside the user workflow.
   targets are verified before release; failure triggers documented tuning, not a silent model swap.
 - The initial evaluation set includes at least three meeting conditions (clean call,
   in-room, interruptions), separate enrollment and held-out recordings, and one 60-minute file.
-  Audio fixtures are local and must be supplied or recorded for validation; none are yet provided.
+  Audio fixtures stay local. One consented hour-long recording has been supplied and split into six disjoint clips at the user's request; independent-condition/reference annotations remain pending.
 - Naming a participant is always possible even when audio is too weak to enroll a voice.
 - A personal, single-user local catalog is sufficient; cross-device sync is deferred.
 - The current text summarization provider remains in use. Fully local summarization is

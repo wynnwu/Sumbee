@@ -2,6 +2,22 @@ import Foundation
 
 /// The styles seeded on first run (spec §10). Fully editable afterward.
 public enum DefaultStyles {
+    static let meetingNotesID = UUID(uuidString: "B586F234-2A64-4B22-A164-A358868E0800")!
+    static func installMeetingNotes(root: URL, store: any StyleStoring = StyleStore()) throws {
+        let existing = try store.loadStyles(root: root)
+        guard !existing.contains(where: { $0.id == meetingNotesID || $0.name == "Meeting Notes" }) else { return }
+        try store.create(SummaryStyle(id: meetingNotesID, name: "Meeting Notes", channel: .file,
+            prompt: meetingNotes, order: (existing.map(\.order).max() ?? 0) + 1), root: root)
+    }
+
+    static let meetingNotes = """
+    Make useful meeting notes grounded only in this transcript. Use sections Summary, Decisions,
+    Action Items, and Open Questions. For every action include the task, established owner,
+    established due date, and evidence timestamp. Mark unknown owners and dates as unspecified.
+    Do not infer owners, dates, commitments, or decisions. Cite supplied timestamps for decisions
+    and actions; use "untimed evidence" if no exact timestamp exists. Separate proposals from
+    agreed decisions. Keep the notes concise enough to review and the tasks specific enough to act on.
+    """
     public static func make() -> [SummaryStyle] {
         [
             SummaryStyle(name: "Meetings - General", channel: .file, prompt: meetingsGeneral, order: 1),

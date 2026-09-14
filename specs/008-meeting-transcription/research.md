@@ -25,6 +25,25 @@ empty-cache offline build; this document does not claim that test has passed.
 
 ## D2 — Batch transcription, timestamp alignment, and progress
 
+**Implementation correction (2026-09-10):** The second supplied recording reproduced
+three voices collapsing into one before transcript assembly. The vendored offline pipeline
+needed corrections to mask transpose axes, hard powerset decoding, Euclidean threshold
+semantics, centroid-tree distance cuts, and clean-speech training selection. These restore
+the intended operations rather than tune a threshold to obtain a requested speaker count.
+See `Vendor/README.md` and `validation-results.md` for the failing regressions and remaining
+overlap follow-up. Pipeline fingerprint `offline-vbx-overlap-abstention-v3` requires
+fresh voice enrollment while reusing the verified model files. The Sumbee overlap policy
+rejects concurrent local speakers whose embeddings would merge under the existing AHC
+distance: their conflicting evidence cannot teach an identity. Nonpositive matches remain
+unassigned, and reconstruction selects only clusters with positive activity. This policy
+adds neither a requested speaker count nor a minimum total cluster duration; it is a
+conservative extension beyond the upstream reference behavior below.
+
+Reference behavior: [powerset decoding](https://github.com/pyannote/pyannote-audio/blob/main/src/pyannote/audio/utils/powerset.py)
+uses a winning class for binary activity; [clustering](https://github.com/pyannote/pyannote-audio/blob/main/src/pyannote/audio/pipelines/clustering.py)
+uses Euclidean centroid linkage, a distance cut, and samples with sufficient single-speaker
+activity. Accelerate's installed `vDSP.h` specifies transpose input dimensions as `[N][M]`.
+
 **Decision:** Keep SDK details inside `FluidAudioTranscriber`. Decode retained audio
 through AVFoundation/SDK converters to the required 16 kHz mono Float32 representation.
 Process one meeting at a time. ASR and diarization can run sequentially to limit memory.
@@ -128,6 +147,24 @@ separate feature; selecting a larger-context model is the initial recovery actio
 
 Evidence: `Services/SummarizationEngine.swift`, `Services/PromptBuilder.swift`,
 `Services/DefaultStyles.swift`, and `State/AppState+Jobs.swift`.
+
+## D7 — Reuse the existing local signing approach
+
+**Decision (2026-09-10):** The user reports local signing is already available through Nora.
+Read-only inspection found `../../nora-tasks/nora-mac/scripts/setup-signing.sh`, `sign.sh`,
+`bundle.sh`, and the "Stable Accessibility approval for agent triggers" section of its README
+(paths from this repository root). Setup selects an existing Apple Development certificate
+and saves its fingerprint in an ignored `.signing-identity`; it creates no certificate and
+exports no key. The signer supports an environment override, rejects ad-hoc signing,
+preflights availability, signs the complete app with `--timestamp=none`, and runs strict
+verification. Nora's bundle script checks signing before replacing the working app.
+
+Adapt this small workflow for Sumbee's `com.sumbee.app` and `SUMBEE_SIGNING_IDENTITY` in T044.
+Keep the selected certificate stable and verify the designated requirement across rebuilds;
+test permission behavior after any one-time transition from the old ad-hoc identity. Local
+development signing is not distribution signing or notarization. Do not copy Nora's bundle
+identifier or make builds depend on its checkout. This pass inspected scripts only; it did
+not access private keys, validate certificate availability, or sign a Sumbee build.
 
 ## Validation decisions
 

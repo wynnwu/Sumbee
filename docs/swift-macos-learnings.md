@@ -28,8 +28,10 @@ AppKit/menu-bar/animation/vibrancy work. Each entry: **Symptom → Cause → Rul
 - **Symptom**: TCC grants and Keychain access needed re-approving after each `swift build`/bundle.
 - **Cause**: ad-hoc signatures have no stable *designated requirement*, so macOS treats each build as
   a new app for TCC and Keychain ACLs.
-- **Rule**: expect re-granting in dev; don't design flows that assume persistent grants across
-  rebuilds. The real fix is a Developer-ID-signed + notarized build.
+- **Rule**: local bundles now use a persistent Apple Development certificate via
+  `scripts/setup-signing.sh` and `scripts/bundle.sh`. Keep the same certificate and bundle ID,
+  and verify the designated requirement across rebuilds. Switching from an old ad-hoc
+  identity may require a one-time grant. Distribution signing/notarization is separate.
 
 ### 4. Reading a Keychain item created under a *different* identity blocks on a prompt (hung headless)
 - **Symptom**: smoke run hung (watchdog SIGKILL / exit 137) after adding a "migrate old API key" step.

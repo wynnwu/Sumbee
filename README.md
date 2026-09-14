@@ -4,11 +4,11 @@
 
 # Sumbee
 
-**Turn meeting transcripts and YouTube videos into clean, structured summaries you own.**
+**Turn meetings, transcripts, and YouTube videos into structured notes you own.**
 
 A native macOS app. Local-first: your summaries are plain Markdown (or HTML) files on your own
-hard drive, in a folder you choose. You own them like any private local file; the app never
-uploads or sees your library. No proprietary format, no lock-in.
+hard drive, in a folder you choose. Audio stays on your Mac; transcript text is sent to the
+configured summary model only when you request a summary. No proprietary summary format.
 
 [![Download Sumbee for macOS](https://img.shields.io/badge/Download_Latest-FF8C00?style=for-the-badge&logo=apple&logoColor=white)](../../releases/latest)
 
@@ -24,25 +24,32 @@ uploads or sees your library. No proprietary format, no lock-in.
 
 - **You own your data.** Summaries and archived sources are plain files on your hard drive (in
   `~/Sumbee Summaries`, or anywhere you choose), yours like any private local file, usable in
-  Finder, Obsidian, or git with the app closed. The app never uploads or sees your library; the
-  on-disk files *are* the source of truth. **No proprietary format, no lock-in.**
-- **Local-first.** Everything stays on your Mac except the two actions you start: sending
-  transcript text to the Anthropic API to summarize, and fetching YouTube captions via `yt-dlp`.
+  Finder or Obsidian with the app closed. The on-disk files are the source of truth.
+- **Local-first.** Recordings, speaker profiles, and local transcripts stay on your Mac.
+  Network access is used for explicit model setup, Anthropic summaries/model selection,
+  and YouTube captions via `yt-dlp`.
 - **Fully private summarization is coming.** Local models via **Ollama** (on-device, nothing leaves
   your Mac) are on the roadmap.
 - **Styles are just prompts.** Each summary **style** is an editable prompt that also names a
   folder in your library: make one per use-case (standups, interviews, research videos…).
 - **Native & beautiful.** SwiftUI + AppKit, real vibrancy/"glass", automatic light/dark, an
   orange accent, and a single responsive window.
-- **Zero third-party dependencies.** Builds offline with only the Apple Swift toolchain.
+- **Offline builds.** Pinned transcription dependencies are included as audited runtime source
+  in [Vendor](Vendor/README.md); SwiftPM resolves them locally. Model weights download separately.
 
 ## Features
+
+- **Local audio transcription (unreleased source build).** Import WAV, MP3, or M4A recordings,
+  review timestamped speaker turns, play the retained audio, and correct text or speaker labels.
+- **Participant catalog.** Confirm names and explicitly remember eligible voices for suggestions
+  in later recordings. Names can be shared by different people; suggestions remain unconfirmed
+  until accepted. Renames affect new exports; existing exports keep their original wording.
 
 - **Drag-and-drop transcripts** (`.md`, `.txt`, `.pdf`, `.docx`, `.rtf`) onto a style → a saved
   summary, with the original safely archived. Drop many at once: they queue and run one at a time,
   and one failure never aborts the batch (with automatic, backed-off retries for transient errors).
 - **YouTube → summary, video or whole playlist.** A left mode rail switches between Transcripts and
-  YouTube. In YouTube mode, paste a single video or a **playlist** URL: a playlist fetches an inline
+  YouTube and Meetings. In YouTube mode, paste a single video or a **playlist** URL: a playlist fetches an inline
   checklist (with already-summarized videos pre-excluded) and summarizes the ones you pick, one at a
   time, through a chosen style. **Fetched playlists are kept** under "Your playlists" so you can come
   back and summarize more (with a Refresh to pick up new videos). If YouTube asks you to "confirm
@@ -85,8 +92,7 @@ uploads or sees your library. No proprietary format, no lock-in.
 
 ## Download & install
 
-> **Heads-up:** the build is **ad-hoc signed, not notarized** (no paid Apple Developer
-> certificate), so macOS Gatekeeper will warn on first launch. The steps below clear that, and you
+> **Heads-up:** the published 0.6.1 build is **ad-hoc signed, not notarized**, so macOS Gatekeeper will warn on first launch. The steps below clear that, and you
 > only do it once.
 
 1. Download **`Sumbee-0.6.1.dmg`** from the [latest release](../../releases/latest) (a `.zip` is also
@@ -100,12 +106,55 @@ uploads or sees your library. No proprietary format, no lock-in.
    **Or** without Terminal: right-click **Sumbee.app → Open → Open**. If macOS still blocks it
    (common on recent macOS), go to **System Settings → Privacy & Security**, scroll to the
    "Sumbee was blocked" notice, and click **Open Anyway**.
-4. On first launch Sumbee opens to **Settings**: paste your
+4. For the published 0.6.1 release, first launch opens **Settings**: paste your
    [Anthropic API key](https://console.anthropic.com/settings/keys), click **Save & Validate**,
    then drag a transcript onto a style.
 
 **Requirements:** macOS 15 (Sequoia) or later, Apple Silicon (M1 or newer). Optional: [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)
 for the YouTube feature (auto-discovered, or installed from Settings).
+
+## Local meetings (unreleased source build)
+
+1. Open **Meetings** and choose **Download meeting models** once (about 486 MB). The app
+   verifies the downloaded files before activating them. No transcription API key is needed.
+2. Import or drop WAV, MP3, or M4A recordings. They process one at a time on this Mac;
+   English is the supported transcription language for this initial model choice.
+3. Open a saved meeting. Click timestamps to listen, edit paragraphs, and assign or merge
+   speaker labels. Choose or create people in the participant catalog and confirm their names.
+4. Use **Remember this voice** separately if you want future name suggestions. It requires
+   a confirmed, unregrouped speaker with at least 10 seconds of speech without overlap.
+   Suggestions require confirmation; uncertain voices stay unnamed. Use another clear
+   recording when a sample is short or its speaker turns were corrected.
+5. Choose **Export transcript**, or select a file style and **Summarize…**. Summarization
+   explicitly sends transcript text to the configured Anthropic model and requires an API key.
+   **Add Meeting Notes summary style** installs an optional decisions/actions prompt without
+   replacing existing edited styles.
+
+Recordings, meeting JSON, and the participant catalog live under the selected library's hidden
+`.meetings` folder. Model caches live in `~/Library/Application Support/Sumbee/models`.
+Include hidden meeting files when backing up or moving the library. New exports in `source/`
+use the latest confirmed names; old exports and summary regeneration keep their original text.
+Oversized meeting summaries fail visibly before sending rather than truncating the transcript.
+
+Interrupted processing can retry from retained audio. Failed or cancelled audio copies leave
+no saved job; import the original again. Renaming or deleting a catalog person preserves
+historical transcript wording. Removing a voice profile keeps its participant; changing
+speaker attribution invalidates voices learned from that meeting.
+
+If you tested an earlier transcription build, re-import recordings to use the corrected
+speaker separation. Existing reviewed meetings are preserved. Voice profiles from the earlier
+pipeline are incompatible with the corrected one; confirm speakers and use **Remember this
+voice** on a new import. Installed model files can be reused without downloading them again.
+
+Use **Delete audio…** in the meeting list or review to remove only Sumbee's saved recording.
+Your transcript, participant names, remembered voices, models, exports, summaries, and original
+audio file are kept. You can still edit, export, and summarize; playback is unavailable afterward.
+
+This implementation is undergoing validation. The supplied hour-long meeting and six disjoint
+clips run offline; independent word/speaker accuracy and microphone generalization are not
+established. Review speaker assignments before relying on them. Measurements and open checks
+are in [validation results](specs/008-meeting-transcription/validation-results.md).
+Model/software attribution is available in the app under **Model and software notices**.
 
 ## Build from source
 
@@ -115,11 +164,23 @@ cd Sumbee
 
 swift run Sumbee        # run a debug build
 swift test              # run the unit tests (95)
-./scripts/bundle.sh     # produce dist/Sumbee.app (release, ad-hoc signed)
+bash scripts/setup-signing.sh  # select an existing Apple Development certificate once
+./scripts/bundle.sh     # produce and verify a locally signed dist/Sumbee.app
 open dist/Sumbee.app
 ```
 
 **Requirements to build:** Xcode 26 / Swift 6.2 toolchain, macOS 15+.
+
+Local bundles use a persistent Apple Development identity, following the same approach as
+Nora. Setup stores only its fingerprint in the ignored `.signing-identity`; keys stay in
+Keychain. Select a specific certificate with `bash scripts/setup-signing.sh <name-or-fingerprint>`
+or override it with `SUMBEE_SIGNING_IDENTITY`. Keep the same signer and `com.sumbee.app` across
+rebuilds. Bundling fails early if the identity is unavailable and verifies the finished signature.
+Plain `swift build`, `swift run`, and `swift test` do not require a signing certificate.
+
+When switching from an old ad-hoc app, macOS may request a one-time permission or Keychain
+approval. Launch the bundled app for permission validation. Local development signing does
+not notarize the app or change the signing of previously published releases.
 
 ## How it works on disk
 
@@ -175,8 +236,8 @@ yt-dlp via `Process`, live refresh via FSEvents. No SPM dependencies, no build-t
 
 - **Local models via [Ollama](https://ollama.com)**: fully on-device, fully-private summarization
   (nothing leaves your Mac). *Coming soon.*
-- On-device audio-file transcription with FluidAudio, speaker review, and a reusable participant
-  catalog (see [feature 008 plan](specs/008-meeting-transcription/plan.md))
+- Complete local meeting transcription accuracy/accessibility validation
+  (see [feature 008 results](specs/008-meeting-transcription/validation-results.md))
 - Live microphone/system recording and video-file transcription follow audio-file import
 - Chunked map-reduce for transcripts exceeding the context window
 - Per-style model overrides UI, library search/tags
