@@ -2,7 +2,9 @@
 
 **Feature:** `008-meeting-transcription` | **Input:** [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md), [data-model.md](data-model.md), [contracts](contracts/).
 
-**Status:** Implementation in progress. Checked tasks have implementation and verification evidence; unchecked tasks may be partly built and still need the stated validation. See validation-results.md.
+**Status:** 41 of 46 tasks checked. Core implementation is present; broader validation remains
+open in T003, T013, T030, T039 and T041. Checked tasks have implementation and verification
+evidence; unchecked tasks may be partly built and still need the stated validation. See validation-results.md.
 
 Paths are repository-relative. `[P]` marks independent files after their prerequisites. `[USn]` identifies the user story. C01–C12 are quoted from the data model where implemented.
 Task IDs remain stable: T043 is placed after T013; T044 belongs to Setup before bundled app validation.
@@ -123,7 +125,7 @@ Write meaningful deterministic tests before their corresponding implementation a
 | FR-002 | T001, T002, T005–T008, T040 |
 | FR-003 | T005, T006, T015, T016, T018, T031, T036, T040 |
 | FR-004 | T004, T007, T008, T010, T012, T014–T016, T018 |
-| FR-005 | T004, T007–T009, T011, T017 |
+| FR-005 | T004, T007–T009, T011, T017, T045 |
 | FR-006 | T009–T012, T017, T024, T043 |
 | FR-007 | T019–T022, T043 |
 | FR-008 | T004, T019–T021, T023, T024, T031, T032, T037, T043 |
@@ -135,9 +137,10 @@ Write meaningful deterministic tests before their corresponding implementation a
 | FR-014 | T031, T034–T037 |
 | FR-015 | T008, T014, T016, T018, T029, T039, T043 |
 | FR-016 | T004, T010, T012, T014, T020, T021, T038 |
+| FR-017 | T046 |
 | SC-001 | T018, T040, T041 |
 | SC-002 | T003, T013, T039, T041 |
-| SC-003 | T003, T013, T041 |
+| SC-003 | T003, T013, T041, T045 |
 | SC-004 | T003, T030, T041 |
 | SC-005 | T020, T024, T026, T030, T038, T041 |
 | SC-006 | T031, T037, T041 |

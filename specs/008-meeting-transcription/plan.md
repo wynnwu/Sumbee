@@ -3,7 +3,10 @@
 **Branch**: `008-meeting-transcription` | **Date**: 2026-09-09 | **Spec**: [spec.md](spec.md)
 
 **Input**: Approved direction in [brief.md](brief.md), expanded into feature 008.
-**Status**: Design complete; all implementation and model-validation tasks remain pending.
+**Status**: Core implementation complete, including diarization corrections and audio-only
+deletion; 41 of 46 tasks are checked. Broader accuracy, held-out identity, reference-hardware,
+accessibility and real-summary validation remain open. See [tasks.md](tasks.md) and
+[validation-results.md](validation-results.md) for evidence and remaining gates.
 Feature 008 supersedes module 002; live recording and licensing are deferred.
 
 ## Summary

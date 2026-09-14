@@ -1,6 +1,25 @@
 # Meeting transcription validation
 
-Implementation in progress. Results below are observed, not estimated quality scores.
+Core implementation is present; broader acceptance validation remains open. Results are
+observed, not estimated quality scores. The sections below retain chronological evidence:
+earlier failures, model fingerprints and test counts describe those checkpoints.
+
+## Current status (2026-09-14)
+
+- Pipeline: `parakeet-v2-offline-20260910-r3`, embedding fingerprint
+  `offline-vbx-overlap-abstention-v3`; matching calibration remains provisional.
+- The corrected full marketing recording passes the six user-labelled speaker examples
+  and confirmed-overlap check with three identified groups. The phantom fourth identity
+  is resolved in that fixture; overlap attribution and short-clip errors remain limitations.
+- **Delete audio…** preserves transcripts, participant names, remembered voices, models,
+  exports, summaries and the original input. Playback becomes unavailable; editing,
+  exports, summary preparation and compatible voice reuse remain available.
+- The pre-commit suite passed 170 tests with ten opt-in skips and zero failures
+  (`/private/tmp/sumbee-precommit-tests.log`). Local signing and audio-deletion checks
+  are detailed in the [audio-only deletion results](#audio-only-deletion-2026-09-12).
+- 41/46 tasks are checked. Full WER/DER, held-out cross-meeting recognition/calibration,
+  reference M1 hardware, complete accessibility review and real Meeting Notes evaluation
+  remain open. Requirement-review checklist markers do not indicate implementation status.
 
 ## Development fixture and hardware
 
@@ -8,7 +27,10 @@ One consented local M4A recording supplied in the sibling `summarizer-sample` di
 60 minutes 22.377 seconds, mono AAC at 48 kHz, 59,096,828 bytes. Raw audio, transcripts,
 and evaluation JSON remain outside Git. Local inventory: `/private/tmp/sumbee-fixture-inventory.json`.
 Hardware actually tested: Apple M4, 32 GB RAM, macOS 15.7.9. The M1/16 GB reference target
-has not been measured. Separate meetings and microphone conditions are not yet available. At the user's direction, the single recording is split into non-overlapping local clips for initial enrollment/development/evaluation tests.
+has not been measured. At this initial checkpoint, separate meetings and microphone conditions
+were not available. The user later supplied the second recording documented below; a separate
+annotated enrollment/development/held-out corpus is still outstanding. The first recording's
+disjoint clips provide same-meeting smoke checks, not cross-meeting accuracy evidence.
 
 ## Verified foundation
 
@@ -37,8 +59,9 @@ completed offline within the memory target. This is a documented checkpoint refi
 UI work may proceed from measured runtime/memory and representative output; quality gates
 remain open and must pass before the feature is called complete.
 
-WER and DER are **unmeasured**: no independently annotated reference transcript or speaker
-timeline has been supplied or created. Use quickstart.md's scoring conventions (word alignment,
+Full-meeting WER and DER are **unmeasured**: the later user-labelled examples are sparse
+speaker references, not a complete reference transcript or speaker timeline.
+Use quickstart.md's scoring conventions (word alignment,
 speaker permutation, 250 ms collar, and stated overlap treatment) when recording those results.
 Clean, in-room, and overlap fixture comparisons remain pending.
 

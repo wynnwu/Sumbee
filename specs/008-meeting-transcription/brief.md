@@ -2,7 +2,8 @@
 
 **Status:** Approved direction, carried forward from module 002 on 2026-09-09.
 The current requirements are in [spec.md](spec.md), with implementation details in
-[plan.md](plan.md) and [tasks.md](tasks.md). This brief preserves the original scope.
+[plan.md](plan.md) and [tasks.md](tasks.md). This brief includes the approved audio-only
+deletion follow-up (FR-017); core implementation is present and broader validation remains open.
 
 ## Outcome and scope
 
@@ -26,10 +27,14 @@ Live microphone/system recording, streaming transcripts, and licensing are defer
    removing saved voice profiles, and deleting catalog entries.
 4. **Reuse:** In later meetings, compare detected voices with compatible saved profiles
    locally and suggest participant names. Let users confirm or correct suggestions;
-   leave ambiguous matches unknown. Only confirmed assignments update voice profiles.
+   leave ambiguous matches unknown. Only an explicit “Remember this voice” action on a
+   confirmed speaker saves a profile; naming or accepting a suggestion alone does not.
 5. **Summarize:** Save the reviewed transcript and choose a summary style. Action items
    include an owner, due date when stated, and supporting transcript timestamps;
    unspecified owners/dates remain unspecified.
+6. **Delete audio:** Remove only Sumbee's saved audio copy after confirmation. Keep the
+   transcript, participant names, remembered voices, models, exports, summaries and original
+   input. Editing/export/summary and voice reuse remain available; playback is unavailable.
 
 ## Technical direction
 
@@ -37,7 +42,9 @@ Use [FluidAudio](https://github.com/FluidInference/FluidAudio): **Parakeet TDT 0
 for English ASR and **OfflineDiarizerManager** for batch speaker diarization. Wrap the
 SDK behind a small transcription interface returning timed words/turns and meeting
 speaker IDs. Match words to speaker intervals; keep participant matching separate
-from diarization and summarization. Use the existing SDK pipeline for clustering.
+from diarization and summarization. Use the pinned vendored SDK with documented diarization
+corrections and a conservative safeguard against learning identities from conflicting overlap
+evidence; see [research.md](research.md) and [validation-results.md](validation-results.md).
 
 A **Participant** has a persistent ID and editable name; a **Meeting Speaker** has an
 ID local to one meeting and an optional confirmed participant link. **Voice Profiles**
@@ -47,7 +54,7 @@ Catalog deletion removes recognition data while preserving historical transcript
 
 Store the catalog and transcript metadata as versioned local JSON, with readable
 Markdown transcripts in the existing library. Preserve imported audio locally for
-playback and corrections. Audio and voice profiles stay on-device; only transcript
+playback and corrections until the user deletes the saved audio. Audio and voice profiles stay on-device; only transcript
 text and prompts go to the selected summarization LLM when the user requests it.
 
 ## Delivery and validation

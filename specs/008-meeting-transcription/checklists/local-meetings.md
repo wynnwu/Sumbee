@@ -50,7 +50,7 @@
 - [ ] CHK024 Are unknown voices, duplicate names, ambiguous suggestions, empty attendee selection, and incompatible profiles addressed? [Coverage, Spec §User Stories 2–3, Data Model §Meeting document/Voice profile]
 - [ ] CHK025 Is the user recovery path for fresh enrollment after a corrected or mixed speaker cluster explicitly specified? [Coverage, Gap, Spec §FR-009/FR-011, Research §D3]
 - [ ] CHK026 Are partial writes, insufficient storage, missing source files, and corrupt or future-version records covered without destructive fallback? [Coverage, Spec §FR-016/Edge Cases, Persistence Contract §Atomic ownership/Reopening]
-- [ ] CHK027 Are retained audio, raw recognition data, reusable profiles, and exported transcripts distinguished in deletion and retention requirements? [Coverage, Spec §FR-012, Persistence Contract §Library changes and deletion]
+- [ ] CHK027 Are retained audio, raw recognition data, reusable profiles, and exported transcripts distinguished in deletion and retention requirements? [Coverage, Spec §FR-012/FR-017, Data Model §Meeting document, Persistence Contract §Library changes and deletion]
 
 ## Non-Functional Requirements and Dependencies
 

@@ -1,6 +1,7 @@
 # Data Model — Meeting Transcription
 
-**Status:** Proposed persisted schema v1. Types belong to `SumbeeKit`; SDK types stay
+**Status:** Implemented persisted schema v1, updated through audio-only deletion (FR-017).
+Types belong to `SumbeeKit`; SDK types stay
 inside the adapter. A catalog belongs to the selected library. Names are never identity keys.
 
 ## Validation rules
@@ -33,7 +34,7 @@ errors. Preserve unrelated settings during migrations. All mutations validate be
 | durationSeconds | Finite nonnegative decoded duration; invalid audio is an import failure |
 | status, failureMessage | Durable state C10; failure text is local and contains no credentials |
 | reviewRevision, attributionRevision | C06; initialize both at 1, including queued records |
-| modelFingerprint | Absent until processing starts; ASR/embedding revisions and preprocessing identifier for reproducibility |
+| modelFingerprint | Filled when the recognition result is saved; pipeline identifier for reproducibility |
 | turns, speakers | Ordered editable transcript plus meeting-local identities |
 | recognitionResult | Original timing/cluster provenance for review and enrollment eligibility |
 | expectedParticipantIDs | Optional UUID set; empty means search all active participants |
@@ -45,6 +46,14 @@ Only then is a queued job durable. Failed/cancelled copies or initial writes lea
 job; discard staging files, including abandoned staging on restart, and re-import normally.
 There are no source bookmarks or pre-copy recovery records.
 
+**Audio-only deletion:** Keep `audioPath`, `originalFilename`, `audioSHA256`, duration,
+status, revisions, transcript and original recognition data unchanged; remove only the
+retained regular audio file after confirmation. Audio availability is derived from the
+filesystem, not a persisted deletion flag. A ready meeting remains ready and supports
+editing, exports, summaries and compatible voice reuse after deletion and reopening.
+Playback/start/retry require the audio file. Participant names, voice profiles, model files,
+exports, summaries and the original imported source are unchanged (FR-017).
+
 Durable state path: queued -> awaitingModels (if needed) -> transcribing -> diarizing
 -> assembling -> ready/noSpeech. Active processing stages may become failed/cancelled.
 On restart, active processing becomes interrupted and can retry using retained audio;
@@ -54,13 +63,15 @@ workflow is included; importing the file again creates an independent meeting.
 
 ## Transcript turn and meeting speaker (`Models/Meeting.swift`)
 
-A turn has `id`, `text`, optional `start`/`end`, `speakerID`, and original token/segment
-references (C01/C04/C05). A speaker has `id`, `genericLabel`, optional SDK cluster keys,
+A turn stores `id`, `text`, optional `start`/`end`, and `speakerID` (C01/C04/C05).
+Original tokens and speaker intervals live in the meeting's `recognitionResult`.
+A speaker stores `id`, `genericLabel`, SDK `clusterKeys` (empty when unavailable),
 `confirmedParticipantID`, saved `displayNameSnapshot`, optional suggestion + score,
-and enrollment eligibility (C01/C07/C09). Scores are local ranking values, not probabilities.
+and `attributionEdited`; enrollment eligibility is computed (C01/C07/C09).
+Scores are local ranking values, not probabilities.
 
 An untimed turn cannot offer exact timestamp playback/citation; the UI labels it untimed
-and allows nearby audio review. A detected-speaker merge remaps turns without deleting text;
+and allows nearby audio review while audio is retained. A detected-speaker merge remaps turns without deleting text;
 a new speaker identity can be created when correcting turns from a mixed cluster.
 Any attribution change invalidates profiles sourced from that meeting through C06/C08,
 even if a crash occurs before eager cleanup. This conservative meeting-level rule avoids
@@ -86,7 +97,9 @@ its participant and confirmed meeting links. No deleted identity is revived by a
 
 Fields: `id`, `participantID`, `embedding`, `embeddingFingerprint`, `dimension`, `sourceMeetingID`,
 `sourceClusterKeys`, `sourceAttributionRevision`, `createdAt` (C01/C08/C09).
-The fingerprint covers embedding model commit/checksum, preprocessing and normalization version.
+The fingerprint covers model commit/checksum, preprocessing, normalization and clustering
+behavior, including overlap handling. Incompatible prior-pipeline profiles require explicit
+fresh enrollment; deleting only the audio does not invalidate an otherwise eligible profile.
 Keep separate confirmed profiles from different meetings; score a candidate participant using
 its best eligible compatible profile, then compare the top two distinct participants.
 Missing/incompatible/stale profiles abstain. Threshold and margin are versioned calibration
