@@ -35,7 +35,7 @@ protocol AnthropicStreaming {
 
 ```json
 {
-  "model": "claude-opus-4-8",
+  "model": "claude-opus-5-5",
   "max_tokens": 4096,
   "stream": true,
   "system": "<style prompt + output convention (+ HTML styling prompt if HTML)>",
@@ -48,7 +48,8 @@ protocol AnthropicStreaming {
   user selected a level.
 - `thinking: {"type":"adaptive"}` is added **only** when extended thinking is on and
   supported; default summarization leaves it off (faithful mode).
-- No `temperature`/`budget_tokens` is ever sent to Opus 4.8/4.7 (they 400).
+- No `temperature`/`budget_tokens` is ever sent to the Opus 4.7+ or Claude 5 families
+  (Opus 5/5.5, Sonnet 5/5.5, Haiku 5.5, Fable, Mythos) — they 400 on it.
 
 ## Streaming (SSE)
 

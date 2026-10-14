@@ -72,8 +72,20 @@ public enum ModelCatalog {
 
     public static let presets: [ModelPreset] = [
         ModelPreset(
+            id: "claude-opus-5-5",
+            displayName: "Claude Opus 5.5 (latest)",
+            capabilities: ModelCapabilities(
+                supportsTemperature: false,
+                supportsEffort: true,
+                effortLevels: opusEffortLevels,
+                supportsAdaptiveThinking: true,
+                maxOutputCeiling: 128_000,
+                approxContextTokens: 1_000_000
+            )
+        ),
+        ModelPreset(
             id: "claude-opus-4-8",
-            displayName: "Claude Opus 4.8 (latest)",
+            displayName: "Claude Opus 4.8",
             capabilities: ModelCapabilities(
                 supportsTemperature: false,
                 supportsEffort: true,
@@ -109,12 +121,18 @@ public enum ModelCatalog {
         ),
     ]
 
-    public static let defaultModelID = "claude-opus-4-8"
+    public static let defaultModelID = "claude-opus-5-5"
 
     /// Model id families (substrings) that REJECT `temperature`/`budget_tokens` and use
-    /// `output_config.effort` + adaptive thinking (Opus 4.7+, Fable, Mythos). A custom id in
-    /// one of these families must NOT be sent temperature, or the API returns 400.
-    static let noTemperatureFamilies = ["opus-4-7", "opus-4-8", "opus-4-9", "fable", "mythos"]
+    /// `output_config.effort` + adaptive thinking (Opus 4.7+ and the whole Claude 5 line —
+    /// Opus 5/5.5, Sonnet 5/5.5, Haiku 5.5 — plus Fable and Mythos). A custom id in one of
+    /// these families must NOT be sent temperature, or the API returns 400. The `*-4-*` ids
+    /// that still accept temperature (Sonnet 4.6, Haiku 4.5) are deliberately absent.
+    static let noTemperatureFamilies = [
+        "opus-4-7", "opus-4-8", "opus-4-9",
+        "opus-5", "sonnet-5", "haiku-5",
+        "fable", "mythos",
+    ]
 
     /// Capabilities for any model id - exact preset match, then a family heuristic for custom
     /// ids, else a conservative default. Treating capabilities as data keeps the request

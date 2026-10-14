@@ -74,7 +74,7 @@ resets an existing config.
 
 `ModelCatalog` lists presets and maps each id → `ModelCapabilities`:
 
-| Capability | Opus 4.8 / 4.7 | Sonnet 4.6 | Haiku 4.5 | Unknown (custom) |
+| Capability | Opus 5.5 / 4.8 / 4.7 | Sonnet 4.6 | Haiku 4.5 | Unknown (custom) |
 |---|---|---|---|---|
 | `supportsTemperature` | false | true | true | true (conservative) |
 | `supportsEffort` | true | true | false | false |
@@ -82,9 +82,14 @@ resets an existing config.
 | `supportsAdaptiveThinking` | true | true | false | false |
 | `maxOutputCeiling` | 128000 | 64000 | 64000 | 8192 |
 
-Presets: `claude-opus-4-8` (default), `claude-sonnet-4-6`, `claude-haiku-4-5`, plus a
-free-text custom id. The request builder reads these flags so a parameter is never sent
-to a model that would reject it (SC-010, FR-013).
+Presets: `claude-opus-5-5` (default), `claude-opus-4-8`, `claude-sonnet-4-6`,
+`claude-haiku-4-5`, plus a free-text custom id. The request builder reads these flags so a
+parameter is never sent to a model that would reject it (SC-010, FR-013).
+
+The whole Claude 5 line rejects `temperature` (Opus 5/5.5, Sonnet 5/5.5, Haiku 5.5), as do
+Opus 4.7+, Fable, and Mythos. A custom id in any of those families (`noTemperatureFamilies`
+substrings) resolves to the Opus profile above so it never triggers the API's 400 on
+`temperature`. The `*-4-*` ids that still accept it (Sonnet 4.6, Haiku 4.5) are excluded.
 
 ## Job (transient, not persisted)
 

@@ -39,8 +39,31 @@ final class ModelCatalogTests: XCTestCase {
         XCTAssertFalse(ModelCatalog.capabilities(for: "claude-fable-5").supportsTemperature)
     }
 
+    func testOpus55PresetRejectsTemperature() {
+        // Regression: Opus 5.5 (the current flagship) 400s on `temperature` like the rest of
+        // the Opus/Claude-5 line; it must resolve to effort + adaptive thinking, no temperature.
+        let caps = ModelCatalog.capabilities(for: "claude-opus-5-5")
+        XCTAssertFalse(caps.supportsTemperature, "Opus 5.5 must NOT receive temperature (it 400s)")
+        XCTAssertTrue(caps.supportsEffort)
+        XCTAssertTrue(caps.supportsAdaptiveThinking)
+        XCTAssertTrue(caps.effortLevels.contains("xhigh"))
+        XCTAssertTrue(ModelCatalog.isPreset("claude-opus-5-5"))
+    }
+
+    func testCustomClaude5IdsRejectTemperature() {
+        // Custom (non-preset) Claude 5 ids must also avoid the temperature 400, while the
+        // `*-4-*` ids that still accept it keep supporting it.
+        for id in ["claude-opus-5", "claude-sonnet-5-5", "claude-sonnet-5", "claude-haiku-5-5"] {
+            XCTAssertFalse(ModelCatalog.capabilities(for: id).supportsTemperature,
+                           "\(id) must NOT receive temperature (it 400s)")
+        }
+        XCTAssertTrue(ModelCatalog.capabilities(for: "claude-sonnet-4-6").supportsTemperature)
+        XCTAssertTrue(ModelCatalog.capabilities(for: "claude-haiku-4-5").supportsTemperature)
+    }
+
     func testDefaultModelIsLatestOpus() {
-        XCTAssertEqual(ModelCatalog.defaultModelID, "claude-opus-4-8")
+        XCTAssertEqual(ModelCatalog.defaultModelID, "claude-opus-5-5")
+        XCTAssertTrue(ModelCatalog.isPreset("claude-opus-5-5"))
         XCTAssertTrue(ModelCatalog.isPreset("claude-opus-4-8"))
         XCTAssertFalse(ModelCatalog.isPreset("custom-thing"))
     }
