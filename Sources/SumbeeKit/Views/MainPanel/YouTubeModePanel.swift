@@ -295,8 +295,9 @@ struct YouTubeModePanel: View {
         }
     }
 
-    /// Populate the not-done/not-queued default once per loaded playlist; afterward only prune
-    /// now-finished/queued videos so manual edits survive a style switch or jobs completing.
+    /// Default a freshly loaded playlist to just the first not-done/not-queued video (topmost in
+    /// list order); afterward only prune now-finished/queued videos so manual edits survive a
+    /// style switch or jobs completing. Nothing is selected when every video is done/queued.
     private func recomputeSelection() {
         guard case .loaded(let url, let entries) = state.playlistFetch else { return }
         let blocked: Set<String> = chosenStyle.map {
@@ -305,7 +306,8 @@ struct YouTubeModePanel: View {
         let selectable = Set(entries.map(\.videoID)).subtracting(blocked)
         if populatedURL != url {
             populatedURL = url
-            selected = selectable
+            selected = entries.first { selectable.contains($0.videoID) }
+                .map { Set([$0.videoID]) } ?? []
         } else {
             selected.formIntersection(selectable)   // prune now-finished/queued; keep manual edits
         }
