@@ -30,7 +30,7 @@ struct DropZoneView: View {
                 }
                 Spacer(minLength: 10)
                 Text(style.name)
-                    .font(.system(size: 30, weight: .thin, design: .rounded))
+                    .font(.system(size: 30, weight: .thin))
                     .foregroundStyle(targeted ? Theme.accent : Color.primary.opacity(0.40))
                     .multilineTextAlignment(.leading)
                     .lineLimit(3)

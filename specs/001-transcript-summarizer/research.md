@@ -154,9 +154,14 @@ capability JSON we don't need.
 ## D12. Shared font system, sized large by default (Revision 4, FR-027)
 
 **Decision**: Define a small set of named font tokens (`Font.uiTitle/uiHeadline/uiBody/
-uiCallout/uiCaption`, design `.rounded`) in `Theme` and use them everywhere instead of
+uiCallout/uiCaption`, default SF Pro design) in `Theme` and use them everywhere instead of
 hard-coding sizes per view. Sizes start deliberately large (body ≈ 16pt) because macOS's
 default text styles render small.
+
+**Typeface (revised)**: SF Pro (`.default` design), not SF Rounded. Rounded read as bubbly and
+tiring over long summaries; SF Pro's optical sizing (Text cut for body, Display for headings)
+reads better and looks more professional. The Markdown preview also adds ~4pt line spacing
+(scaled with the preview font size) for long passages.
 
 **Rationale**: One place to tune scale; consistent typography; avoids the drift this version
 had before (scattered `.caption`/`.callout` literals). **Rejected**: `dynamicTypeSize`. On

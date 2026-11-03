@@ -132,7 +132,7 @@ struct AssetBrowserView: View {
                                 }
                             } header: {
                                 Label(group.name, systemImage: group.isSourceFolder ? "archivebox" : "doc.text")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .font(.system(size: 16, weight: .semibold))
                             }
                         }
                     }

@@ -72,7 +72,7 @@ struct SettingsView: View {
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Settings")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.system(size: 22, weight: .bold))
                 .padding(.horizontal, 14).padding(.top, 16).padding(.bottom, 8)
 
             ForEach(Section.allCases) { item in

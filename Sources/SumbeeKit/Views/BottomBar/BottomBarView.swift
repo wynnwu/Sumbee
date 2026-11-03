@@ -160,7 +160,7 @@ struct BottomBarView: View {
             }
         } label: {
             Text(label)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .font(.system(size: 14, weight: .bold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .foregroundStyle(active ? Color.white : Color.secondary)

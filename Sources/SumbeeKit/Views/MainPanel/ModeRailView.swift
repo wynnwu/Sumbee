@@ -26,7 +26,7 @@ struct ModeRailView: View {
         } label: {
             VStack(spacing: 5) {
                 Image(systemName: mode.icon).font(.system(size: 19))
-                Text(mode.displayName).font(.system(size: 10, weight: .semibold, design: .rounded))
+                Text(mode.displayName).font(.system(size: 10, weight: .semibold))
             }
             .foregroundStyle(active ? Theme.accent : .secondary)
             .frame(maxWidth: .infinity)

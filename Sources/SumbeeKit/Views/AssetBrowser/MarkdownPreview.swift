@@ -221,7 +221,8 @@ struct MarkdownText: View {
                 }
             }
         }
-        .font(.system(size: baseSize, design: .rounded))   // base size for inline body lines
+        .font(.system(size: baseSize))   // base size for inline body lines
+        .lineSpacing(4 * scale)                            // comfortable leading for long passages
         .tint(Theme.accent)                                // clickable links use the accent (FR-043)
         .textSelection(.enabled)
     }
@@ -298,12 +299,12 @@ struct MarkdownText: View {
         if trimmed.isEmpty {
             Color.clear.frame(height: 5 * scale)
         } else if trimmed.hasPrefix("### ") {
-            Text(String(trimmed.dropFirst(4))).font(.system(size: 17 * scale, weight: .bold, design: .rounded))
+            Text(String(trimmed.dropFirst(4))).font(.system(size: 17 * scale, weight: .bold))
         } else if trimmed.hasPrefix("## ") {
-            Text(String(trimmed.dropFirst(3))).font(.system(size: 22 * scale, weight: .bold, design: .rounded))
+            Text(String(trimmed.dropFirst(3))).font(.system(size: 22 * scale, weight: .bold))
                 .padding(.top, 4)
         } else if trimmed.hasPrefix("# ") {
-            Text(String(trimmed.dropFirst(2))).font(.system(size: 26 * scale, weight: .bold, design: .rounded))
+            Text(String(trimmed.dropFirst(2))).font(.system(size: 26 * scale, weight: .bold))
                 .foregroundStyle(Theme.accent)
         } else if trimmed.hasPrefix("- [ ] ") || trimmed.hasPrefix("- [x] ") || trimmed.hasPrefix("- [X] ") {
             let checked = !trimmed.hasPrefix("- [ ] ")

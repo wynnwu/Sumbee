@@ -39,7 +39,7 @@ public enum Theme {
 
     public static func sectionLabel(_ text: String) -> Text {
         Text(text.uppercased())
-            .font(.system(size: 15, weight: .bold, design: .rounded))
+            .font(.system(size: 15, weight: .bold))
             .kerning(1.6)
     }
 
@@ -50,11 +50,11 @@ public enum Theme {
 
 /// Shared, deliberately-larger font tokens (macOS default text styles run small; FR-027).
 public extension Font {
-    static let uiTitle    = Font.system(size: 32, weight: .bold, design: .rounded)
-    static let uiHeadline = Font.system(size: 19, weight: .semibold, design: .rounded)
-    static let uiBody     = Font.system(size: 16, design: .rounded)
-    static let uiCallout  = Font.system(size: 15, design: .rounded)
-    static let uiCaption  = Font.system(size: 13, design: .rounded)
+    static let uiTitle    = Font.system(size: 32, weight: .bold)
+    static let uiHeadline = Font.system(size: 19, weight: .semibold)
+    static let uiBody     = Font.system(size: 16)
+    static let uiCallout  = Font.system(size: 15)
+    static let uiCaption  = Font.system(size: 13)
 }
 
 public extension View {

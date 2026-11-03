@@ -17,7 +17,7 @@ Theme.accent orange. Hex values describe the light palette; system equivalents a
 mode and accessibility. Do not hard-code light colors. Use solid surfaces behind TextEditor
 and native scroll views, following the repository's macOS rendering learnings.
 
-Type: existing rounded SF `.uiTitle` for headings, `.uiHeadline`/`.uiBody` for speaker controls
+Type: existing SF Pro `.uiTitle` for headings, `.uiHeadline`/`.uiBody` for speaker controls
 and transcript, `.uiCaption` for context; timestamps use monospaced digits only. Left align
 text, constrain transcript reading width, use 20-point outer padding and 12–16-point grouping.
 Native focus rings and standard controls carry keyboard affordance. Animation is limited to
