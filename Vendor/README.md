@@ -18,6 +18,12 @@ LP64 CBLAS declarations; correct the Clang pragma diagnostic name; use pointer u
 UTF-8 decoding APIs; handle MLMultiArray int8; remove unused locals/results and redundant
 availability checks. These edits retain the algorithms and numerical precision.
 
+Swift 6.3 compatibility: Swift 6.3's region-based isolation rejects sending the actor's
+`nonisolated(unsafe)` `AsrManager` into its async methods (`SendingRisksDataRace`) in
+`StreamingAsrManager`. Its three call sites now bind it to a `nonisolated(unsafe)` local
+first, matching the stored property's existing annotation. No behavior change; Sumbee does
+not use streaming ASR.
+
 Diarization correctness patches (2026-09-10) additionally correct the offline speaker-mask
 transpose dimensions, decode the winning powerset class into binary activity, use the
 documented Euclidean AHC threshold, respect child merge distances when cutting a centroid

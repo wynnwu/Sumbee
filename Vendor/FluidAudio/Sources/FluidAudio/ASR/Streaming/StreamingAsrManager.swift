@@ -255,7 +255,8 @@ public actor StreamingAsrManager {
         nextWindowCenterStart = 0
 
         // Reset decoder state for the current audio source
-        if let asrManager = asrManager {
+        if let unwrapped = asrManager {
+            nonisolated(unsafe) let asrManager = unwrapped
             try await asrManager.resetDecoderState(for: audioSource)
         }
 
@@ -367,7 +368,8 @@ public actor StreamingAsrManager {
         windowStartSample: Int,
         isLastChunk: Bool = false
     ) async {
-        guard let asrManager = asrManager else { return }
+        guard let unwrapped = asrManager else { return }
+        nonisolated(unsafe) let asrManager = unwrapped
 
         do {
             let chunkStartTime = Date()
@@ -616,7 +618,8 @@ public actor StreamingAsrManager {
 
     /// Reset decoder state for error recovery
     private func resetDecoderForRecovery() async {
-        if let asrManager = asrManager {
+        if let unwrapped = asrManager {
+            nonisolated(unsafe) let asrManager = unwrapped
             do {
                 try await asrManager.resetDecoderState(for: audioSource)
                 logger.info("Successfully reset decoder state during error recovery")
